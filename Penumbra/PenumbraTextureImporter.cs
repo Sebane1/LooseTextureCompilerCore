@@ -3,7 +3,7 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace Penumbra.LTCImport.Dds;
 
-public static class TextureImporter {
+public static class PenumbraTextureImporter {
     private static void WriteHeader(byte[] target, int width, int height) {
         using var mem = new MemoryStream(target);
         using var bw = new BinaryWriter(mem);

@@ -646,7 +646,7 @@ namespace FFXIVLooseTextureCompiler {
                     stream.Flush();
                     stream.Position = 0;
                     if (stream.Length > 0) {
-                        TextureImporter.PngToTex(stream, out data);
+                        PenumbraTextureImporter.PngToTex(stream, out data);
                         stream.Position = 0;
                     }
                 }

@@ -31,7 +31,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 MemoryStream stream = new MemoryStream();
                 bitmap.Save(stream, ImageFormat.Png);
                 stream.Position = 0;
-                TextureImporter.PngToTex(stream, out output);
+                PenumbraTextureImporter.PngToTex(stream, out output);
                 return TexToBytes(new MemoryStream(output));
             }
         }
@@ -98,7 +98,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public static Bitmap TexToBitmap(string path) {
             using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read)) {
-                var scratch = TexFileParser.Parse(stream);
+                var scratch = PenumbraTexFileParser.Parse(stream);
                 var rgba = scratch.GetRGBA(out var f).ThrowIfError(f);
                 byte[] RGBAPixels = rgba.Pixels[..(f.Meta.Width * f.Meta.Height * f.Meta.Format.BitsPerPixel() / 8)].ToArray();
                 return RGBAToBitmap(RGBAPixels, f.Meta.Width, f.Meta.Height);
@@ -107,7 +107,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public static KeyValuePair<Size, byte[]> TexToBytes(string path) {
             using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read)) {
-                var scratch = TexFileParser.Parse(stream);
+                var scratch = PenumbraTexFileParser.Parse(stream);
                 var rgba = scratch.GetRGBA(out var f).ThrowIfError(f);
                 return new KeyValuePair<Size, byte[]>(new Size(f.Meta.Width, f.Meta.Height),
                 rgba.Pixels[..(f.Meta.Width * f.Meta.Height * f.Meta.Format.BitsPerPixel() / 8)].ToArray());
@@ -115,7 +115,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static KeyValuePair<Size, byte[]> TexToBytes(Stream stream) {
-            var scratch = TexFileParser.Parse(stream);
+            var scratch = PenumbraTexFileParser.Parse(stream);
             var rgba = scratch.GetRGBA(out var f).ThrowIfError(f);
             return new KeyValuePair<Size, byte[]>(new Size(f.Meta.Width, f.Meta.Height),
             rgba.Pixels[..(f.Meta.Width * f.Meta.Height * f.Meta.Format.BitsPerPixel() / 8)].ToArray());
@@ -146,7 +146,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public static byte[] GetTexBytes(string inputFile) {
             byte[] data = new byte[0];
             KeyValuePair<Size, byte[]> keyValuePair = ResolveImageBytes(inputFile);
-            TextureImporter.RgbaBytesToTex(keyValuePair.Value, keyValuePair.Key.Width, keyValuePair.Key.Height, out data);
+            PenumbraTextureImporter.RgbaBytesToTex(keyValuePair.Value, keyValuePair.Key.Width, keyValuePair.Key.Height, out data);
             return data;
         }
         public static void ObfuscateOrDeobfuscate(byte[] blob) {

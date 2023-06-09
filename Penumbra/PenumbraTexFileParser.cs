@@ -4,7 +4,7 @@ using OtterTex;
 
 namespace Penumbra.LTCImport.Textures;
 
-public static class TexFileParser {
+public static class PenumbraTexFileParser {
     public static ScratchImage Parse(Stream data) {
         using var r = new BinaryReader(data);
         var header = r.ReadStructure<TexFile.TexHeader>();

@@ -4,7 +4,7 @@ using Image = SixLabors.ImageSharp.Image;
 
 namespace Penumbra.LTCImport.Textures;
 
-public sealed class Texture : IDisposable {
+public sealed class PenumbraTexture : IDisposable {
     public enum FileType {
         Unknown,
         Dds,
@@ -34,7 +34,7 @@ public sealed class Texture : IDisposable {
     // Whether the file is successfully loaded and drawable.
     // The ImGui wrapper to load the image.
     // null if LoadError != null or Path is empty.
-    public TextureWrap? TextureWrap = null;
+    public PenumbraTextureWrap? TextureWrap = null;
     // Whether the file is successfully loaded and drawable.
     public bool IsLoaded
         => TextureWrap != null;
@@ -100,7 +100,7 @@ public sealed class Texture : IDisposable {
     private bool LoadTex() {
         Type = FileType.Tex;
         using var stream = OpenTexStream();
-        var scratch = TexFileParser.Parse(stream);
+        var scratch = PenumbraTexFileParser.Parse(stream);
         BaseImage = scratch;
         var rgba = scratch.GetRGBA(out var f).ThrowIfError(f);
         RGBAPixels = rgba.Pixels[..(f.Meta.Width * f.Meta.Height * f.Meta.Format.BitsPerPixel() / 8)].ToArray();

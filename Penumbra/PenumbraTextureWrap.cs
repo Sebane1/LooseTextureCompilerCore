@@ -4,7 +4,7 @@
 #endregion
 
 
-public interface TextureWrap : IDisposable {
+public interface PenumbraTextureWrap : IDisposable {
     IntPtr ImGuiHandle { get; }
 
     int Width { get; }
