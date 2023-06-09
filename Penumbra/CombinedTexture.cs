@@ -6,7 +6,7 @@ using SixLabors.ImageSharp.PixelFormats;
 using System.Numerics;
 using Image = SixLabors.ImageSharp.Image;
 
-namespace Penumbra.Import.Textures;
+namespace Penumbra.LTCImport.Textures;
 
 public partial class CombinedTexture : IDisposable {
     private Matrix4x4 _multiplierLeft = Matrix4x4.Identity;

@@ -2,7 +2,7 @@
 using Lumina.Extensions;
 using OtterTex;
 
-namespace Penumbra.Import.Textures;
+namespace Penumbra.LTCImport.Textures;
 
 public static class TexFileParser {
     public static ScratchImage Parse(Stream data) {

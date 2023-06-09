@@ -4,7 +4,7 @@ using FFXIVLooseTextureCompiler.PathOrganization;
 using FFXIVLooseTextureCompiler.Racial;
 using FFXIVVoicePackCreator.Json;
 using Newtonsoft.Json;
-using Penumbra.Import.Dds;
+using Penumbra.LTCImport.Dds;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;

@@ -1,7 +1,7 @@
 ﻿using Lumina.Data.Files;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace Penumbra.Import.Dds;
+namespace Penumbra.LTCImport.Dds;
 
 public static class TextureImporter {
     private static void WriteHeader(byte[] target, int width, int height) {

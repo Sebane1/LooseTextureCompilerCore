@@ -4,7 +4,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using SixLabors.ImageSharp.PixelFormats;
 
-namespace Penumbra.Import.Textures;
+namespace Penumbra.LTCImport.Textures;
 
 public partial class CombinedTexture
 {

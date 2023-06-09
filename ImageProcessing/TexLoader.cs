@@ -1,6 +1,6 @@
 ﻿using OtterTex;
-using Penumbra.Import.Dds;
-using Penumbra.Import.Textures;
+using Penumbra.LTCImport.Dds;
+using Penumbra.LTCImport.Textures;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;

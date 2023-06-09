@@ -2,7 +2,7 @@
 using SixLabors.ImageSharp.PixelFormats;
 using Image = SixLabors.ImageSharp.Image;
 
-namespace Penumbra.Import.Textures;
+namespace Penumbra.LTCImport.Textures;
 
 public sealed class Texture : IDisposable {
     public enum FileType {
