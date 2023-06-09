@@ -8,14 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Penumbra\CombinedTexture.Manipulation.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Penumbra\CombinedTexture.Manipulation.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Lumina" Version="3.10.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.0.1" />
