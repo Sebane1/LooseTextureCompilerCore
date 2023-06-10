@@ -1,4 +1,5 @@
 ﻿using FFXIVLooseTextureCompiler.ImageProcessing;
+using FFXIVLooseTextureCompiler.PathOrganization;
 
 namespace FFXIVLooseTextureCompiler.Export {
     public class BackupTexturePaths {
@@ -58,6 +59,40 @@ namespace FFXIVLooseTextureCompiler.Export {
         public static BackupTexturePaths VanillaLalaPath { get => vanillaLalaPath; }
         public static BackupTexturePaths TbsePathHighlander { get => tbsePathHighlander; }
         public static BackupTexturePaths TbsePathViera { get => tbsePathViera; }
+
+        public static void AddBackupPaths(int gender, int race, TextureSet textureSet) {
+            if (gender != 0) {
+                if (textureSet.InternalDiffusePath.Contains("bibo")) {
+                    textureSet.BackupTexturePaths = BiboPath;
+                } else if (textureSet.InternalDiffusePath.Contains("gen3") || textureSet.InternalDiffusePath.Contains("eve")) {
+                    textureSet.BackupTexturePaths = Gen3Path;
+                } else if (textureSet.InternalDiffusePath.Contains("v01_c1101b0001_g")) {
+                    textureSet.BackupTexturePaths = OtopopLalaPath;
+                } else {
+                    textureSet.BackupTexturePaths = race == 5 ?
+                    VanillaLalaPath : Gen3Gen2Path;
+                }
+            } else {
+                if (race == 5) {
+                    textureSet.BackupTexturePaths = VanillaLalaPath;
+                } else {
+                    // Midlander, Elezen, Miqo'te
+                    if (textureSet.InternalDiffusePath.Contains("--c0101b0001_b_d")) {
+                        textureSet.BackupTexturePaths = TbsePath;
+                    } else
+                    // Highlander
+                    if (textureSet.InternalDiffusePath.Contains("--c0301b0001_b_d")) {
+                        textureSet.BackupTexturePaths = TbsePathHighlander;
+                    } else
+                    // Viera
+                    if (textureSet.InternalDiffusePath.Contains("--c1701b0001_b_d")) {
+                        textureSet.BackupTexturePaths = TbsePathViera;
+                    } else if (textureSet.InternalDiffusePath.Contains("_b_d")) {
+                        textureSet.BackupTexturePaths = TbsePath;
+                    }
+                }
+            }
+        }
         public static BackupTexturePaths AsymLalaPath {
             get {
                 if (!File.Exists(asymLalaPath.Diffuse)) {
