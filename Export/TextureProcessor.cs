@@ -174,7 +174,9 @@ namespace FFXIVLooseTextureCompiler {
             if (OnLaunchedXnormal != null) {
                 OnLaunchedXnormal.Invoke(this, EventArgs.Empty);
             }
-            xnormal.ProcessBatches();
+            if (finalizeResults) {
+                xnormal.ProcessBatches();
+            }
             if (OnStartedProcessing != null) {
                 OnStartedProcessing.Invoke(this, EventArgs.Empty);
             }
@@ -317,7 +319,7 @@ namespace FFXIVLooseTextureCompiler {
                     } else if (textureSet.InternalDiffusePath.Contains("fac_d")) {
                         ExportTex(textureSet.Diffuse, AppendNumber(multiDiskPath, fileCount), ExportType.MultiFace, "", textureSet.Glow,
                             textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Diffuse : "");
-                    }else {
+                    } else {
                         ExportTex(textureSet.Diffuse, AppendNumber(multiDiskPath, fileCount), ExportType.Multi, "", textureSet.Glow,
                             textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Diffuse : "");
                     }
