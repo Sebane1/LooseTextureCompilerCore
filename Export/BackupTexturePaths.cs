@@ -5,18 +5,6 @@ namespace FFXIVLooseTextureCompiler.Export {
     public class BackupTexturePaths {
         public BackupTexturePaths(string path) {
             _path = path;
-            string cleanup = Diffuse.Replace(".ltct", ".tex");
-            if (File.Exists(cleanup)) {
-                File.Delete(cleanup);
-            }
-            cleanup = DiffuseRaen.Replace(".ltct", ".tex");
-            if (File.Exists(cleanup)) {
-                File.Delete(cleanup);
-            }
-            cleanup = Normal.Replace(".ltct", ".tex");
-            if (File.Exists(cleanup)) {
-                File.Delete(cleanup);
-            }
         }
         const string _diffuse = "diffuse.ltct";
         const string _diffuseRaen = "diffuseRaen.ltct";
