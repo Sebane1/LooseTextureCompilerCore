@@ -25,6 +25,12 @@ namespace FFXIVLooseTextureCompiler {
         private bool generateNormals;
         private bool generateMulti;
 
+        string _basePath = "";
+
+        public TextureProcessor(string basePath = null) {
+            _basePath = !string.IsNullOrEmpty(basePath) ? basePath : _basePath;
+        }
+
         public event EventHandler OnProgressChange;
         public event EventHandler OnStartedProcessing;
         public event EventHandler OnLaunchedXnormal;
@@ -352,7 +358,7 @@ namespace FFXIVLooseTextureCompiler {
             && generateNormals && !(textureSet.InternalMultiPath.ToLower().Contains("catchlight"))) {
                 if (!textureSet.IgnoreNormalGeneration) {
                     if (textureSet.BackupTexturePaths != null) {
-                        ExportTex((Path.Combine(AppDomain.CurrentDomain.BaseDirectory, textureSet.BackupTexturePaths.Normal)),
+                        ExportTex((Path.Combine(_basePath, textureSet.BackupTexturePaths.Normal)),
                             AppendNumber(normalDiskPath, fileCount), ExportType.MergeNormal, textureSet.Diffuse, textureSet.NormalMask,
                             (textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Normal : ""),
                             textureSet.NormalCorrection, textureSet.InvertNormalGeneration);
@@ -442,7 +448,7 @@ namespace FFXIVLooseTextureCompiler {
                             if (bitmap != null) {
                                 if (!string.IsNullOrEmpty(layeringImage)) {
                                     Bitmap image = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb);
-                                    Bitmap layer = TexLoader.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                                    Bitmap layer = TexLoader.ResolveBitmap(Path.Combine(_basePath,
                                         layeringImage));
                                     Graphics g = Graphics.FromImage(image);
                                     g.Clear(Color.Transparent);
@@ -467,7 +473,7 @@ namespace FFXIVLooseTextureCompiler {
                             if (bitmap != null) {
                                 if (!string.IsNullOrEmpty(layeringImage)) {
                                     Bitmap image = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb);
-                                    Bitmap layer = TexLoader.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                                    Bitmap layer = TexLoader.ResolveBitmap(Path.Combine(_basePath,
                                         layeringImage));
                                     Graphics g = Graphics.FromImage(image);
                                     g.Clear(Color.Transparent);
@@ -547,7 +553,7 @@ namespace FFXIVLooseTextureCompiler {
                                     Bitmap image;
                                     if (layeringImage != null) {
                                         image = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb);
-                                        Bitmap layer = TexLoader.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                                        Bitmap layer = TexLoader.ResolveBitmap(Path.Combine(_basePath,
                                             layeringImage));
                                         Graphics g = Graphics.FromImage(image);
                                         g.Clear(Color.Transparent);
@@ -598,7 +604,7 @@ namespace FFXIVLooseTextureCompiler {
                                                     if (bitmap != null) {
                                                         if (!string.IsNullOrEmpty(layeringImage)) {
                                                             Bitmap image = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb);
-                                                            Bitmap layer = TexLoader.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                                                            Bitmap layer = TexLoader.ResolveBitmap(Path.Combine(_basePath,
                                                                 layeringImage));
                                                             Graphics g = Graphics.FromImage(image);
                                                             g.Clear(Color.Transparent);
