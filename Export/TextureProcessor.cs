@@ -31,7 +31,7 @@ namespace FFXIVLooseTextureCompiler
 
         public TextureProcessor(string basePath = null)
         {
-            _basePath = !string.IsNullOrEmpty(basePath) ? basePath : _basePath;
+            _basePath = !string.IsNullOrEmpty(basePath) ? basePath : AppDomain.CurrentDomain.BaseDirectory;
         }
 
         public event EventHandler OnProgressChange;
@@ -60,8 +60,10 @@ namespace FFXIVLooseTextureCompiler
             {
                 if (!xnormalCache.ContainsKey(child.Diffuse))
                 {
-                    string diffuseAlpha = parent.Diffuse.Replace(".", "_alpha.").Replace(".tex", ".png");
-                    string diffuseRGB = parent.Diffuse.Replace(".", "_rgb.").Replace(".tex", ".png");
+                    string diffuseAlpha = ImageManipulation.ReplaceExtension(
+                    ImageManipulation.AddSuffix(parent.Diffuse, "_alpha"), ".png");
+                    string diffuseRGB = ImageManipulation.AddSuffix(
+                    ImageManipulation.AddSuffix(parent.Diffuse, "_rgb"), ".png");
                     if (finalizeResults || !File.Exists(child.Diffuse.Replace("baseTexBaked", "rgb_baseTexBaked"))
                         || !File.Exists(child.Diffuse.Replace("baseTexBaked", "alpha_baseTexBaked")))
                     {
@@ -85,11 +87,11 @@ namespace FFXIVLooseTextureCompiler
                                 {
                                     if (!File.Exists(childAlpha))
                                     {
-                                        new Bitmap(1024, 1024).Save(childAlpha.Replace(".", "_baseTexBaked."), ImageFormat.Png);
+                                        new Bitmap(1024, 1024).Save(ImageManipulation.AddSuffix(childAlpha, "_baseTexBaked."), ImageFormat.Png);
                                     }
                                     if (!File.Exists(childRGB))
                                     {
-                                        new Bitmap(1024, 1024).Save(childRGB.Replace(".", "_baseTexBaked."), ImageFormat.Png);
+                                        new Bitmap(1024, 1024).Save(ImageManipulation.AddSuffix(childRGB, "_baseTexBaked."), ImageFormat.Png);
                                     }
                                 }
                             }
@@ -105,8 +107,8 @@ namespace FFXIVLooseTextureCompiler
             {
                 if (!xnormalCache.ContainsKey(child.Normal))
                 {
-                    string normalAlpha = parent.Normal.Replace(".", "_alpha.");
-                    string normalRGB = parent.Normal.Replace(".", "_rgb.");
+                    string normalAlpha = ImageManipulation.AddSuffix(parent.Normal, "_alpha");
+                    string normalRGB = ImageManipulation.AddSuffix(parent.Normal, "_rgb");
                     if (finalizeResults || !File.Exists(child.Normal.Replace("baseTexBaked", "rgb_baseTexBaked"))
                         || !File.Exists(child.Normal.Replace("baseTexBaked", "alpha_baseTexBaked")))
                     {
@@ -140,8 +142,8 @@ namespace FFXIVLooseTextureCompiler
             {
                 if (!xnormalCache.ContainsKey(child.Glow))
                 {
-                    string glowAlpha = parent.Glow.Replace(".", "_alpha.");
-                    string glowRGB = parent.Glow.Replace(".", "_rgb.");
+                    string glowAlpha = ImageManipulation.AddSuffix(parent.Glow, "_alpha");
+                    string glowRGB = ImageManipulation.AddSuffix(parent.Glow, "_rgb");
                     if (finalizeResults || !File.Exists(child.Glow.Replace("baseTexBaked", "rgb_baseTexBaked"))
                         || !File.Exists(child.Glow.Replace("baseTexBaked", "alpha_baseTexBaked")))
                     {
@@ -161,8 +163,8 @@ namespace FFXIVLooseTextureCompiler
             {
                 if (!xnormalCache.ContainsKey(child.NormalMask))
                 {
-                    string normalMaskAlpha = parent.NormalMask.Replace(".", "_alpha.");
-                    string normalMaskRGB = parent.NormalMask.Replace(".", "_rgb.");
+                    string normalMaskAlpha = ImageManipulation.AddSuffix(parent.NormalMask, "_alpha");
+                    string normalMaskRGB = ImageManipulation.AddSuffix(parent.NormalMask, "_rgb");
                     if (finalizeResults || !File.Exists(child.NormalMask.Replace("baseTexBaked", "rgb_baseTexBaked"))
                         || !File.Exists(child.NormalMask.Replace("baseTexBaked", "alpha_baseTexBaked")))
                     {
@@ -181,7 +183,7 @@ namespace FFXIVLooseTextureCompiler
         }
 
         public void Export(List<TextureSet> textureSetList, Dictionary<string, int> groupOptionTypes,
-            string modPath, int generationType, bool generateNormals, 
+            string modPath, int generationType, bool generateNormals,
             bool generateMulti, bool useXNormal, string xNormalPathOverride = "")
         {
             XNormal.XNormalPathOverride = xNormalPathOverride;
