@@ -2,88 +2,109 @@
 
 namespace FFXIVLooseTextureCompiler.PathOrganization {
     public class TextureSet {
-        string materialSetName = "";
-        string materialGroupName = "";
+     private   string _textureSetName = "";
+        private string _groupName = "";
 
-        string diffuse = "";
-        string normal = "";
-        string multi = "";
+        private string _diffuse = "";
+        private string _normal = "";
+        private string _multi = "";
 
-        string internalDiffusePath = "";
-        string internalNormalPath = "";
-        string internalMultiPath = "";
-        private string normalMask = "";
-        private string glow = "" ;
+        private string _internalDiffusePath = "";
+        private string _internalNormalPath = "";
+        private string _internalMultiPath = "";
+        private string _normalMask = "";
+        private string _glow = "" ;
 
-        private bool ignoreNormalGeneration;
-        private bool ignoreMultiGeneration;
-        private bool invertNormalGeneration;
-        private bool omniExportMode;
-        private BackupTexturePaths backupTexturePaths;
+        private bool _ignoreNormalGeneration;
+        private bool _ignoreMultiGeneration;
+        private bool _invertNormalGeneration;
+        private bool _omniExportMode;
+        private BackupTexturePaths _backupTexturePaths;
         public bool IsChildSet {
             get {
-                return MaterialSetName.Contains("[IsChild]");
+                return TextureSetName.Contains("[IsChild]");
             }
         }
 
-        List<TextureSet> childSets = new List<TextureSet>();
-        private string normalCorrection;
+        List<TextureSet> _childSets = new List<TextureSet>();
+        private string _normalCorrection ="";
 
-        public string MaterialSetName { get => materialSetName; set => materialSetName = value; }
-        public string Diffuse { get { if (diffuse == null) { diffuse = ""; } return diffuse; } set => diffuse = value; }
-        public string Normal { get { if (normal == null) { normal = ""; } return normal; } set => normal = value; }
-        public string Multi { get { if (multi == null) { multi = ""; } return multi; } set => multi = value; }
-        public string NormalMask { get { if (normalMask == null) { normalMask = ""; } return normalMask; } set => normalMask = value; }
+        public string TextureSetName { get => _textureSetName; set => _textureSetName = value; }
+
+        /// <summary>
+        /// This only exists for backwards compatibility
+        /// </summary>
+        public string MaterialSetName { set => _textureSetName = value; }
+        public string Diffuse { get { if (_diffuse == null) { _diffuse = ""; } return _diffuse; } set => _diffuse = value; }
+        public string Normal { get { if (_normal == null) { _normal = ""; } return _normal; } set => _normal = value; }
+        public string Multi { get { if (_multi == null) { _multi = ""; } return _multi; } set => _multi = value; }
+        public string NormalMask { get { if (_normalMask == null) { _normalMask = ""; } return _normalMask; } set => _normalMask = value; }
         public string Glow {
             get {
-                if (glow == null) {
-                    glow = "";
+                if (_glow == null) {
+                    _glow = "";
                 }
-                return glow;
+                return _glow;
             }
             set {
                 if (!string.IsNullOrEmpty(value)) {
                     IgnoreMultiGeneration = false;
                 }
-                glow = value;
+                _glow = value;
             }
         }
         public string InternalDiffusePath {
             get {
-                return internalDiffusePath == null ? internalDiffusePath = "" : internalDiffusePath;
+                return _internalDiffusePath == null ? _internalDiffusePath = "" : _internalDiffusePath;
             }
-            set => internalDiffusePath = value; }
+            set => _internalDiffusePath = value; }
         public string InternalNormalPath {
             get {
-                return internalNormalPath == null ? internalNormalPath = "" : internalNormalPath;
+                return _internalNormalPath == null ? _internalNormalPath = "" : _internalNormalPath;
             }
-            set => internalNormalPath = value; }
-        public string InternalMultiPath {
-            get {
-                return internalMultiPath == null ? internalMultiPath = "" : internalMultiPath;
-            }
-            set => internalMultiPath = value;
+            set => _internalNormalPath = value;
         }
-        public string MaterialGroupName {
-            get {
-                if (string.IsNullOrEmpty(materialGroupName)) {
-                    materialGroupName = materialSetName;
-                }
-                return materialGroupName;
+        public string InternalMultiPath
+        {
+            get
+            {
+                return _internalMultiPath == null ? _internalMultiPath = "" : _internalMultiPath;
             }
-            set => materialGroupName = value;
+            set => _internalMultiPath = value;
         }
 
-        public bool IgnoreMultiGeneration { get => ignoreMultiGeneration; set => ignoreMultiGeneration = value; }
-        public bool IgnoreNormalGeneration { get => ignoreNormalGeneration; set => ignoreNormalGeneration = value; }
-        public bool OmniExportMode { get => omniExportMode; set => omniExportMode = value; }
-        public List<TextureSet> ChildSets { get => childSets; set => childSets = value; }
-        public BackupTexturePaths BackupTexturePaths { get => backupTexturePaths; set => backupTexturePaths = value; }
-        public string NormalCorrection { get => normalCorrection; set => normalCorrection = value; }
-        public bool InvertNormalGeneration { get => invertNormalGeneration; set => invertNormalGeneration = value; }
+
+        public string GroupName
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_groupName))
+                {
+                    _groupName = _textureSetName;
+                }
+                return _groupName;
+            }
+            set => _groupName = value;
+        }
+
+
+        /// <summary>
+        /// This only exists for backwards compatibility
+        /// </summary>
+        public string MaterialGroupName {
+            set => _groupName = value;
+        }
+
+        public bool IgnoreMultiGeneration { get => _ignoreMultiGeneration; set => _ignoreMultiGeneration = value; }
+        public bool IgnoreNormalGeneration { get => _ignoreNormalGeneration; set => _ignoreNormalGeneration = value; }
+        public bool OmniExportMode { get => _omniExportMode; set => _omniExportMode = value; }
+        public List<TextureSet> ChildSets { get => _childSets; set => _childSets = value; }
+        public BackupTexturePaths BackupTexturePaths { get => _backupTexturePaths; set => _backupTexturePaths = value; }
+        public string NormalCorrection { get => _normalCorrection; set => _normalCorrection = value; }
+        public bool InvertNormalGeneration { get => _invertNormalGeneration; set => _invertNormalGeneration = value; }
 
         public override string ToString() {
-            return materialSetName + (MaterialGroupName != materialSetName ? $" | Group({materialGroupName})" : "");
+            return _textureSetName + (GroupName != _textureSetName ? $" | Group({_groupName})" : "");
         }
     }
 }
