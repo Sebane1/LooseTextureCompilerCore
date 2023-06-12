@@ -104,7 +104,7 @@ namespace FFXIVLooseTextureCompiler
         public void AddToBatch(string internalPath, string inputPath, string outputPath, bool isNormalMap)
         {
             string environment = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            userDataPath = environment + @"\FFXIVLooseTextureCompiler";
+            userDataPath = environment + @"\FFXIVLooseTextureCompiler\";
             if (File.Exists(inputPath))
             {
                 if (internalPath.Contains("bibo"))
@@ -264,7 +264,7 @@ namespace FFXIVLooseTextureCompiler
         }
         public static void CallXNormal(string inputFBX, string outputFBX, string inputImage, string outputImage)
         {
-            userDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), @"\FFXIVLooseTextureCompiler\");
+            userDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\FFXIVLooseTextureCompiler\";
             string path = Path.Combine(userDataPath, xmlFileName);
             string executable = !string.IsNullOrEmpty(xNormalPathOverride) ? xNormalPathOverride
             : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, xNormal);
