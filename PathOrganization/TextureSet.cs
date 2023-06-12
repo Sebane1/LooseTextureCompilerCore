@@ -34,6 +34,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         /// <summary>
         /// This only exists for backwards compatibility
         /// </summary>
+        [Obsolete("This property is only here for backwards compatibility, please use TextureSetName instead.")]
         public string MaterialSetName { set => _textureSetName = value; }
         public string Diffuse { get { if (_diffuse == null) { _diffuse = ""; } return _diffuse; } set => _diffuse = value; }
         public string Normal { get { if (_normal == null) { _normal = ""; } return _normal; } set => _normal = value; }
@@ -91,6 +92,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         /// <summary>
         /// This only exists for backwards compatibility
         /// </summary>
+
+        [Obsolete("This property is only here for backwards compatibility, please use GroupName instead.")]
         public string MaterialGroupName {
             set => _groupName = value;
         }
