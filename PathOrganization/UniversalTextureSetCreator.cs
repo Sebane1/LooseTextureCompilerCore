@@ -178,7 +178,6 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                 tbseVanilla.BackupTexturePaths.Normal));
 
-
             if (File.Exists(textureSet.Diffuse)) {
                 ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Diffuse)).Save(tbseVanilla.Diffuse);
             }
