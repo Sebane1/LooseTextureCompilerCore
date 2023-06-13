@@ -261,11 +261,11 @@ namespace FFXIVLooseTextureCompiler
                 foreach (TextureSet textureSet in textureSets)
                 {
                     string diffuseDiskPath = !string.IsNullOrEmpty(textureSet.InternalDiffusePath) ?
-                        Path.Combine(modPath, textureSet.InternalDiffusePath.Replace("/", @"\")) : "";
+                        Path.Combine(modPath, RedirectToDisk(textureSet.InternalDiffusePath)) : "";
                     string normalDiskPath = !string.IsNullOrEmpty(textureSet.InternalNormalPath) ?
-                        Path.Combine(modPath, textureSet.InternalNormalPath.Replace("/", @"\")) : "";
+                        Path.Combine(modPath, RedirectToDisk(textureSet.InternalNormalPath)) : "";
                     string multiDiskPath = !string.IsNullOrEmpty(textureSet.InternalMultiPath) ?
-                        Path.Combine(modPath, textureSet.InternalMultiPath.Replace("/", @"\")) : "";
+                        Path.Combine(modPath, RedirectToDisk(textureSet.InternalMultiPath)) : "";
                     switch (choiceOption)
                     {
                         case 0:
@@ -359,7 +359,7 @@ namespace FFXIVLooseTextureCompiler
         }
         public string RedirectToDisk(string path)
         {
-            return @"\Do Not Edit\" + path.Replace("/", @"\");
+            return @"Do Not Edit\" + path.Replace("/", @"\");
         }
         public void AddDetailedGroupOption(string path, string name, string alternateName,
             TextureSet textureSet, List<TextureSet> textureSets, Group group, Option inputOption, out Option outputOption)
