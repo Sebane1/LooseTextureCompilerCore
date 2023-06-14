@@ -75,7 +75,7 @@ namespace FFXIVLooseTextureCompiler.Export {
                     // Viera
                     if (textureSet.InternalDiffusePath.Contains("--c1701b0001_b_d")) {
                         textureSet.BackupTexturePaths = TbsePathViera;
-                    } else if (textureSet.InternalDiffusePath.Contains("_b_d")) {
+                    } else if (textureSet.InternalDiffusePath.Contains("1_b_d")) {
                         textureSet.BackupTexturePaths = TbsePath;
                     }
                 }
