@@ -325,6 +325,9 @@ namespace FFXIVLooseTextureCompiler {
                     ExportGroup(groupPath, group);
                 }
             }
+            while (_exportCompletion < _exportMax) {
+                Thread.Sleep(500);
+            }
             foreach (Bitmap value in _normalCache.Values) {
                 value.Dispose();
             }
@@ -333,9 +336,6 @@ namespace FFXIVLooseTextureCompiler {
             }
             foreach (Bitmap value in _glowCache.Values) {
                 value.Dispose();
-            }
-            while (_exportCompletion < _exportMax) {
-                Thread.Sleep(500);
             }
             return true;
         }
