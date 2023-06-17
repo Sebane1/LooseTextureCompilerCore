@@ -225,5 +225,10 @@ namespace FFXIVLooseTextureCompiler.Racial {
             }
             return null;
         }
+
+        public static string GetFaceTexturePath(int selectedIndex)
+        {
+           return "chara/common/texture/decal_face/_decal_" + (selectedIndex + 1) + ".tex";
+        }
     }
 }
