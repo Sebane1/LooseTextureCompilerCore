@@ -215,9 +215,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return image;
         }
 
-        public static Bitmap BitmapToEyeMulti(Bitmap image) {
-            string gloss = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\gloss.png");
-            string template = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\template.png");
+        public static Bitmap BitmapToEyeMulti(Bitmap image, string baseDirectory = null){
+            string gloss = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory 
+                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\gloss.png");
+            string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory 
+                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\template.png");
             Bitmap canvas = new Bitmap(image.Width, image.Height, PixelFormat.Format32bppArgb);
             Bitmap newEye = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 1.0f, 1.1f, 1);
 
@@ -362,17 +364,19 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return canvas;
         }
 
-        public static Bitmap BitmapToCatchlight(Bitmap file) {
-            string catchlightTemplate = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\catchlight.png");
+        public static Bitmap BitmapToCatchlight(Bitmap file, string baseDirectory = null) {
+            string catchlightTemplate = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory 
+                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\catchlight.png");
             Bitmap catchlight = Brightness.BrightenImage(Grayscale.MakeGrayscale(file), 0.6f, 1.5f, 1);
             Graphics graphics = Graphics.FromImage(catchlight);
             graphics.DrawImage(new Bitmap(new Bitmap(catchlightTemplate), catchlight.Width, catchlight.Height), 0, 0);
             return catchlight;
         }
 
-        public static Bitmap BitmapToEyeNormal(Bitmap file) {
+        public static Bitmap BitmapToEyeNormal(Bitmap file, string baseDirectory = null) {
             Bitmap newFile = new Bitmap(file);
-            string normalTemplate = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\normal.png");
+            string normalTemplate = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory 
+                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\normal.png");
             Bitmap normal = Normal.Calculate(InvertImage(Brightness.BrightenImage(Grayscale.MakeGrayscale(newFile), 0.8f, 1.5f, 1)));
             Graphics graphics = Graphics.FromImage(normal);
             graphics.DrawImage(new Bitmap(new Bitmap(normalTemplate), file.Width, file.Height), 0, 0);
@@ -404,12 +408,12 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 SideBySide(normal, normal).Save(ReplaceExtension(AddSuffix(output, "_eye_normal_asym"), ".png"), ImageFormat.Png);
             }
         }
-        public static void ConvertToEyeMaps(string filename) {
+        public static void ConvertToEyeMaps(string filename, string baseDirectory = null) {
             Bitmap image = TexLoader.ResolveBitmap(filename);
-            Bitmap eyeMulti = BitmapToEyeMulti(image);
+            Bitmap eyeMulti = BitmapToEyeMulti(image, baseDirectory);
             Bitmap eyeGlow = GrayscaleToAlpha(eyeMulti);
-            Bitmap catchLight = BitmapToCatchlight(eyeMulti);
-            Bitmap normal = BitmapToEyeNormal(eyeMulti);
+            Bitmap catchLight = BitmapToCatchlight(eyeMulti, baseDirectory);
+            Bitmap normal = BitmapToEyeNormal(eyeMulti, baseDirectory);
 
             eyeMulti.Save(ReplaceExtension(AddSuffix(filename, "_eye_multi"), ".png"), ImageFormat.Png);
             eyeGlow.Save(ReplaceExtension(AddSuffix(filename, "_eye_glow"), ".png"), ImageFormat.Png);
