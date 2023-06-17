@@ -142,7 +142,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return diffuse;
         }
 
-        public static Bitmap.Bitmap  ExtractGlowMapFormLegacyDiffuse(Bitmap.Bitmap  file) {
+        public static Bitmap.Bitmap  ExtractGlowMapFromDiffuse(Bitmap.Bitmap  file) {
             Bitmap.Bitmap  image = new Bitmap.Bitmap (file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
