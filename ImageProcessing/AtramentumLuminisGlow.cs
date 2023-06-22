@@ -97,7 +97,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     Bitmap.Color comparisonColour = FlattenColours(sourcePixel, 90);
                     if (!(comparisonColour.R == 0 && comparisonColour.G == 0 && comparisonColour.B == 0)) {
                         if (sourcePixel.A > 20) {
-                            Bitmap.Color col = Bitmap.Color.FromArgb(destinationPixel.A, destinationPixel.R, destinationPixel.G, 255 - sourcePixel.A);
+                            Bitmap.Color col = Bitmap.Color.FromArgb(destinationPixel.A, 
+                                destinationPixel.R, destinationPixel.G, 255 - sourcePixel.A);
                             destination.SetPixel(x, y, col);
                         }
                     }
