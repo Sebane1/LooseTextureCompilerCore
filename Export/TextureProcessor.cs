@@ -355,8 +355,8 @@ namespace FFXIVLooseTextureCompiler {
                 textureSet.Multi.GetHashCode().ToString() +
                 textureSet.Glow.GetHashCode().ToString() +
                 textureSet.NormalMask.GetHashCode().ToString() +
-                (RaceInfo.ReverseRaceLookup(textureSet.InternalDiffusePath) == 6 ?
-                textureSet.BackupTexturePaths.DiffuseRaen : textureSet.BackupTexturePaths.Diffuse).GetHashCode().ToString();
+                (textureSet.BackupTexturePaths != null ? (RaceInfo.ReverseRaceLookup(textureSet.InternalDiffusePath) == 6 ?
+                textureSet.BackupTexturePaths.DiffuseRaen : textureSet.BackupTexturePaths.Diffuse).GetHashCode().ToString() : "");
         }
 
         public string RedirectToDisk(string path) {
