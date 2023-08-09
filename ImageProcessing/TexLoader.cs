@@ -123,7 +123,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public static Bitmap ResolveBitmap(string inputFile) {
             if (string.IsNullOrEmpty(inputFile) || !File.Exists(inputFile)) {
-                return new Bitmap(1024, 1024);
+                return new Bitmap(4096, 4096);
             }
 
             while (IsFileLocked(inputFile)) {
@@ -139,7 +139,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     return new Bitmap(bitmap);
                 }
             } catch {
-                return new Bitmap(1024, 1024);
+                return new Bitmap(4096, 4096);
             }
         }
 
