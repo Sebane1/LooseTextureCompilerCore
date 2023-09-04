@@ -606,7 +606,7 @@ namespace FFXIVLooseTextureCompiler {
                             ExportTypeMulti(inputFile, layeringImage, exportType, modifierMap, stream);
                             break;
                         case ExportType.MergeNormal:
-                            ExportTypeMergeNormal(inputFile, outputFile, layeringImage, diffuseNormal, modifierMap, normalCorrection, stream);
+                            ExportTypeMergeNormal(inputFile, outputFile, layeringImage, diffuseNormal, modifierMap, normalCorrection, stream, modifier);
                             break;
                         case ExportType.XNormalImport:
                             ExportTypeXNormalImport(inputFile, diffuseNormal, stream);
@@ -657,7 +657,7 @@ namespace FFXIVLooseTextureCompiler {
         }
 
         private void ExportTypeMergeNormal(string inputFile, string outputFile, string layeringImage,
-            string diffuseNormal, string modifierMap, string normalCorrection, Stream stream) {
+            string diffuseNormal, string modifierMap, string normalCorrection, Stream stream, bool modifier) {
             Bitmap output = null;
             if (!string.IsNullOrEmpty(diffuseNormal)) {
                 lock (_normalCache) {
@@ -671,11 +671,11 @@ namespace FFXIVLooseTextureCompiler {
                                         using (Bitmap normalMaskBitmap = TexLoader.ResolveBitmap(modifierMap)) {
                                             if (outputFile.Contains("fac_b_n")) {
                                                 Bitmap resize = new Bitmap(diffuse, new Size(1024, 1024));
-                                                output = ImageManipulation.MergeNormals(inputFile, resize,
-                                                    canvasImage, normalMaskBitmap, diffuseNormal);
+                                                output = ImageManipulation.MergeNormals(TexLoader.ResolveBitmap(inputFile), resize,
+                                                    canvasImage, normalMaskBitmap, diffuseNormal, modifier);
                                             } else {
-                                                output = ImageManipulation.MergeNormals(inputFile, diffuse,
-                                                    canvasImage, normalMaskBitmap, diffuseNormal);
+                                                output = ImageManipulation.MergeNormals(TexLoader.ResolveBitmap(inputFile), diffuse,
+                                                    canvasImage, normalMaskBitmap, diffuseNormal, modifier);
                                             }
                                         }
                                     } else {
@@ -692,9 +692,9 @@ namespace FFXIVLooseTextureCompiler {
                                                     g.SmoothingMode = SmoothingMode.HighQuality;
                                                     g.DrawImage(layer, 0, 0, bitmap.Width, bitmap.Height);
                                                     g.DrawImage(GetMergedBitmap(inputFile), 0, 0, bitmap.Width, bitmap.Height);
-                                                    output = ImageManipulation.MergeNormals(image, diffuse, canvasImage, null, diffuseNormal);
+                                                    output = ImageManipulation.MergeNormals(image, diffuse, canvasImage, null, diffuseNormal, modifier);
                                                 } else {
-                                                    output = ImageManipulation.MergeNormals(inputFile, diffuse, canvasImage, null, diffuseNormal);
+                                                    output = ImageManipulation.MergeNormals(TexLoader.ResolveBitmap(inputFile), diffuse, canvasImage, null, diffuseNormal,modifier);
                                                 }
                                             }
                                         }
