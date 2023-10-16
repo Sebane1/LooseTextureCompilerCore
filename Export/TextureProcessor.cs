@@ -867,16 +867,16 @@ namespace FFXIVLooseTextureCompiler {
             using (Bitmap bitmap = TexLoader.ResolveBitmap(inputFile)) {
                 if (bitmap != null) {
                     if (!string.IsNullOrEmpty(layeringImage)) {
-                        Bitmap image = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb);
                         Bitmap layer = TexLoader.ResolveBitmap(Path.Combine(_basePath,
                             layeringImage));
+                        Bitmap image = new Bitmap(layer.Width, layer.Height, PixelFormat.Format32bppArgb);
                         Graphics g = Graphics.FromImage(image);
                         g.Clear(Color.Transparent);
                         g.CompositingQuality = CompositingQuality.HighQuality;
                         g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                        g.SmoothingMode = SmoothingMode.HighQuality;
-                        g.DrawImage(layer, 0, 0, bitmap.Width, bitmap.Height);
-                        g.DrawImage(GetMergedBitmap(inputFile), 0, 0, bitmap.Width, bitmap.Height);
+                        g.SmoothingMode = SmoothingMode.None;
+                        g.DrawImage(layer, 0, 0, layer.Width, layer.Height);
+                        g.DrawImage(GetMergedBitmap(inputFile), 0, 0, layer.Width, layer.Height);
                         image.Save(stream, ImageFormat.Png);
                     } else {
                         bitmap.Save(stream, ImageFormat.Png);

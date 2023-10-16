@@ -181,10 +181,12 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             source.LockBits();
             for (int y = 0; y < image.Height; y++)
             {
-                for (int x = 0; x < image.Width; x++)
-                {
+                for (int x = 0; x < image.Width; x++) {
                     Bitmap.Color sourcePixel = source.GetPixel(x, y);
                     Bitmap.Color col = Bitmap.Color.FromArgb(255 - sourcePixel.A, sourcePixel.R, sourcePixel.G, sourcePixel.B);
+                    if (sourcePixel.A == 0) {
+                        object test = new object();
+                    }
                     source.SetPixel(x, y, col);
                 }
             }
