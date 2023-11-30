@@ -6,6 +6,32 @@ using Rectangle = System.Drawing.Rectangle;
 
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
     public class ImageManipulation {
+        public static Bitmap BoostAboveThreshold(Bitmap file, int threshhold) {
+            Bitmap image = new Bitmap(file);
+            LockBitmap source = new LockBitmap(image);
+            source.LockBits();
+            for (int y = 0; y < image.Height; y++) {
+                for (int x = 0; x < image.Width; x++) {
+                    Color sourcePixel = source.GetPixel(x, y);
+                    Color col = Color.FromArgb(sourcePixel.A,
+                        FlattenToThreshold(sourcePixel.R, threshhold),
+                        FlattenToThreshold(sourcePixel.G, threshhold),
+                        FlattenToThreshold(sourcePixel.B, threshhold));
+                    source.SetPixel(x, y, col);
+                }
+            };
+            source.UnlockBits();
+            return image;
+        }
+
+        private static int FlattenToThreshold(float colourValue, float threshhold) {
+            float nextPixel = ((colourValue / 255f) * threshhold) + threshhold;
+            if (nextPixel > 255f) {
+                nextPixel = (nextPixel - 255f) + threshhold;
+            }
+            return (int)nextPixel;
+        }
+
         public static Bitmap SaniitizeArtifacts(Bitmap file) {
             Bitmap image = new Bitmap(file);
             LockBitmap source = new LockBitmap(image);
