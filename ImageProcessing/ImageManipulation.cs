@@ -25,7 +25,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         private static int FlattenToThreshold(float colourValue, float threshhold) {
-            float nextPixel = ((colourValue / 255f) * threshhold) + threshhold;
+            float nextPixel = ((colourValue / 255f) * (255 - threshhold)) + threshhold;
             if (nextPixel > 255f) {
                 nextPixel = (nextPixel - 255f) + threshhold;
             }
