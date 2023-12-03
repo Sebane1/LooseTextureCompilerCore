@@ -1,6 +1,7 @@
 ﻿using FFXIVLooseTextureCompiler.Export;
 using FFXIVLooseTextureCompiler.ImageProcessing;
 using FFXIVLooseTextureCompiler.Racial;
+using LooseTextureCompilerCore.Export;
 
 namespace FFXIVLooseTextureCompiler.PathOrganization {
     public static class UniversalTextureSetCreator {
@@ -39,7 +40,46 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 ConfigureTBSECrossCompatibility(textureSet, race);
             }
         }
+        public static List<string> GetSkinTypeNames(TextureSet textureSet) {
+            textureSet.OmniExportMode = true;
+            textureSet.ChildSets.Clear();
+            int race = RaceInfo.ReverseRaceLookup(textureSet.InternalDiffusePath);
+            if (((textureSet.InternalDiffusePath.Contains("0001_d.tex") &&
+                !textureSet.InternalDiffusePath.Contains("fac"))
+                || (textureSet.InternalDiffusePath.Contains("0101_d.tex")
+                && !textureSet.InternalDiffusePath.Contains("fac")))
+                && !textureSet.InternalDiffusePath.Contains("--c1101b0001_")) {
+                return GetSkinNames(BackupTexturePaths.Gen3SkinTypes);
+            } else if (textureSet.InternalDiffusePath.Contains("fac_b")) {
+                return null;
+            } else if (textureSet.InternalDiffusePath.Contains("fac_")) {
+                return null;
+            } else if (textureSet.InternalDiffusePath.Contains("bibo")) {
+                return GetSkinNames(BackupTexturePaths.BiboSkinTypes);
+            } else if (textureSet.InternalDiffusePath.Contains("eve")) {
+                return GetSkinNames(BackupTexturePaths.Gen3SkinTypes);
+            } else if (textureSet.InternalDiffusePath.Contains("gen3")) {
+                return GetSkinNames(BackupTexturePaths.Gen3SkinTypes);
+            } else if (textureSet.InternalDiffusePath.Contains("chara/human/c1101/obj/body/b0001/texture/v01_c1101b0001_g_d")) {
+                return GetSkinNames(BackupTexturePaths.OtopopSkinTypes);
+            } else if (textureSet.InternalDiffusePath.Contains("--c1101b0001_")) {
+                return GetSkinNames(BackupTexturePaths.OtopopSkinTypes);
+            } else if (textureSet.InternalDiffusePath.Contains("v01_c1101b0001_b")) {
+                return GetSkinNames(BackupTexturePaths.OtopopSkinTypes);
+            } else if (textureSet.InternalDiffusePath.Contains("_b_d")
+                && !textureSet.InternalDiffusePath.Contains("fac")) {
+                return GetSkinNames(BackupTexturePaths.TbseSkinTypes);
+            }
+            return null;
+        }
 
+        private static List<string> GetSkinNames(List<SkinType> skinTypes) {
+            List<string> strings = new List<string>();
+            foreach (SkinType skinType in skinTypes) {
+                strings.Add(skinType.Name);
+            }
+            return strings;
+        }
         private static void ConfigureAsymFaceCrossCompatibility(TextureSet textureSet, int race) {
             TextureSet faceVanilla = new TextureSet();
             ConfigureTextureSet("Vanilla Face [IsChild]", "face_vanilla", race, 0, 0, faceVanilla, textureSet, 1, true);
@@ -95,7 +135,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
 
         private static void ConfigureTextureSet(string name, string prefix, int race, int gender, int body,
             TextureSet destinationTextureSet, TextureSet baseTextureSet, int bodyPart = 0, bool asymFace = false, bool uniqueAuRa = false) {
-            destinationTextureSet.MaterialSetName = name;
+            destinationTextureSet.TextureSetName = name;
             switch (bodyPart) {
                 case 0:
                     destinationTextureSet.InternalDiffusePath = RacePaths.GetBodyTexturePath(0, gender, body, race, 0, uniqueAuRa);
@@ -132,7 +172,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
 
         private static void ConfigureTextureSet(string name, int race, int gender, int body,
            TextureSet destinationTextureSet, TextureSet baseTextureSet) {
-            destinationTextureSet.MaterialSetName = name;
+            destinationTextureSet.TextureSetName = name;
             destinationTextureSet.InternalDiffusePath = RacePaths.GetBodyTexturePath(0, gender, body, 0, race);
             destinationTextureSet.InternalNormalPath = RacePaths.GetBodyTexturePath(1, gender, body, 0, race);
             destinationTextureSet.InternalMultiPath = RacePaths.GetBodyTexturePath(2, gender, body, 0, race);
@@ -150,7 +190,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private static void ConfigureTBSECrossCompatibility(TextureSet textureSet, int race) {
             TextureSet tbseVanilla = new TextureSet();
             ConfigureTextureSet("Vanilla [IsChild]", "tbse_vanilla", race, 0, 0, tbseVanilla, textureSet);
-            tbseVanilla.BackupTexturePaths = new BackupTexturePaths(@"res\textures\tbse\vanilla\");
+            tbseVanilla.BackupTexturePaths = BackupTexturePaths.TbseSkinTypes[textureSet.SkinType].BackupTextures[3];
 
             Directory.CreateDirectory(
                 Path.GetDirectoryName(
@@ -158,26 +198,31 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 AppDomain.CurrentDomain.BaseDirectory,
                 tbseVanilla.BackupTexturePaths.Diffuse)));
 
-            TexLoader.WriteImageToXOR(ImageManipulation.CutInHalf(
-                TexLoader.ResolveBitmap(
+            string vanillaDiffuse =
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                textureSet.BackupTexturePaths.Diffuse))),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                tbseVanilla.BackupTexturePaths.Diffuse));
-
-            TexLoader.WriteImageToXOR(ImageManipulation.CutInHalf(
-                 TexLoader.ResolveBitmap(
+                tbseVanilla.BackupTexturePaths.Diffuse);
+            if (!File.Exists(vanillaDiffuse)) {
+                TexLoader.WriteImageToXOR(ImageManipulation.CutInHalf(
+                    TexLoader.ResolveBitmap(
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                    textureSet.BackupTexturePaths.Diffuse))), vanillaDiffuse);
+            }
+            string vanillaRaen =
                  Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                 textureSet.BackupTexturePaths.DiffuseRaen))),
-                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                 tbseVanilla.BackupTexturePaths.DiffuseRaen));
-
-            TexLoader.WriteImageToXOR(ImageManipulation.CutInHalf(
-                TexLoader.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                textureSet.BackupTexturePaths.Normal))),
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                tbseVanilla.BackupTexturePaths.Normal));
-
+                 tbseVanilla.BackupTexturePaths.DiffuseRaen);
+            if (!File.Exists(vanillaRaen)) {
+                TexLoader.WriteImageToXOR(ImageManipulation.CutInHalf(
+                     TexLoader.ResolveBitmap(
+                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                     textureSet.BackupTexturePaths.DiffuseRaen))), vanillaRaen);
+            }
+            string vanillaNormal = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                tbseVanilla.BackupTexturePaths.Normal);
+            if (!File.Exists(vanillaNormal)) {
+                TexLoader.WriteImageToXOR(ImageManipulation.CutInHalf(
+                    TexLoader.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                    textureSet.BackupTexturePaths.Normal))), vanillaNormal);
+            }
             if (File.Exists(textureSet.Diffuse)) {
                 ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Diffuse)).Save(tbseVanilla.Diffuse);
             }
@@ -198,64 +243,64 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         }
 
         private static void ConfigureLalafellVanillaCrossCompatibility(TextureSet textureSet, int race) {
-            textureSet.BackupTexturePaths = BackupTexturePaths.VanillaLalaPath;
+            textureSet.BackupTexturePaths = BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[2];
 
             TextureSet otopop = new TextureSet();
             ConfigureTextureSet("Otopop [IsChild]", "otopop", race, 1, 7, otopop, textureSet);
-            otopop.BackupTexturePaths = BackupTexturePaths.OtopopLalaPath;
+            otopop.BackupTexturePaths = BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[1];
 
             TextureSet asymLalaFell = new TextureSet();
             ConfigureTextureSet("Asym Lala [IsChild]", "asym_lala", race, 0, 8, asymLalaFell, textureSet);
-            asymLalaFell.BackupTexturePaths = BackupTexturePaths.AsymLalaPath;
+            asymLalaFell.BackupTexturePaths = BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
 
             textureSet.ChildSets.Add(asymLalaFell);
             textureSet.ChildSets.Add(otopop);
         }
 
         private static void ConfigureAsymLalafellCrossCompatibility(TextureSet textureSet, int race) {
-            textureSet.BackupTexturePaths = BackupTexturePaths.AsymLalaPath;
+            textureSet.BackupTexturePaths = BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
 
             TextureSet otopop = new TextureSet();
             ConfigureTextureSet("Otopop [IsChild]", "otopop", race, 0, 7, otopop, textureSet);
-            otopop.BackupTexturePaths = BackupTexturePaths.OtopopLalaPath;
+            otopop.BackupTexturePaths = BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[1];
 
             TextureSet vanilla = new TextureSet();
             ConfigureTextureSet("Vanilla [IsChild]", "vanilla_lala", race, 0, 0, vanilla, textureSet);
-            vanilla.BackupTexturePaths = BackupTexturePaths.VanillaLalaPath;
+            vanilla.BackupTexturePaths = BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
 
             textureSet.ChildSets.Add(vanilla);
             textureSet.ChildSets.Add(otopop);
         }
 
         private static void ConfigureOtopopCrossCompatibility(TextureSet textureSet, int race) {
-            textureSet.BackupTexturePaths = BackupTexturePaths.OtopopLalaPath;
+            textureSet.BackupTexturePaths = BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[1];
 
             TextureSet vanilla = new TextureSet();
             ConfigureTextureSet("Vanilla [IsChild]", "vanilla_lala", race, 0, 0, vanilla, textureSet);
-            vanilla.BackupTexturePaths = BackupTexturePaths.VanillaLalaPath;
+            vanilla.BackupTexturePaths = BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
 
             TextureSet asymLalafell = new TextureSet();
             ConfigureTextureSet("Asym Lala [IsChild]", "asym_lala", race, 0, 8, asymLalafell, textureSet);
-            asymLalafell.BackupTexturePaths = BackupTexturePaths.AsymLalaPath;
+            asymLalafell.BackupTexturePaths = BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
 
             textureSet.ChildSets.Add(asymLalafell);
             textureSet.ChildSets.Add(vanilla);
         }
 
         private static void ConfigureGen3FemaleCrossCompatibility(TextureSet textureSet, int race) {
-            textureSet.BackupTexturePaths = BackupTexturePaths.Gen3Path;
+            textureSet.BackupTexturePaths = BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[1];
 
             TextureSet vanilla = new TextureSet();
             ConfigureTextureSet("Vanilla [IsChild]", "gen2", race, 1, 0, vanilla, textureSet);
-            vanilla.BackupTexturePaths = BackupTexturePaths.Gen3Gen2Path;
+            vanilla.BackupTexturePaths = BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
 
             TextureSet bibo = new TextureSet();
             ConfigureTextureSet("Bibo+ [IsChild]", "bibo", race, 1, 1, bibo, textureSet);
-            bibo.BackupTexturePaths = BackupTexturePaths.Gen3BiboPath;
+            bibo.BackupTexturePaths = BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[0];
 
             TextureSet eve = new TextureSet();
             ConfigureTextureSet("Eve [IsChild]", race, 1, 2, eve, textureSet);
-            eve.BackupTexturePaths = BackupTexturePaths.Gen3Path;
+            eve.BackupTexturePaths = BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
 
             textureSet.ChildSets.Add(vanilla);
             textureSet.ChildSets.Add(bibo);
@@ -263,19 +308,19 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         }
 
         private static void ConfigureEveFemaleCrossCompatibility(TextureSet textureSet, int race) {
-            textureSet.BackupTexturePaths = BackupTexturePaths.Gen3Path;
+            textureSet.BackupTexturePaths = BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
 
             TextureSet vanilla = new TextureSet();
             ConfigureTextureSet("Vanilla [IsChild]", "gen2", race, 1, 0, vanilla, textureSet);
-            vanilla.BackupTexturePaths = BackupTexturePaths.Gen3Gen2Path;
+            vanilla.BackupTexturePaths = BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
 
             TextureSet bibo = new TextureSet();
             ConfigureTextureSet("Bibo+ [IsChild]", "bibo", race, 1, 1, bibo, textureSet);
-            bibo.BackupTexturePaths = BackupTexturePaths.Gen3BiboPath;
+            bibo.BackupTexturePaths = BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[0];
 
             TextureSet gen3 = new TextureSet();
             ConfigureTextureSet("Tight & Firm [IsChild]", race, 1, 3, gen3, textureSet);
-            gen3.BackupTexturePaths = BackupTexturePaths.Gen3Path;
+            gen3.BackupTexturePaths = BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
 
             textureSet.ChildSets.Add(vanilla);
             textureSet.ChildSets.Add(bibo);
@@ -283,19 +328,19 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         }
 
         private static void ConfigureBiboFemaleCrossCompatibility(TextureSet textureSet, int race) {
-            textureSet.BackupTexturePaths = BackupTexturePaths.BiboPath;
+            textureSet.BackupTexturePaths = BackupTexturePaths.BiboSkinTypes[textureSet.SkinType].BackupTextures[0];
 
             TextureSet vanilla = new TextureSet();
             ConfigureTextureSet("Vanilla [IsChild]", "gen2", race, 1, 0, vanilla, textureSet);
-            vanilla.BackupTexturePaths = BackupTexturePaths.BiboGen2Path;
+            vanilla.BackupTexturePaths = BackupTexturePaths.BiboSkinTypes[textureSet.SkinType].BackupTextures[2];
 
             TextureSet eve = new TextureSet();
             ConfigureTextureSet("Eve [IsChild]", "gen3", race, 1, 2, eve, textureSet);
-            eve.BackupTexturePaths = BackupTexturePaths.BiboGen3Path;
+            eve.BackupTexturePaths = BackupTexturePaths.BiboSkinTypes[textureSet.SkinType].BackupTextures[2];
 
             TextureSet gen3 = new TextureSet();
             ConfigureTextureSet("Tight & Firm [IsChild]", "gen3", race, 1, 3, gen3, textureSet);
-            gen3.BackupTexturePaths = BackupTexturePaths.BiboGen3Path;
+            gen3.BackupTexturePaths = BackupTexturePaths.BiboSkinTypes[textureSet.SkinType].BackupTextures[0];
 
             textureSet.ChildSets.Add(vanilla);
             textureSet.ChildSets.Add(eve);
@@ -303,19 +348,19 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         }
 
         private static void ConfigureVanillaFemaleCrossCompatibility(TextureSet textureSet, int race) {
-            textureSet.BackupTexturePaths = BackupTexturePaths.Gen3Gen2Path;
+            textureSet.BackupTexturePaths = BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
 
             TextureSet bibo = new TextureSet();
             ConfigureTextureSet("Bibo [IsChild]", "bibo", race, 1, 1, bibo, textureSet);
-            bibo.BackupTexturePaths = BackupTexturePaths.Gen3BiboPath;
+            bibo.BackupTexturePaths = BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[0];
 
             TextureSet eve = new TextureSet();
             ConfigureTextureSet("Eve[IsChild]", "gen3", race, 1, 2, eve, textureSet);
-            eve.BackupTexturePaths = BackupTexturePaths.Gen3Path;
+            eve.BackupTexturePaths = BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[1];
 
             TextureSet gen3 = new TextureSet();
             ConfigureTextureSet("Tight & Firm [IsChild]", "gen3", race, 1, 3, gen3, textureSet);
-            gen3.BackupTexturePaths = BackupTexturePaths.Gen3Path;
+            gen3.BackupTexturePaths = BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[1];
 
             textureSet.ChildSets.Add(bibo);
             textureSet.ChildSets.Add(eve);

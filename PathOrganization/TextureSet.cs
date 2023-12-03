@@ -19,6 +19,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private bool _ignoreMultiGeneration;
         private bool _invertNormalGeneration;
         private bool _omniExportMode;
+
+        private int _skinType = 0;
         private BackupTexturePaths _backupTexturePaths;
         public bool IsChildSet {
             get {
@@ -105,6 +107,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public BackupTexturePaths BackupTexturePaths { get => _backupTexturePaths; set => _backupTexturePaths = value; }
         public string NormalCorrection { get => _normalCorrection; set => _normalCorrection = value; }
         public bool InvertNormalGeneration { get => _invertNormalGeneration; set => _invertNormalGeneration = value; }
+        public int SkinType { get => _skinType; set => _skinType = value; }
 
         public override string ToString() {
             return _textureSetName + (GroupName != _textureSetName ? $" | Group({_groupName})" : "");
