@@ -41,8 +41,6 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             }
         }
         public static List<string> GetSkinTypeNames(TextureSet textureSet) {
-            textureSet.OmniExportMode = true;
-            textureSet.ChildSets.Clear();
             int race = RaceInfo.ReverseRaceLookup(textureSet.InternalDiffusePath);
             if (((textureSet.InternalDiffusePath.Contains("0001_d.tex") &&
                 !textureSet.InternalDiffusePath.Contains("fac"))
