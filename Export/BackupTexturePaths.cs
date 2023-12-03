@@ -22,21 +22,33 @@ namespace FFXIVLooseTextureCompiler.Export {
             }
         }
         private static List<SkinType> _biboSkinTypes = new List<SkinType>() {
-            new SkinType("Default",new BackupTexturePaths(@"res\textures\bibo\bibo\"),
+            new SkinType("Bibo Default",new BackupTexturePaths(@"res\textures\bibo\bibo\"),
                          new BackupTexturePaths(@"res\textures\bibo\gen3\"),
                          new BackupTexturePaths(@"res\textures\bibo\gen2\")),
-            new SkinType("Smooth",new BackupTexturePaths(@"res\textures\biboSmooth\bibo\"),
+            new SkinType("Bibo Smooth",new BackupTexturePaths(@"res\textures\biboSmooth\bibo\"),
                          new BackupTexturePaths(@"res\textures\biboSmooth\gen3\"),
                          new BackupTexturePaths(@"res\textures\biboSmooth\gen2\")),
-            new SkinType("Soft Finger",new BackupTexturePaths(@"res\textures\biboSoftFinger\bibo\"),
+            new SkinType("Bibo Soft Finger",new BackupTexturePaths(@"res\textures\biboSoftFinger\bibo\"),
                          new BackupTexturePaths(@"res\textures\biboSoftFinger\gen3\"),
-                         new BackupTexturePaths(@"res\textures\biboSoftFinger\gen2\"))
+                         new BackupTexturePaths(@"res\textures\biboSoftFinger\gen2\")),
+            new SkinType("Gen3 Default",new BackupTexturePaths(@"res\textures\gen3\bibo\"),
+                         new BackupTexturePaths(@"res\textures\gen3\gen3\"),
+                         new BackupTexturePaths(@"res\textures\gen3\gen2\")),
         };
 
         private static List<SkinType> _gen3SkinTypes = new List<SkinType>() {
-            new SkinType("Default",new BackupTexturePaths(@"res\textures\gen3\bibo\"),
+            new SkinType("Gen3 Default",new BackupTexturePaths(@"res\textures\gen3\bibo\"),
                          new BackupTexturePaths(@"res\textures\gen3\gen3\"),
                          new BackupTexturePaths(@"res\textures\gen3\gen2\")),
+            new SkinType("Bibo Default",new BackupTexturePaths(@"res\textures\bibo\bibo\"),
+                         new BackupTexturePaths(@"res\textures\bibo\gen3\"),
+                         new BackupTexturePaths(@"res\textures\bibo\gen2\")),
+            new SkinType("Bibo Smooth",new BackupTexturePaths(@"res\textures\biboSmooth\bibo\"),
+                         new BackupTexturePaths(@"res\textures\biboSmooth\gen3\"),
+                         new BackupTexturePaths(@"res\textures\biboSmooth\gen2\")),
+            new SkinType("Bibo Soft Finger",new BackupTexturePaths(@"res\textures\biboSoftFinger\bibo\"),
+                         new BackupTexturePaths(@"res\textures\biboSoftFinger\gen3\"),
+                         new BackupTexturePaths(@"res\textures\biboSoftFinger\gen2\")),
         };
 
         private static List<SkinType> _tbseSkinTypes = new List<SkinType>() {
