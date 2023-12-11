@@ -298,7 +298,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
 
             TextureSet eve = new TextureSet();
             ConfigureTextureSet("Eve [IsChild]", race, 1, 2, eve, textureSet);
-            eve.BackupTexturePaths = BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
+            eve.BackupTexturePaths = BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[1];
 
             textureSet.ChildSets.Add(vanilla);
             textureSet.ChildSets.Add(bibo);
@@ -318,7 +318,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
 
             TextureSet gen3 = new TextureSet();
             ConfigureTextureSet("Tight & Firm [IsChild]", race, 1, 3, gen3, textureSet);
-            gen3.BackupTexturePaths = BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
+            gen3.BackupTexturePaths = BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[1];
 
             textureSet.ChildSets.Add(vanilla);
             textureSet.ChildSets.Add(bibo);
@@ -334,11 +334,11 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
 
             TextureSet eve = new TextureSet();
             ConfigureTextureSet("Eve [IsChild]", "gen3", race, 1, 2, eve, textureSet);
-            eve.BackupTexturePaths = BackupTexturePaths.BiboSkinTypes[textureSet.SkinType].BackupTextures[2];
+            eve.BackupTexturePaths = BackupTexturePaths.BiboSkinTypes[textureSet.SkinType].BackupTextures[1];
 
             TextureSet gen3 = new TextureSet();
             ConfigureTextureSet("Tight & Firm [IsChild]", "gen3", race, 1, 3, gen3, textureSet);
-            gen3.BackupTexturePaths = BackupTexturePaths.BiboSkinTypes[textureSet.SkinType].BackupTextures[0];
+            gen3.BackupTexturePaths = BackupTexturePaths.BiboSkinTypes[textureSet.SkinType].BackupTextures[1];
 
             textureSet.ChildSets.Add(vanilla);
             textureSet.ChildSets.Add(eve);
