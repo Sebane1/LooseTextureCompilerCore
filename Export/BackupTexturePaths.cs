@@ -34,6 +34,9 @@ namespace FFXIVLooseTextureCompiler.Export {
             new SkinType("Gen3 Default",new BackupTexturePaths(@"res\textures\gen3\bibo\"),
                          new BackupTexturePaths(@"res\textures\gen3\gen3\"),
                          new BackupTexturePaths(@"res\textures\gen3\gen2\")),
+            new SkinType("Pythia",new BackupTexturePaths(@"res\textures\pythia\bibo\"),
+                         new BackupTexturePaths(@"res\textures\pythia\gen3\"),
+                         new BackupTexturePaths(@"res\textures\pythia\gen2\")),
         };
 
         private static List<SkinType> _gen3SkinTypes = new List<SkinType>() {
@@ -49,6 +52,9 @@ namespace FFXIVLooseTextureCompiler.Export {
             new SkinType("Bibo Soft Finger",new BackupTexturePaths(@"res\textures\biboSoftFinger\bibo\"),
                          new BackupTexturePaths(@"res\textures\biboSoftFinger\gen3\"),
                          new BackupTexturePaths(@"res\textures\biboSoftFinger\gen2\")),
+            new SkinType("Pythia",new BackupTexturePaths(@"res\textures\pythia\bibo\"),
+                         new BackupTexturePaths(@"res\textures\pythia\gen3\"),
+                         new BackupTexturePaths(@"res\textures\pythia\gen2\")),
         };
 
         private static List<SkinType> _tbseSkinTypes = new List<SkinType>() {
