@@ -72,15 +72,17 @@ namespace FFXIVLooseTextureCompiler.Export {
 
         public static void AddBackupPaths(int gender, int race, TextureSet textureSet) {
             if (gender != 0) {
-                if (textureSet.InternalDiffusePath.Contains("bibo")) {
-                    textureSet.BackupTexturePaths = BiboSkinTypes[textureSet.SkinType].BackupTextures[0];
-                } else if (textureSet.InternalDiffusePath.Contains("gen3") || textureSet.InternalDiffusePath.Contains("eve")) {
-                    textureSet.BackupTexturePaths = Gen3SkinTypes[textureSet.SkinType].BackupTextures[1];
-                } else if (textureSet.InternalDiffusePath.Contains("v01_c1101b0001_g")) {
-                    textureSet.BackupTexturePaths = OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
-                } else {
-                    textureSet.BackupTexturePaths = race == 5 ?
-                     OtopopSkinTypes[textureSet.SkinType].BackupTextures[2] : Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
+                if (textureSet.SkinType > -1) {
+                    if (textureSet.InternalDiffusePath.Contains("bibo")) {
+                        textureSet.BackupTexturePaths = BiboSkinTypes[textureSet.SkinType].BackupTextures[0];
+                    } else if (textureSet.InternalDiffusePath.Contains("gen3") || textureSet.InternalDiffusePath.Contains("eve")) {
+                        textureSet.BackupTexturePaths = Gen3SkinTypes[textureSet.SkinType].BackupTextures[1];
+                    } else if (textureSet.InternalDiffusePath.Contains("v01_c1101b0001_g")) {
+                        textureSet.BackupTexturePaths = OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
+                    } else {
+                        textureSet.BackupTexturePaths = race == 5 ?
+                         OtopopSkinTypes[textureSet.SkinType].BackupTextures[2] : Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
+                    }
                 }
             } else {
                 if (race == 5) {
@@ -103,28 +105,28 @@ namespace FFXIVLooseTextureCompiler.Export {
                 }
             }
         }
-        public static BackupTexturePaths AsymLalaPath (int skinType) {
-                if (!File.Exists(_otopopSkinTypes[skinType].BackupTextures[1].Diffuse)) {
-                    Directory.CreateDirectory(
-                    Path.GetDirectoryName(
-                    Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    _otopopSkinTypes[skinType].BackupTextures[1].Diffuse)));
+        public static BackupTexturePaths AsymLalaPath(int skinType) {
+            if (!File.Exists(_otopopSkinTypes[skinType].BackupTextures[1].Diffuse)) {
+                Directory.CreateDirectory(
+                Path.GetDirectoryName(
+                Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                _otopopSkinTypes[skinType].BackupTextures[1].Diffuse)));
 
-                    TexLoader.WriteImageToXOR(ImageManipulation.MirrorAndDuplicate(
-                    TexLoader.ResolveBitmap(
-                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                        _otopopSkinTypes[skinType].BackupTextures[2].Diffuse))),
-                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                        _otopopSkinTypes[skinType].BackupTextures[1].Diffuse));
+                TexLoader.WriteImageToXOR(ImageManipulation.MirrorAndDuplicate(
+                TexLoader.ResolveBitmap(
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                    _otopopSkinTypes[skinType].BackupTextures[2].Diffuse))),
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                    _otopopSkinTypes[skinType].BackupTextures[1].Diffuse));
 
-                    TexLoader.WriteImageToXOR(ImageManipulation.MirrorAndDuplicate(
-                        TexLoader.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                        _otopopSkinTypes[skinType].BackupTextures[2].Normal))),
-                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                        _otopopSkinTypes[skinType].BackupTextures[1].Normal));
-                }
-                return _otopopSkinTypes[skinType].BackupTextures[1];
+                TexLoader.WriteImageToXOR(ImageManipulation.MirrorAndDuplicate(
+                    TexLoader.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                    _otopopSkinTypes[skinType].BackupTextures[2].Normal))),
+                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                    _otopopSkinTypes[skinType].BackupTextures[1].Normal));
+            }
+            return _otopopSkinTypes[skinType].BackupTextures[1];
         }
 
         internal static List<SkinType> BiboSkinTypes { get => _biboSkinTypes; set => _biboSkinTypes = value; }
