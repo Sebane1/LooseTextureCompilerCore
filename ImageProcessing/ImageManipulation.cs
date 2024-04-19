@@ -458,7 +458,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public static Bitmap ConvertToDawntrailSkinMulti(Bitmap image) {
             Bitmap inverted = ImageManipulation.InvertImage(image);
-            return MergeGrayscalesToRGBA(ExtractRed(image), ExtractBlue(image), inverted, image);
+            Bitmap alpha = new Bitmap(image.Width, image.Height);
+            Graphics.FromImage(alpha).Clear(Color.White);
+            return MergeGrayscalesToRGBA(ExtractRed(image), ExtractBlue(image), inverted, alpha);
         }
 
         public static void ConvertToAsymEyeMaps(string filename1, string filename2, string output) {
@@ -498,15 +500,23 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             catchLight.Save(ReplaceExtension(AddSuffix(filename, "_eye_catchlight"), ".png"), ImageFormat.Png);
             normal.Save(ReplaceExtension(AddSuffix(filename, "_eye_normal"), ".png"), ImageFormat.Png);
         }
-        public static void ConvertToEyeMapsDawntrail(string filename, string baseDirectory = null) {
-            Bitmap image = TexLoader.ResolveBitmap(filename);
-            Bitmap eyeDiffuse = BitmapToEyeDiffuseDawntrail(image, baseDirectory);
-            Bitmap eyeMulti = BitmapToEyeMultiDawntrail(image, baseDirectory);
-            Bitmap normal = BitmapToEyeNormalDawntrail(eyeMulti, baseDirectory);
-
-            eyeDiffuse.Save(ReplaceExtension(AddSuffix(filename, "_eye_diffuse"), ".png"), ImageFormat.Png);
-            eyeMulti.Save(ReplaceExtension(AddSuffix(filename, "_eye_multi"), ".png"), ImageFormat.Png);
-            normal.Save(ReplaceExtension(AddSuffix(filename, "_eye_normal"), ".png"), ImageFormat.Png);
+        public static string[] ConvertToEyeMapsDawntrail(string filename, string baseDirectory = null,
+            bool ignoreIfExists = false, bool wasEyeMulti = false) {
+            string[] strings = new string[] {
+                ReplaceExtension(AddSuffix(filename, "_eye_diffuse"), ".png"),
+                ReplaceExtension(AddSuffix(filename, "_eye_normal"), ".png"),
+                ReplaceExtension(AddSuffix(filename, "_eye_multi"), ".png")
+            };
+            if (!ignoreIfExists || !File.Exists(strings[0])) {
+                Bitmap image = !wasEyeMulti ? TexLoader.ResolveBitmap(filename) : ExtractRed(TexLoader.ResolveBitmap(filename));
+                Bitmap eyeDiffuse = BitmapToEyeDiffuseDawntrail(image, baseDirectory);
+                Bitmap eyeMulti = BitmapToEyeMultiDawntrail(image, baseDirectory);
+                Bitmap normal = BitmapToEyeNormalDawntrail(eyeMulti, baseDirectory);
+                eyeDiffuse.Save(strings[0], ImageFormat.Png);
+                normal.Save(strings[1], ImageFormat.Png);
+                eyeMulti.Save(strings[2], ImageFormat.Png);
+            }
+            return strings;
         }
 
         public static void ConvertOldEyeMapToDawntrailEyeMaps(string filename, string baseDirectory = null) {

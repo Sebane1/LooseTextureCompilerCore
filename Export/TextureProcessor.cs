@@ -360,7 +360,7 @@ namespace FFXIVLooseTextureCompiler {
         }
 
         public string RedirectToDisk(string path) {
-            return @"do_not_edit\" + path.Replace("/", @"\");
+            return @"do_not_edit\textures\" + Path.GetFileName(path.Replace("/", @"\"));
         }
         public void AddDetailedGroupOption(string path, string diskPath, string name, string alternateName,
             TextureSet textureSet, List<TextureSet> textureSets, Group group, Option inputOption, out Option outputOption) {
@@ -618,16 +618,21 @@ namespace FFXIVLooseTextureCompiler {
                         if (stream.Length > 0) {
                             PenumbraTextureImporter.PngToTex(stream, out data);
                             stream.Position = 0;
+                            Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
+                            while (File.Exists(outputFile) && TexLoader.IsFileLocked(outputFile)) {
+                                Thread.Sleep(500);
+                            }
+                            File.WriteAllBytesAsync(outputFile.Replace(".tex", ".png"), stream.ToArray());
                         }
                     }
                 }
-                if (data.Length > 0) {
-                    Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
-                    while (File.Exists(outputFile) && TexLoader.IsFileLocked(outputFile)) {
-                        Thread.Sleep(500);
-                    }
-                    File.WriteAllBytes(outputFile, data);
-                }
+                //if (data.Length > 0) {
+                //    Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
+                //    while (File.Exists(outputFile) && TexLoader.IsFileLocked(outputFile)) {
+                //        Thread.Sleep(500);
+                //    }
+                //    File.WriteAllBytesAsync(outputFile, data);
+                //}
                 if (OnProgressChange != null) {
                     OnProgressChange.Invoke(this, EventArgs.Empty);
                 }
@@ -694,7 +699,7 @@ namespace FFXIVLooseTextureCompiler {
                                                     g.DrawImage(GetMergedBitmap(inputFile), 0, 0, bitmap.Width, bitmap.Height);
                                                     output = ImageManipulation.MergeNormals(image, diffuse, canvasImage, null, diffuseNormal, modifier);
                                                 } else {
-                                                    output = ImageManipulation.MergeNormals(TexLoader.ResolveBitmap(inputFile), diffuse, canvasImage, null, diffuseNormal,modifier);
+                                                    output = ImageManipulation.MergeNormals(TexLoader.ResolveBitmap(inputFile), diffuse, canvasImage, null, diffuseNormal, modifier);
                                                 }
                                             }
                                         }
@@ -738,13 +743,13 @@ namespace FFXIVLooseTextureCompiler {
                             }
                             Bitmap generatedMulti = exportType != ExportType.MultiTbse
                             ? (exportType == ExportType.MultiFace || exportType == ExportType.MultiFaceAsym) ?
-                            ImageManipulation.GenerateFaceMulti(image, exportType == ExportType.MultiFaceAsym) :
-                            ImageManipulation.GenerateSkinMulti(image)
-                            : MultiplyFilter.MultiplyImage(Brightness.BrightenImage(Grayscale.MakeGrayscale(image)), 255,
-                            (byte)0, 0);
-                            Bitmap multi = !string.IsNullOrEmpty(modifierMap)
-                                ? AtramentumLuminisGlow.CalculateMulti(generatedMulti, TexLoader.ResolveBitmap(modifierMap))
-                                : generatedMulti;
+                            ImageManipulation.ConvertToDawntrailSkinMulti(image) :
+                            ImageManipulation.ConvertToDawntrailSkinMulti(image)
+                            : ImageManipulation.ConvertToDawntrailSkinMulti(image);
+                            //Bitmap multi = !string.IsNullOrEmpty(modifierMap)
+                            //    ? AtramentumLuminisGlow.CalculateMulti(generatedMulti, TexLoader.ResolveBitmap(modifierMap))
+                            //    : generatedMulti;
+                            Bitmap multi = generatedMulti;
                             multi.Save(stream, ImageFormat.Png);
                             _multiCache.Add(inputFile, multi);
                         }

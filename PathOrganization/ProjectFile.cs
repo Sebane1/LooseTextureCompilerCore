@@ -6,6 +6,8 @@
         public string Website { get; set; }
         public string Version { get; set; }
 
+        public int ProjectVersion { get; set; }
+
         public Dictionary<string, int> GroupOptionTypes { get; set; }
         public bool BakeMissingNormals { get; set; }
         public bool GenerateMulti { get; set; }
