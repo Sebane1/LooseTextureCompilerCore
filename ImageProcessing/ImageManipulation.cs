@@ -260,7 +260,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             graphics.DrawImage(new Bitmap(newEye), 0, 0, image.Width, image.Height);
             graphics.DrawImage(new Bitmap(template), 0, 0, image.Width, image.Height);
 
-            return MergeGrayscalesToARGB(canvas, new Bitmap(new Bitmap(gloss), image.Width, image.Height), white, new Bitmap(white));
+            return MergeGrayscalesToRGBA(canvas, new Bitmap(new Bitmap(gloss), image.Width, image.Height), white, new Bitmap(white));
         }
 
         public static Bitmap BitmapToEyeMultiDawntrail(Bitmap image, string baseDirectory = null) {
@@ -282,7 +282,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 (float)enforcedSize * 0.4096f, (float)enforcedSize * 0.4096f);
             graphics.DrawImage(bitmapTemplate, 0, 0, enforcedSize, enforcedSize);
 
-            return MergeGrayscalesToARGB(ImageManipulation.InvertImage(white), new Bitmap(new Bitmap(canvas), enforcedSize, enforcedSize),
+            return MergeGrayscalesToRGBA(ImageManipulation.InvertImage(white), new Bitmap(new Bitmap(canvas), enforcedSize, enforcedSize),
                 ImageManipulation.InvertImage(ExtractAlpha(new Bitmap(bitmapTemplate, enforcedSize, enforcedSize))), new Bitmap(white));
         }
 
@@ -323,7 +323,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return image;
         }
 
-        public static Bitmap MergeGrayscalesToARGB(Bitmap red, Bitmap green, Bitmap blue, Bitmap alpha) {
+        public static Bitmap MergeGrayscalesToRGBA(Bitmap red, Bitmap green, Bitmap blue, Bitmap alpha) {
             Bitmap image = new Bitmap(red);
             LockBitmap destination = new LockBitmap(image);
             LockBitmap redBits = new LockBitmap(red);
@@ -454,6 +454,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Graphics graphics = Graphics.FromImage(normal);
             graphics.DrawImage(new Bitmap(new Bitmap(normalTemplate), file.Width, file.Height), 0, 0);
             return normal;
+        }
+
+        public static Bitmap ConvertToDawntrailSkinMulti(Bitmap image) {
+            Bitmap inverted = ImageManipulation.InvertImage(image);
+            return MergeGrayscalesToRGBA(ExtractRed(image), ExtractBlue(image), inverted, image);
         }
 
         public static void ConvertToAsymEyeMaps(string filename1, string filename2, string output) {
