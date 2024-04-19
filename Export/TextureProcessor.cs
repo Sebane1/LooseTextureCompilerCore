@@ -646,9 +646,9 @@ namespace FFXIVLooseTextureCompiler {
                     Graphics g = Graphics.FromImage(underlay);
                     g.Clear(Color.FromArgb(255, 160, 113, 94));
                     if (!string.IsNullOrEmpty(diffuseNormal)) {
-                        g.CompositingQuality = CompositingQuality.HighQuality;
-                        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                        g.SmoothingMode = SmoothingMode.HighQuality;
+                        //g.CompositingQuality = CompositingQuality.HighQuality;
+                        //g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                        //g.SmoothingMode = SmoothingMode.HighQuality;
                         g.DrawImage(TexLoader.ResolveBitmap(diffuseNormal), 0, 0, bitmap.Width, bitmap.Height);
                     }
                     AtramentumLuminisGlow.TransplantData(underlay, bitmap).Save(stream, ImageFormat.Png);
@@ -687,9 +687,9 @@ namespace FFXIVLooseTextureCompiler {
                                                         layeringImage));
                                                     Graphics g = Graphics.FromImage(image);
                                                     g.Clear(Color.Transparent);
-                                                    g.CompositingQuality = CompositingQuality.HighQuality;
-                                                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                                                    g.SmoothingMode = SmoothingMode.HighQuality;
+                                                    //g.CompositingQuality = CompositingQuality.HighQuality;
+                                                    //g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                                                    //g.SmoothingMode = SmoothingMode.HighQuality;
                                                     g.DrawImage(layer, 0, 0, bitmap.Width, bitmap.Height);
                                                     g.DrawImage(GetMergedBitmap(inputFile), 0, 0, bitmap.Width, bitmap.Height);
                                                     output = ImageManipulation.MergeNormals(image, diffuse, canvasImage, null, diffuseNormal, modifier);
@@ -728,9 +728,9 @@ namespace FFXIVLooseTextureCompiler {
                                     layeringImage));
                                 Graphics g = Graphics.FromImage(image);
                                 g.Clear(Color.Transparent);
-                                g.CompositingQuality = CompositingQuality.HighQuality;
-                                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                                g.SmoothingMode = SmoothingMode.HighQuality;
+                                //g.CompositingQuality = CompositingQuality.HighQuality;
+                                //g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                                //g.SmoothingMode = SmoothingMode.HighQuality;
                                 g.DrawImage(layer, 0, 0, bitmap.Width, bitmap.Height);
                                 g.DrawImage(GetMergedBitmap(inputFile), 0, 0, bitmap.Width, bitmap.Height);
                             } else {
@@ -763,9 +763,9 @@ namespace FFXIVLooseTextureCompiler {
                         using (Bitmap target = new Bitmap(bitmap.Size.Width, bitmap.Size.Height, PixelFormat.Format32bppArgb)) {
                             Graphics g = Graphics.FromImage(target);
                             g.Clear(Color.Transparent);
-                            g.CompositingQuality = CompositingQuality.HighQuality;
-                            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                            g.SmoothingMode = SmoothingMode.HighQuality;
+                            //g.CompositingQuality = CompositingQuality.HighQuality;
+                            //g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                            //g.SmoothingMode = SmoothingMode.HighQuality;
                             g.DrawImage(bitmap, 0, 0, bitmap.Width, bitmap.Height);
                             if (File.Exists(modifierMap)) {
                                 using (Bitmap normalMaskBitmap = TexLoader.ResolveBitmap(modifierMap)) {
@@ -843,9 +843,9 @@ namespace FFXIVLooseTextureCompiler {
                                     layeringImage));
                                 Graphics g = Graphics.FromImage(image);
                                 g.Clear(Color.Transparent);
-                                g.CompositingQuality = CompositingQuality.HighQuality;
-                                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                                g.SmoothingMode = SmoothingMode.HighQuality;
+                                //g.CompositingQuality = CompositingQuality.HighQuality;
+                                //g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                                //g.SmoothingMode = SmoothingMode.HighQuality;
                                 g.DrawImage(layer, 0, 0, bitmap.Width, bitmap.Height);
                                 g.DrawImage(GetMergedBitmap(inputFile), 0, 0, bitmap.Width, bitmap.Height);
                                 Bitmap glowBitmap = AtramentumLuminisGlow.CalculateDiffuse(image,
@@ -872,9 +872,9 @@ namespace FFXIVLooseTextureCompiler {
                         Bitmap image = new Bitmap(layer.Width, layer.Height, PixelFormat.Format32bppArgb);
                         Graphics g = Graphics.FromImage(image);
                         g.Clear(Color.Transparent);
-                        g.CompositingQuality = CompositingQuality.HighQuality;
-                        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                        g.SmoothingMode = SmoothingMode.None;
+                        //g.CompositingQuality = CompositingQuality.HighQuality;
+                        //g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                        //g.SmoothingMode = SmoothingMode.None;
                         g.DrawImage(layer, 0, 0, layer.Width, layer.Height);
                         g.DrawImage(GetMergedBitmap(inputFile), 0, 0, layer.Width, layer.Height);
                         image.Save(stream, ImageFormat.Png);

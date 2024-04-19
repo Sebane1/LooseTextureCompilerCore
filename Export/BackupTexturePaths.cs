@@ -22,50 +22,62 @@ namespace FFXIVLooseTextureCompiler.Export {
             }
         }
         private static List<SkinType> _biboSkinTypes = new List<SkinType>() {
-            new SkinType("Bibo Default",new BackupTexturePaths(@"res\textures\bibo\bibo\"),
+            new SkinType("Bibo Default",
+                         new BackupTexturePaths(@"res\textures\bibo\bibo\"),
                          new BackupTexturePaths(@"res\textures\bibo\gen3\"),
                          new BackupTexturePaths(@"res\textures\bibo\gen2\")),
-            new SkinType("Bibo Smooth",new BackupTexturePaths(@"res\textures\biboSmooth\bibo\"),
+            new SkinType("Bibo Smooth",
+                         new BackupTexturePaths(@"res\textures\biboSmooth\bibo\"),
                          new BackupTexturePaths(@"res\textures\biboSmooth\gen3\"),
                          new BackupTexturePaths(@"res\textures\biboSmooth\gen2\")),
-            new SkinType("Bibo Soft Finger",new BackupTexturePaths(@"res\textures\biboSoftFinger\bibo\"),
+            new SkinType("Bibo Soft Finger",
+                         new BackupTexturePaths(@"res\textures\biboSoftFinger\bibo\"),
                          new BackupTexturePaths(@"res\textures\biboSoftFinger\gen3\"),
                          new BackupTexturePaths(@"res\textures\biboSoftFinger\gen2\")),
-            new SkinType("Gen3 Default",new BackupTexturePaths(@"res\textures\gen3\bibo\"),
+            new SkinType("Gen3 Default",
+                         new BackupTexturePaths(@"res\textures\gen3\bibo\"),
                          new BackupTexturePaths(@"res\textures\gen3\gen3\"),
                          new BackupTexturePaths(@"res\textures\gen3\gen2\")),
-            new SkinType("Pythia",new BackupTexturePaths(@"res\textures\pythia\bibo\"),
+            new SkinType("Pythia",
+                         new BackupTexturePaths(@"res\textures\pythia\bibo\"),
                          new BackupTexturePaths(@"res\textures\pythia\gen3\"),
                          new BackupTexturePaths(@"res\textures\pythia\gen2\")),
         };
 
         private static List<SkinType> _gen3SkinTypes = new List<SkinType>() {
-            new SkinType("Gen3 Default",new BackupTexturePaths(@"res\textures\gen3\bibo\"),
+            new SkinType("Gen3 Default",
+                         new BackupTexturePaths(@"res\textures\gen3\bibo\"),
                          new BackupTexturePaths(@"res\textures\gen3\gen3\"),
                          new BackupTexturePaths(@"res\textures\gen3\gen2\")),
-            new SkinType("Bibo Default",new BackupTexturePaths(@"res\textures\bibo\bibo\"),
+            new SkinType("Bibo Default",
+                         new BackupTexturePaths(@"res\textures\bibo\bibo\"),
                          new BackupTexturePaths(@"res\textures\bibo\gen3\"),
                          new BackupTexturePaths(@"res\textures\bibo\gen2\")),
-            new SkinType("Bibo Smooth",new BackupTexturePaths(@"res\textures\biboSmooth\bibo\"),
+            new SkinType("Bibo Smooth",
+                         new BackupTexturePaths(@"res\textures\biboSmooth\bibo\"),
                          new BackupTexturePaths(@"res\textures\biboSmooth\gen3\"),
                          new BackupTexturePaths(@"res\textures\biboSmooth\gen2\")),
-            new SkinType("Bibo Soft Finger",new BackupTexturePaths(@"res\textures\biboSoftFinger\bibo\"),
+            new SkinType("Bibo Soft Finger",
+                         new BackupTexturePaths(@"res\textures\biboSoftFinger\bibo\"),
                          new BackupTexturePaths(@"res\textures\biboSoftFinger\gen3\"),
                          new BackupTexturePaths(@"res\textures\biboSoftFinger\gen2\")),
-            new SkinType("Pythia",new BackupTexturePaths(@"res\textures\pythia\bibo\"),
+            new SkinType("Pythia",
+                         new BackupTexturePaths(@"res\textures\pythia\bibo\"),
                          new BackupTexturePaths(@"res\textures\pythia\gen3\"),
                          new BackupTexturePaths(@"res\textures\pythia\gen2\")),
         };
 
         private static List<SkinType> _tbseSkinTypes = new List<SkinType>() {
-            new SkinType("Default",new BackupTexturePaths(@"res\textures\tbse\tbse\"),
+            new SkinType("Default",
+                         new BackupTexturePaths(@"res\textures\tbse\tbse\"),
                          new BackupTexturePaths(@"res\textures\tbse\highlander\"),
                          new BackupTexturePaths(@"res\textures\tbse\viera\"),
                          new BackupTexturePaths(@"res\textures\tbse\vanilla\")),
         };
 
         private static List<SkinType> _otopopSkinTypes = new List<SkinType>() {
-            new SkinType("Default",new BackupTexturePaths(@"es\textures\otopop\otopop\"),
+            new SkinType("Default",
+                         new BackupTexturePaths(@"res\textures\otopop\otopop\"),
                          new BackupTexturePaths(@"res\textures\otopop\asym\"),
                          new BackupTexturePaths(@"res\textures\otopop\vanilla\")),
         };
@@ -107,15 +119,12 @@ namespace FFXIVLooseTextureCompiler.Export {
         }
         public static BackupTexturePaths AsymLalaPath(int skinType) {
             if (!File.Exists(_otopopSkinTypes[skinType].BackupTextures[1].Diffuse)) {
-                Directory.CreateDirectory(
-                Path.GetDirectoryName(
-                Path.Combine(
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
                 _otopopSkinTypes[skinType].BackupTextures[1].Diffuse)));
 
                 TexLoader.WriteImageToXOR(ImageManipulation.MirrorAndDuplicate(
-                TexLoader.ResolveBitmap(
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                TexLoader.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                     _otopopSkinTypes[skinType].BackupTextures[2].Diffuse))),
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                     _otopopSkinTypes[skinType].BackupTextures[1].Diffuse));

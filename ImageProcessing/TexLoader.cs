@@ -51,7 +51,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 RGBAPixels[i] = B;
                 RGBAPixels[i + 1] = G;
                 RGBAPixels[i + 2] = R;
-                RGBAPixels[i + 3] = A;
+                RGBAPixels[i + 3] = (A == (byte)0 ? (byte)1 : A);
 
             }
             System.Runtime.InteropServices.Marshal.Copy(RGBAPixels, 0, ptr, RGBAPixels.Length);

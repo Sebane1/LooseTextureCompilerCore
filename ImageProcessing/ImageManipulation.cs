@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using Lumina.Data.Files;
+using System.Drawing;
 using System.Drawing.Imaging;
 using Color = System.Drawing.Color;
 using Point = System.Drawing.Point;
@@ -261,6 +262,52 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             return MergeGrayscalesToARGB(canvas, new Bitmap(new Bitmap(gloss), image.Width, image.Height), white, new Bitmap(white));
         }
+
+        public static Bitmap BitmapToEyeMultiDawntrail(Bitmap image, string baseDirectory = null) {
+            int enforcedSize = 2048;
+            string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
+                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\multi.png");
+            Bitmap canvas = new Bitmap(enforcedSize, enforcedSize, PixelFormat.Format32bppArgb);
+            Bitmap newEye = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 1.0f, 1.1f, 1);
+
+            Graphics graphics = Graphics.FromImage(canvas);
+            graphics.Clear(Color.Black);
+            Bitmap white = new Bitmap(enforcedSize, enforcedSize);
+            graphics = Graphics.FromImage(white);
+            graphics.Clear(Color.White);
+            var bitmapTemplate = new Bitmap(template);
+            graphics = Graphics.FromImage(canvas);
+            graphics.DrawImage(new Bitmap(newEye),
+               (enforcedSize / 2) - (((float)enforcedSize * 0.4096f) / 2), (enforcedSize / 2) - (((float)enforcedSize * 0.4096f) / 2),
+                (float)enforcedSize * 0.4096f, (float)enforcedSize * 0.4096f);
+            graphics.DrawImage(bitmapTemplate, 0, 0, enforcedSize, enforcedSize);
+
+            return MergeGrayscalesToARGB(ImageManipulation.InvertImage(white), new Bitmap(new Bitmap(canvas), enforcedSize, enforcedSize),
+                ImageManipulation.InvertImage(ExtractAlpha(new Bitmap(bitmapTemplate, enforcedSize, enforcedSize))), new Bitmap(white));
+        }
+
+        public static Bitmap BitmapToEyeDiffuseDawntrail(Bitmap image, string baseDirectory = null) {
+            int enforcedSize = 2048;
+            string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
+                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\diffuse.png");
+            Bitmap canvas = new Bitmap(enforcedSize, enforcedSize, PixelFormat.Format32bppArgb);
+            Bitmap newEye = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 1.0f, 1.1f, 1);
+
+            Graphics graphics = Graphics.FromImage(canvas);
+            graphics.Clear(Color.Black);
+            Bitmap white = new Bitmap(enforcedSize, enforcedSize);
+            graphics = Graphics.FromImage(white);
+            graphics.Clear(Color.White);
+
+            graphics = Graphics.FromImage(canvas);
+            graphics.DrawImage(new Bitmap(newEye),
+               (enforcedSize / 2) - (((float)enforcedSize * 0.4096f) / 2), (enforcedSize / 2) - (((float)enforcedSize * 0.4096f) / 2),
+                (float)enforcedSize * 0.4096f, (float)enforcedSize * 0.4096f);
+            graphics.DrawImage(new Bitmap(template), 0, 0, enforcedSize, enforcedSize);
+
+            return canvas;
+        }
+
         public static Bitmap GrayscaleToAlpha(Bitmap file) {
             Bitmap image = new Bitmap(file);
             LockBitmap source = new LockBitmap(image);
@@ -446,6 +493,50 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             catchLight.Save(ReplaceExtension(AddSuffix(filename, "_eye_catchlight"), ".png"), ImageFormat.Png);
             normal.Save(ReplaceExtension(AddSuffix(filename, "_eye_normal"), ".png"), ImageFormat.Png);
         }
+        public static void ConvertToEyeMapsDawntrail(string filename, string baseDirectory = null) {
+            Bitmap image = TexLoader.ResolveBitmap(filename);
+            Bitmap eyeDiffuse = BitmapToEyeDiffuseDawntrail(image, baseDirectory);
+            Bitmap eyeMulti = BitmapToEyeMultiDawntrail(image, baseDirectory);
+            Bitmap normal = BitmapToEyeNormalDawntrail(eyeMulti, baseDirectory);
+
+            eyeDiffuse.Save(ReplaceExtension(AddSuffix(filename, "_eye_diffuse"), ".png"), ImageFormat.Png);
+            eyeMulti.Save(ReplaceExtension(AddSuffix(filename, "_eye_multi"), ".png"), ImageFormat.Png);
+            normal.Save(ReplaceExtension(AddSuffix(filename, "_eye_normal"), ".png"), ImageFormat.Png);
+        }
+
+        public static void ConvertOldEyeMapToDawntrailEyeMaps(string filename, string baseDirectory = null) {
+            Bitmap image = ExtractRed(TexLoader.ResolveBitmap(filename));
+            Bitmap eyeDiffuse = BitmapToEyeDiffuseDawntrail(image, baseDirectory);
+            Bitmap eyeMulti = BitmapToEyeMultiDawntrail(image, baseDirectory);
+            Bitmap normal = BitmapToEyeNormalDawntrail(eyeMulti, baseDirectory);
+
+            eyeDiffuse.Save(ReplaceExtension(AddSuffix(filename, "_eye_diffuse"), ".png"), ImageFormat.Png);
+            eyeMulti.Save(ReplaceExtension(AddSuffix(filename, "_eye_multi"), ".png"), ImageFormat.Png);
+            normal.Save(ReplaceExtension(AddSuffix(filename, "_eye_normal"), ".png"), ImageFormat.Png);
+        }
+
+        private static Bitmap BitmapToEyeNormalDawntrail(Bitmap image, string baseDirectory) {
+            int enforcedSize = 2048;
+            string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
+                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\normaldt.png");
+            Bitmap canvas = new Bitmap(enforcedSize, enforcedSize, PixelFormat.Format32bppArgb);
+            Bitmap normal = Normal.Calculate(InvertImage(Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 0.8f, 1.5f, 1)));
+
+            Graphics graphics = Graphics.FromImage(canvas);
+            graphics.Clear(Color.Black);
+            Bitmap white = new Bitmap(enforcedSize, enforcedSize);
+            graphics = Graphics.FromImage(white);
+            graphics.Clear(Color.White);
+
+            graphics = Graphics.FromImage(canvas);
+            graphics.DrawImage(new Bitmap(normal),
+               (enforcedSize / 2) - (((float)enforcedSize * 0.4096f) / 2), (enforcedSize / 2) - (((float)enforcedSize * 0.4096f) / 2),
+                (float)enforcedSize * 0.4096f, (float)enforcedSize * 0.4096f);
+            graphics.DrawImage(new Bitmap(template), 0, 0, enforcedSize, enforcedSize);
+
+            return canvas;
+        }
+
         public static string ReplaceExtension(string path, string extension) {
             return Path.ChangeExtension(path, extension);
         }
