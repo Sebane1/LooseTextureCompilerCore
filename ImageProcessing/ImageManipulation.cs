@@ -356,6 +356,59 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             destination.UnlockBits();
             return image;
         }
+
+        public static void HairDiffuseToHairMaps(string filename) {
+            Bitmap image = TexLoader.ResolveBitmap(filename);
+            Bitmap rgb = ImageManipulation.ExtractRGB(image);
+            Bitmap alpha = ImageManipulation.ExtractAlpha(image);
+            Bitmap hairNormalConversion = Normal.Calculate(rgb);
+            Bitmap hairNormalFinal = ImageManipulation.MergeAlphaToRGB(alpha, hairNormalConversion);
+
+            Bitmap hairSpecularGreyscale = ImageManipulation.BoostAboveThreshold(image, 127);
+            Bitmap hairSpecularGreyscale2 = ImageManipulation.BoostAboveThreshold(image, 90);
+            Bitmap blank = new Bitmap(hairSpecularGreyscale.Width, hairSpecularGreyscale.Height);
+            Graphics graphics = Graphics.FromImage(blank);
+            graphics.Clear(Color.White);
+            Bitmap hairSpecularConversion = ImageManipulation.MergeGrayscalesToRGBA(hairSpecularGreyscale, hairSpecularGreyscale2, blank, alpha);
+
+            LegacyHairNormalToDawntrailNormal(hairSpecularConversion, hairNormalFinal)
+                .Save(ImageManipulation.AddSuffix(filename.Replace(".dds", ".png"), "_n"), ImageFormat.Png);
+            LegacyHairMultiToDawntrailMulti(hairSpecularConversion)
+                .Save(ImageManipulation.AddSuffix(filename.Replace(".dds", ".png"), "_m"), ImageFormat.Png);
+        }
+
+        public static Bitmap LegacyHairMultiToDawntrailMulti(Bitmap bitmap) {
+            Bitmap blueChannel = new Bitmap(bitmap.Width, bitmap.Height);
+            Graphics.FromImage(blueChannel).Clear(Color.FromArgb(255, 47, 47, 47));
+            Bitmap redChannel = bitmap;
+            return MergeGrayscalesToRGBA(redChannel, InvertImage(ExtractGreen(bitmap)), blueChannel, new Bitmap(redChannel));
+        }
+
+        public static Bitmap LegacyHairNormalToDawntrailNormal(Bitmap legacyMulti, Bitmap legacyNormal) {
+            return MergeGrayscalesToRGBA(ExtractRed(legacyNormal), ExtractGreen(legacyNormal), ExtractAlpha(legacyMulti), ExtractAlpha(legacyNormal));
+        }
+
+        public static void GenerateClothingMaps(string filename) {
+            Bitmap image = TexLoader.ResolveBitmap(filename);
+            Bitmap rgb = ImageManipulation.ExtractRGB(image);
+            Bitmap alpha = ImageManipulation.ExtractAlpha(image);
+            Bitmap clothingNormalConversion = Normal.Calculate(rgb);
+            Bitmap clothingNormalFinal = ImageManipulation.MergeAlphaToRGB(Grayscale.MakeGrayscale(image), clothingNormalConversion);
+
+            Bitmap clothingMultiGreyscale = ImageManipulation.BoostAboveThreshold(Grayscale.MakeGrayscale(image), 160);
+            Bitmap clothingMultiGreyscale2 = ImageManipulation.BoostAboveThreshold(Grayscale.MakeGrayscale(image), 140);
+            Bitmap blank = new Bitmap(clothingMultiGreyscale.Width, clothingMultiGreyscale.Height);
+            Graphics graphics = Graphics.FromImage(blank);
+            graphics.Clear(Color.White);
+            Bitmap blank2 = new Bitmap(blank);
+            Bitmap clothingMultiConversion = ImageManipulation.MergeGrayscalesToRGBA(clothingMultiGreyscale, blank, clothingMultiGreyscale2, blank2);
+
+            clothingMultiGreyscale.Save(ImageManipulation.AddSuffix(filename.Replace(".dds", ".png"), "_np1"), ImageFormat.Png);
+            clothingMultiGreyscale2.Save(ImageManipulation.AddSuffix(filename.Replace(".dds", ".png"), "_np2"), ImageFormat.Png);
+
+            clothingNormalFinal.Save(ImageManipulation.AddSuffix(filename.Replace(".dds", ".png"), "_n"), ImageFormat.Png);
+            clothingMultiConversion.Save(ImageManipulation.AddSuffix(filename.Replace(".dds", ".png"), "_m"), ImageFormat.Png);
+        }
         public static Bitmap MergeAlphaToRGB(Bitmap alpha, Bitmap rgb) {
             Bitmap image = new Bitmap(rgb.Width, rgb.Height, PixelFormat.Format32bppArgb);
             LockBitmap destination = new LockBitmap(image);
@@ -459,9 +512,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public static Bitmap ConvertToDawntrailSkinMulti(Bitmap image) {
             Bitmap inverted = ImageManipulation.InvertImage(image);
             Bitmap alpha = new Bitmap(image.Width, image.Height);
+            Bitmap blueChannel = new Bitmap(image.Width, image.Height);
             Graphics.FromImage(alpha).Clear(Color.White);
-            return MergeGrayscalesToRGBA(ExtractRed(image), ExtractBlue(image), inverted, alpha);
+            Graphics.FromImage(blueChannel).Clear(Color.FromArgb(152, 152, 152));
+            return MergeGrayscalesToRGBA(ExtractRed(image), ImageManipulation.InvertImage(ExtractBlue(image)), blueChannel, alpha);
         }
+
+
 
         public static void ConvertToAsymEyeMaps(string filename1, string filename2, string output) {
             Bitmap image = TexLoader.ResolveBitmap(filename1);
@@ -559,7 +616,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             string fDir = Path.GetDirectoryName(filename);
             string fName = Path.GetFileNameWithoutExtension(filename);
             string fExt = Path.GetExtension(filename);
-            return !string.IsNullOrEmpty(filename) ? Path.Combine(fDir, String.Concat(fName, suffix, fExt)) : "";
+            return !string.IsNullOrEmpty(filename) ? Path.Combine(fDir,
+                String.Concat(fName, suffix, fExt)).Replace(".dds", ".png") : "";
         }
 
     }

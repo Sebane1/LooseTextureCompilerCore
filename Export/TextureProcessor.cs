@@ -377,9 +377,9 @@ namespace FFXIVLooseTextureCompiler {
         private bool MultiLogic(TextureSet textureSet, string multiDiskPath, bool skipTexExport) {
             bool outputGenerated = false;
             if (!string.IsNullOrEmpty(textureSet.Multi) && !string.IsNullOrEmpty(textureSet.InternalMultiPath)) {
-                if (!string.IsNullOrEmpty(textureSet.Glow) && !textureSet.InternalMultiPath.Contains("catchlight")) {
+                if (!string.IsNullOrEmpty(textureSet.Diffuse) && !textureSet.InternalMultiPath.Contains("iri")) {
                     if (!skipTexExport) {
-                        Task.Run(() => ExportTex(textureSet.Multi, multiDiskPath, ExportType.GlowMulti, "", textureSet.Glow));
+                        Task.Run(() => ExportTex(textureSet.Multi, multiDiskPath, ExportType.DTMulti, "", textureSet.Diffuse));
                     }
                 } else if (textureSet.InternalMultiPath.Contains("etc_") || textureSet.InternalMultiPath.Contains("hair")) {
                     if (!skipTexExport) {
@@ -392,27 +392,27 @@ namespace FFXIVLooseTextureCompiler {
                 }
                 outputGenerated = true;
             } else if (!string.IsNullOrEmpty(textureSet.Diffuse) && !string.IsNullOrEmpty(textureSet.InternalMultiPath)
-                    && _generateMulti && !(textureSet.InternalMultiPath.ToLower().Contains("catchlight"))) {
+                    && _generateMulti && !(textureSet.InternalMultiPath.ToLower().Contains("iri"))) {
                 if (!textureSet.IgnoreMultiGeneration) {
                     if (textureSet.InternalDiffusePath.Contains("b0001_b_d") || textureSet.InternalDiffusePath.Contains("b0101_b_d")) {
                         if (!skipTexExport) {
-                            Task.Run(() => ExportTex(textureSet.Diffuse, multiDiskPath, ExportType.MultiTbse, "", textureSet.Glow,
-                        textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Diffuse : ""));
+                            Task.Run(() => ExportTex(textureSet.Diffuse, multiDiskPath, ExportType.MultiTbse, "",
+                            textureSet.Diffuse, textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Diffuse : ""));
                         }
                     } else if (textureSet.InternalDiffusePath.Contains("fac_b_d")) {
                         if (!skipTexExport) {
                             Task.Run(() => ExportTex(textureSet.Diffuse, multiDiskPath, ExportType.MultiFaceAsym, "",
-                        textureSet.Glow, textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Diffuse : ""));
+                            textureSet.Diffuse, textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Diffuse : ""));
                         }
                     } else if (textureSet.InternalDiffusePath.Contains("fac_d")) {
                         if (!skipTexExport) {
                             Task.Run(() => ExportTex(textureSet.Diffuse, multiDiskPath, ExportType.MultiFace, "",
-                        textureSet.Glow, textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Diffuse : ""));
+                            textureSet.Diffuse, textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Diffuse : ""));
                         }
                     } else {
                         if (!skipTexExport) {
                             Task.Run(() => ExportTex(textureSet.Diffuse, multiDiskPath, ExportType.Multi, "",
-                        textureSet.Glow, textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Diffuse : ""));
+                            textureSet.Diffuse, textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Diffuse : ""));
                         }
                     }
                     outputGenerated = true;
@@ -566,7 +566,7 @@ namespace FFXIVLooseTextureCompiler {
             GlowEyeMulti,
             XNormalImport,
             DontManipulate,
-            GlowMulti,
+            DTMulti,
             MultiTbse,
             MultiFace,
             MultiFaceAsym
@@ -593,8 +593,8 @@ namespace FFXIVLooseTextureCompiler {
                         case ExportType.GlowEyeMulti:
                             ExportTypeGlowEyeMulti(inputFile, modifierMap, stream);
                             break;
-                        case ExportType.GlowMulti:
-                            ExportTypeGlowMulti(inputFile, modifierMap, stream);
+                        case ExportType.DTMulti:
+                            ExportTypeDTMulti(inputFile, modifierMap, stream);
                             break;
                         case ExportType.Normal:
                             ExportTypeNormal(inputFile, outputFile, modifierMap, normalCorrection, modifier, stream);
@@ -656,7 +656,7 @@ namespace FFXIVLooseTextureCompiler {
                         //g.SmoothingMode = SmoothingMode.HighQuality;
                         g.DrawImage(TexLoader.ResolveBitmap(diffuseNormal), 0, 0, bitmap.Width, bitmap.Height);
                     }
-                    AtramentumLuminisGlow.TransplantData(underlay, bitmap).Save(stream, ImageFormat.Png);
+                    MapWriting.TransplantData(underlay, bitmap).Save(stream, ImageFormat.Png);
                 }
             }
         }
@@ -741,15 +741,10 @@ namespace FFXIVLooseTextureCompiler {
                             } else {
                                 image = bitmap;
                             }
-                            Bitmap generatedMulti = exportType != ExportType.MultiTbse
-                            ? (exportType == ExportType.MultiFace || exportType == ExportType.MultiFaceAsym) ?
-                            ImageManipulation.ConvertToDawntrailSkinMulti(image) :
-                            ImageManipulation.ConvertToDawntrailSkinMulti(image)
-                            : ImageManipulation.ConvertToDawntrailSkinMulti(image);
-                            //Bitmap multi = !string.IsNullOrEmpty(modifierMap)
-                            //    ? AtramentumLuminisGlow.CalculateMulti(generatedMulti, TexLoader.ResolveBitmap(modifierMap))
-                            //    : generatedMulti;
-                            Bitmap multi = generatedMulti;
+                            Bitmap generatedMulti = ImageManipulation.ConvertToDawntrailSkinMulti(image);
+                            Bitmap multi = !string.IsNullOrEmpty(modifierMap)
+                                ? MapWriting.CalculateMulti(generatedMulti, TexLoader.ResolveBitmap(modifierMap))
+                                : generatedMulti;
                             multi.Save(stream, ImageFormat.Png);
                             _multiCache.Add(inputFile, multi);
                         }
@@ -794,7 +789,7 @@ namespace FFXIVLooseTextureCompiler {
             output.Save(stream, ImageFormat.Png);
         }
 
-        private void ExportTypeGlowMulti(string inputFile, string mask, Stream stream) {
+        private void ExportTypeDTMulti(string inputFile, string mask, Stream stream) {
             string descriminator = inputFile + mask + "glowMulti";
             Bitmap glowOutput;
             lock (_glowCache) {
@@ -804,9 +799,9 @@ namespace FFXIVLooseTextureCompiler {
                 } else {
                     using (Bitmap bitmap = TexLoader.ResolveBitmap(inputFile)) {
                         if (bitmap != null) {
-                            Bitmap glowBitmap = AtramentumLuminisGlow.CalculateMulti(bitmap, TexLoader.ResolveBitmap(mask));
-                            glowBitmap.Save(stream, ImageFormat.Png);
-                            _glowCache.Add(descriminator, glowBitmap);
+                            Bitmap multiChannelMap = MapWriting.CalculateMulti(bitmap, TexLoader.ResolveBitmap(mask));
+                            multiChannelMap.Save(stream, ImageFormat.Png);
+                            _glowCache.Add(descriminator, multiChannelMap);
                         }
                     }
                 }
@@ -823,7 +818,7 @@ namespace FFXIVLooseTextureCompiler {
                 } else {
                     using (Bitmap bitmap = TexLoader.ResolveBitmap(inputFile)) {
                         if (bitmap != null) {
-                            Bitmap glowBitmap = AtramentumLuminisGlow.CalculateEyeMulti(bitmap, TexLoader.ResolveBitmap(mask));
+                            Bitmap glowBitmap = MapWriting.CalculateEyeMulti(bitmap, TexLoader.ResolveBitmap(mask));
                             glowBitmap.Save(stream, ImageFormat.Png);
                             _glowCache.Add(descriminator, glowBitmap);
                         }
@@ -853,12 +848,12 @@ namespace FFXIVLooseTextureCompiler {
                                 //g.SmoothingMode = SmoothingMode.HighQuality;
                                 g.DrawImage(layer, 0, 0, bitmap.Width, bitmap.Height);
                                 g.DrawImage(GetMergedBitmap(inputFile), 0, 0, bitmap.Width, bitmap.Height);
-                                Bitmap glowBitmap = AtramentumLuminisGlow.CalculateDiffuse(image,
+                                Bitmap glowBitmap = MapWriting.CalculateDiffuse(image,
                                     ImageManipulation.Resize(GetMergedBitmap(glowMap), bitmap.Width, bitmap.Height));
                                 glowBitmap.Save(stream, ImageFormat.Png);
                                 _glowCache.Add(descriminator, glowBitmap);
                             } else {
-                                Bitmap glowBitmap = AtramentumLuminisGlow.CalculateDiffuse(bitmap, TexLoader.ResolveBitmap(glowMap));
+                                Bitmap glowBitmap = MapWriting.CalculateDiffuse(bitmap, TexLoader.ResolveBitmap(glowMap));
                                 glowBitmap.Save(stream, ImageFormat.Png);
                                 _glowCache.Add(descriminator, glowBitmap);
                             }

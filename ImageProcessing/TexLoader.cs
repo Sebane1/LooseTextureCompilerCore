@@ -9,11 +9,11 @@ using Size = System.Drawing.Size;
 
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
     public static class TexLoader {
-        public static Bitmap DDSToBitmap(string inputFile) {
+        public static Bitmap DDSToBitmap(string inputFile, bool noAlpha = false) {
             using (var scratch = ScratchImage.LoadDDS(inputFile)) {
                 var rgba = scratch.GetRGBA(out var f).ThrowIfError(f);
                 byte[] ddsFile = rgba.Pixels[..(f.Meta.Width * f.Meta.Height * f.Meta.Format.BitsPerPixel() / 8)].ToArray();
-                return RGBAToBitmap(ddsFile, scratch.Meta.Width, scratch.Meta.Height);
+                return RGBAToBitmap(ddsFile, scratch.Meta.Width, scratch.Meta.Height, noAlpha);
             }
         }
 
@@ -37,7 +37,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
 
-        public static Bitmap RGBAToBitmap(byte[] RGBAPixels, int width, int height) {
+        public static Bitmap RGBAToBitmap(byte[] RGBAPixels, int width, int height, bool noAlpha = false) {
             Bitmap output = new Bitmap(width, height, PixelFormat.Format32bppArgb);
             Rectangle rect = new Rectangle(0, 0, output.Width, output.Height);
             BitmapData bmpData = output.LockBits(rect, ImageLockMode.ReadWrite, output.PixelFormat);
@@ -51,7 +51,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 RGBAPixels[i] = B;
                 RGBAPixels[i + 1] = G;
                 RGBAPixels[i + 2] = R;
-                RGBAPixels[i + 3] = (A == (byte)0 ? (byte)1 : A);
+                RGBAPixels[i + 3] = noAlpha ? (byte)255 : (A == (byte)0 ? (byte)1 : A);
 
             }
             System.Runtime.InteropServices.Marshal.Copy(RGBAPixels, 0, ptr, RGBAPixels.Length);
@@ -96,12 +96,12 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return RGBAPixels;
         }
 
-        public static Bitmap TexToBitmap(string path) {
+        public static Bitmap TexToBitmap(string path, bool noAlpha = false) {
             using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read)) {
                 var scratch = PenumbraTexFileParser.Parse(stream);
                 var rgba = scratch.GetRGBA(out var f).ThrowIfError(f);
                 byte[] RGBAPixels = rgba.Pixels[..(f.Meta.Width * f.Meta.Height * f.Meta.Format.BitsPerPixel() / 8)].ToArray();
-                return RGBAToBitmap(RGBAPixels, f.Meta.Width, f.Meta.Height);
+                return RGBAToBitmap(RGBAPixels, f.Meta.Width, f.Meta.Height, noAlpha);
             }
         }
 
@@ -121,7 +121,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             rgba.Pixels[..(f.Meta.Width * f.Meta.Height * f.Meta.Format.BitsPerPixel() / 8)].ToArray());
         }
 
-        public static Bitmap ResolveBitmap(string inputFile) {
+        public static Bitmap ResolveBitmap(string inputFile, bool dontUseAlpha = false) {
             if (string.IsNullOrEmpty(inputFile) || !File.Exists(inputFile)) {
                 return new Bitmap(4096, 4096);
             }
@@ -132,8 +132,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             try {
                 using (Bitmap bitmap =
-                    inputFile.EndsWith(".tex") ? TexToBitmap(inputFile) :
-                    inputFile.EndsWith(".dds") ? DDSToBitmap(inputFile) :
+                    inputFile.EndsWith(".tex") ? TexToBitmap(inputFile, dontUseAlpha) :
+                    inputFile.EndsWith(".dds") ? DDSToBitmap(inputFile, dontUseAlpha) :
                     inputFile.EndsWith(".ltct") ? OpenImageFromXOR(inputFile) :
                     new Bitmap(inputFile)) {
                     return new Bitmap(bitmap);
