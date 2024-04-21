@@ -741,7 +741,7 @@ namespace FFXIVLooseTextureCompiler {
                             } else {
                                 image = bitmap;
                             }
-                            Bitmap generatedMulti = ImageManipulation.ConvertToDawntrailSkinMulti(image);
+                            Bitmap generatedMulti = ImageManipulation.ConvertDiffuseToDawntrailSkinMulti(image);
                             Bitmap multi = !string.IsNullOrEmpty(modifierMap)
                                 ? MapWriting.CalculateMulti(generatedMulti, TexLoader.ResolveBitmap(modifierMap))
                                 : generatedMulti;

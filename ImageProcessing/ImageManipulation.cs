@@ -372,9 +372,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap hairSpecularConversion = ImageManipulation.MergeGrayscalesToRGBA(hairSpecularGreyscale, hairSpecularGreyscale2, blank, alpha);
 
             LegacyHairNormalToDawntrailNormal(hairSpecularConversion, hairNormalFinal)
-                .Save(ImageManipulation.AddSuffix(filename.Replace(".dds", ".png"), "_n"), ImageFormat.Png);
+                .Save(ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(filename, "_n"), ".png"), ImageFormat.Png);
             LegacyHairMultiToDawntrailMulti(hairSpecularConversion)
-                .Save(ImageManipulation.AddSuffix(filename.Replace(".dds", ".png"), "_m"), ImageFormat.Png);
+                .Save(ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(filename, "_m"), ".png"), ImageFormat.Png);
         }
 
         public static Bitmap LegacyHairMultiToDawntrailMulti(Bitmap bitmap) {
@@ -388,7 +388,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return MergeGrayscalesToRGBA(ExtractRed(legacyNormal), ExtractGreen(legacyNormal), ExtractAlpha(legacyMulti), ExtractAlpha(legacyNormal));
         }
 
-        public static void GenerateClothingMaps(string filename) {
+        public static void ClothingDiffuseToClothingMultiAndNormalMaps(string filename) {
             Bitmap image = TexLoader.ResolveBitmap(filename);
             Bitmap rgb = ImageManipulation.ExtractRGB(image);
             Bitmap alpha = ImageManipulation.ExtractAlpha(image);
@@ -403,11 +403,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap blank2 = new Bitmap(blank);
             Bitmap clothingMultiConversion = ImageManipulation.MergeGrayscalesToRGBA(clothingMultiGreyscale, blank, clothingMultiGreyscale2, blank2);
 
-            clothingMultiGreyscale.Save(ImageManipulation.AddSuffix(filename.Replace(".dds", ".png"), "_np1"), ImageFormat.Png);
-            clothingMultiGreyscale2.Save(ImageManipulation.AddSuffix(filename.Replace(".dds", ".png"), "_np2"), ImageFormat.Png);
+            clothingMultiGreyscale.Save(ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(filename, "_np1"), ".png"), ImageFormat.Png);
+            clothingMultiGreyscale2.Save(ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(filename, "_np2"), ".png"), ImageFormat.Png);
 
-            clothingNormalFinal.Save(ImageManipulation.AddSuffix(filename.Replace(".dds", ".png"), "_n"), ImageFormat.Png);
-            clothingMultiConversion.Save(ImageManipulation.AddSuffix(filename.Replace(".dds", ".png"), "_m"), ImageFormat.Png);
+            clothingNormalFinal.Save(ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(filename, "_n"), ".png"), ImageFormat.Png);
+            clothingMultiConversion.Save(ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(filename, "_m"), ".png"), ImageFormat.Png);
         }
         public static Bitmap MergeAlphaToRGB(Bitmap alpha, Bitmap rgb) {
             Bitmap image = new Bitmap(rgb.Width, rgb.Height, PixelFormat.Format32bppArgb);
@@ -490,7 +490,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return canvas;
         }
 
-        public static Bitmap BitmapToCatchlight(Bitmap file, string baseDirectory = null) {
+        public static Bitmap ImageToCatchlightLegacy(Bitmap file, string baseDirectory = null) {
             string catchlightTemplate = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
                 : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\catchlight.png");
             Bitmap catchlight = Brightness.BrightenImage(Grayscale.MakeGrayscale(file), 0.6f, 1.5f, 1);
@@ -499,7 +499,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return catchlight;
         }
 
-        public static Bitmap BitmapToEyeNormal(Bitmap file, string baseDirectory = null) {
+        public static Bitmap ImageToEyeNormal(Bitmap file, string baseDirectory = null) {
             Bitmap newFile = new Bitmap(file);
             string normalTemplate = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
                 : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\normal.png");
@@ -509,7 +509,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return normal;
         }
 
-        public static Bitmap ConvertToDawntrailSkinMulti(Bitmap image) {
+        public static Bitmap ConvertDiffuseToDawntrailSkinMulti(Bitmap image) {
             Bitmap inverted = ImageManipulation.InvertImage(image);
             Bitmap alpha = new Bitmap(image.Width, image.Height);
             Bitmap blueChannel = new Bitmap(image.Width, image.Height);
@@ -520,19 +520,19 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
 
 
-        public static void ConvertToAsymEyeMaps(string filename1, string filename2, string output) {
+        public static void ConvertImageToAsymEyeMaps(string filename1, string filename2, string output) {
             Bitmap image = TexLoader.ResolveBitmap(filename1);
             Bitmap eyeMulti = BitmapToEyeMulti(image);
             Bitmap eyeGlow = GrayscaleToAlpha(eyeMulti);
-            Bitmap catchLight = BitmapToCatchlight(eyeMulti);
-            Bitmap normal = BitmapToEyeNormal(eyeMulti);
+            Bitmap catchLight = ImageToCatchlightLegacy(eyeMulti);
+            Bitmap normal = ImageToEyeNormal(eyeMulti);
 
             if (filename1 != filename2) {
                 Bitmap image2 = TexLoader.ResolveBitmap(filename2);
                 Bitmap eyeMulti2 = BitmapToEyeMulti(image2);
                 Bitmap eyeGlow2 = GrayscaleToAlpha(eyeMulti2);
-                Bitmap catchLight2 = BitmapToCatchlight(eyeMulti2);
-                Bitmap normal2 = BitmapToEyeNormal(eyeMulti2);
+                Bitmap catchLight2 = ImageToCatchlightLegacy(eyeMulti2);
+                Bitmap normal2 = ImageToEyeNormal(eyeMulti2);
 
                 SideBySide(eyeMulti, eyeMulti2).Save(ReplaceExtension(AddSuffix(output, "_eye_multi_asym"), ".png"), ImageFormat.Png);
                 SideBySide(eyeGlow, eyeGlow2).Save(ReplaceExtension(AddSuffix(output, "_eye_glow_asym"), ".png"), ImageFormat.Png);
@@ -545,19 +545,19 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 SideBySide(normal, normal).Save(ReplaceExtension(AddSuffix(output, "_eye_normal_asym"), ".png"), ImageFormat.Png);
             }
         }
-        public static void ConvertToEyeMaps(string filename, string baseDirectory = null) {
+        public static void ConvertImageToEyeMapsLegacy(string filename, string baseDirectory = null) {
             Bitmap image = TexLoader.ResolveBitmap(filename);
             Bitmap eyeMulti = BitmapToEyeMulti(image, baseDirectory);
             Bitmap eyeGlow = GrayscaleToAlpha(eyeMulti);
-            Bitmap catchLight = BitmapToCatchlight(eyeMulti, baseDirectory);
-            Bitmap normal = BitmapToEyeNormal(eyeMulti, baseDirectory);
+            Bitmap catchLight = ImageToCatchlightLegacy(eyeMulti, baseDirectory);
+            Bitmap normal = ImageToEyeNormal(eyeMulti, baseDirectory);
 
             eyeMulti.Save(ReplaceExtension(AddSuffix(filename, "_eye_multi"), ".png"), ImageFormat.Png);
             eyeGlow.Save(ReplaceExtension(AddSuffix(filename, "_eye_glow"), ".png"), ImageFormat.Png);
             catchLight.Save(ReplaceExtension(AddSuffix(filename, "_eye_catchlight"), ".png"), ImageFormat.Png);
             normal.Save(ReplaceExtension(AddSuffix(filename, "_eye_normal"), ".png"), ImageFormat.Png);
         }
-        public static string[] ConvertToEyeMapsDawntrail(string filename, string baseDirectory = null,
+        public static string[] ConvertImageToEyeMapsDawntrail(string filename, string baseDirectory = null,
             bool ignoreIfExists = false, bool wasEyeMulti = false) {
             string[] strings = new string[] {
                 ReplaceExtension(AddSuffix(filename, "_eye_diffuse"), ".png"),
@@ -568,7 +568,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 Bitmap image = !wasEyeMulti ? TexLoader.ResolveBitmap(filename) : ExtractRed(TexLoader.ResolveBitmap(filename));
                 Bitmap eyeDiffuse = BitmapToEyeDiffuseDawntrail(image, baseDirectory);
                 Bitmap eyeMulti = BitmapToEyeMultiDawntrail(image, baseDirectory);
-                Bitmap normal = BitmapToEyeNormalDawntrail(eyeMulti, baseDirectory);
+                Bitmap normal = ImageToEyeNormalDawntrail(eyeMulti, baseDirectory);
                 eyeDiffuse.Save(strings[0], ImageFormat.Png);
                 normal.Save(strings[1], ImageFormat.Png);
                 eyeMulti.Save(strings[2], ImageFormat.Png);
@@ -576,18 +576,18 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return strings;
         }
 
-        public static void ConvertOldEyeMapToDawntrailEyeMaps(string filename, string baseDirectory = null) {
+        public static void ConvertOldEyeMultiToDawntrailEyeMaps(string filename, string baseDirectory = null) {
             Bitmap image = ExtractRed(TexLoader.ResolveBitmap(filename));
             Bitmap eyeDiffuse = BitmapToEyeDiffuseDawntrail(image, baseDirectory);
             Bitmap eyeMulti = BitmapToEyeMultiDawntrail(image, baseDirectory);
-            Bitmap normal = BitmapToEyeNormalDawntrail(eyeMulti, baseDirectory);
+            Bitmap normal = ImageToEyeNormalDawntrail(eyeMulti, baseDirectory);
 
             eyeDiffuse.Save(ReplaceExtension(AddSuffix(filename, "_eye_diffuse"), ".png"), ImageFormat.Png);
             eyeMulti.Save(ReplaceExtension(AddSuffix(filename, "_eye_multi"), ".png"), ImageFormat.Png);
             normal.Save(ReplaceExtension(AddSuffix(filename, "_eye_normal"), ".png"), ImageFormat.Png);
         }
 
-        private static Bitmap BitmapToEyeNormalDawntrail(Bitmap image, string baseDirectory) {
+        private static Bitmap ImageToEyeNormalDawntrail(Bitmap image, string baseDirectory) {
             int enforcedSize = 2048;
             string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
                 : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\normaldt.png");
@@ -617,7 +617,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             string fName = Path.GetFileNameWithoutExtension(filename);
             string fExt = Path.GetExtension(filename);
             return !string.IsNullOrEmpty(filename) ? Path.Combine(fDir,
-                String.Concat(fName, suffix, fExt)).Replace(".dds", ".png") : "";
+                String.Concat(fName, suffix, fExt)) : "";
         }
 
     }

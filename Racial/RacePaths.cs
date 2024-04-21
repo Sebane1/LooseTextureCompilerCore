@@ -47,6 +47,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                 return "chara/common/texture/catchlight_1.tex";
             }
         }
+
         public static string GetBodyTexturePath(int texture, int genderValue, int baseBody, int race, int tail, bool uniqueAuRa = false) {
             string result = "";
             string unique = RaceInfo.Races[race].Contains("Xaela") ? "0101" : "0001";
