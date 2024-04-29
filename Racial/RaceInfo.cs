@@ -6,6 +6,8 @@ namespace FFXIVLooseTextureCompiler.Racial {
             "Keeper", "Sea Wolf", "Hellsguard", "Plainsfolk", "Dunesfolk", "Raen", "Xaela", "Helion", "The Lost", "Rava", "Veena" };
         private static List<string> races = new List<string>() { "Midlander","Highlander","Elezen","Miqo'te","Roegadyn",
             "Lalafell","Raen","Xaela","Hrothgar","Viera",};
+        private static List<string> modelRaces = new List<string>() { "Midlander","Highlander","Elezen","Miqote","Roegadyn",
+            "Lalafell","Aura","Hrothgar","Viera",};
 
         private static RaceCode raceCodeBody = new RaceCode(new string[] {
             "0101","0301","0101","0101","0901","1101","1301","1301","1501","1701"}, new string[] {
@@ -40,6 +42,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
         internal static List<RacialBodyIdentifiers> BodyIdentifiers { get => bodyIdentifiers; set => bodyIdentifiers = value; }
         public static List<string> SubRaces { get => subRaces; set => subRaces = value; }
         public static List<string> Races { get => races; set => races = value; }
+        public static List<string> ModelRaces { get => modelRaces; set => modelRaces = value; }
 
         public static string ReverseBodyLookup(string internalPath) {
             if (internalPath.Contains("bibo")) {
@@ -98,33 +101,55 @@ namespace FFXIVLooseTextureCompiler.Racial {
                 case 2:
                 case 3:
                     return 2;
-
                 case 4:
                 case 5:
                     return 3;
-
                 case 6:
                 case 7:
                     return 4;
-
                 case 8:
                 case 9:
                     return 5;
-
                 case 10:
                     return 6;
-
                 case 11:
                     return 7;
-
                 case 12:
                 case 13:
                     return 8;
-
                 case 14:
                 case 15:
                     return 9;
-
+            }
+            return -1;
+        }
+        public static int SubRaceToModelRace(int subRace) {
+            switch (subRace) {
+                case 0:
+                    return 0;
+                case 1:
+                    return 1;
+                case 2:
+                case 3:
+                    return 2;
+                case 4:
+                case 5:
+                    return 3;
+                case 6:
+                case 7:
+                    return 4;
+                case 8:
+                case 9:
+                    return 5;
+                case 10:
+                case 11:
+                    return 6;
+                case 12:
+                case 13:
+                    return 7;
+                case 14:
+                case 15:
+                    return 8;
             }
             return -1;
         }

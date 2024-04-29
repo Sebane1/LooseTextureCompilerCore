@@ -7,6 +7,7 @@ using Rectangle = System.Drawing.Rectangle;
 
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
     public class ImageManipulation {
+
         public static Bitmap BoostAboveThreshold(Bitmap file, int threshhold) {
             Bitmap image = new Bitmap(file);
             LockBitmap source = new LockBitmap(image);
@@ -88,6 +89,25 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     Color sourcePixel = source.GetPixel(x, y);
                     Color col = Color.FromArgb(255, sourcePixel.A, sourcePixel.A, sourcePixel.A);
                     source.SetPixel(x, y, col);
+                }
+            };
+            source.UnlockBits();
+            return image;
+        }
+        public static Bitmap ReplaceBlackWithBackingImage(Bitmap file, Bitmap backingImage) {
+            Bitmap image = new Bitmap(file);
+            LockBitmap source = new LockBitmap(image);
+            Bitmap backingImageCopy = new Bitmap(backingImage);
+            LockBitmap backingImageSource = new LockBitmap(backingImageCopy);
+            source.LockBits();
+            for (int y = 0; y < image.Height; y++) {
+                for (int x = 0; x < image.Width; x++) {
+                    Color sourcePixel = source.GetPixel(x, y);
+                    Color backingPixel = backingImageSource.GetPixel(x, y);
+                    if (sourcePixel.A < 200) {
+                        Color col = Color.FromArgb(sourcePixel.A, backingPixel.R, backingPixel.G, backingPixel.B);
+                        source.SetPixel(x, y, col);
+                    }
                 }
             };
             source.UnlockBits();
@@ -210,6 +230,89 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             source.UnlockBits();
             return image;
         }
+
+        public static Bitmap LipCorrection(Bitmap correctionMap, Bitmap file, bool blurResult) {
+            Bitmap image = new Bitmap(file);
+            Bitmap correctionImage = new Bitmap(correctionMap);
+            LockBitmap source = new LockBitmap(image);
+            LockBitmap correctionSource = new LockBitmap(correctionImage);
+            Color[] xColors = new Color[correctionMap.Width];
+            source.LockBits();
+            correctionSource.LockBits();
+            Color correctionColor = Color.White;
+            for (int y = 0; y < correctionMap.Height; y++) {
+                for (int x = 0; x < correctionMap.Width; x++) {
+                    Color correctionPixel = correctionSource.GetPixel(x, y);
+                    Color sourcePixel = source.GetPixel(x, y);
+                    if (correctionPixel.B == 0 && correctionPixel.R == 0 && correctionPixel.G == 255 && correctionPixel.A == 255) {
+                        correctionColor = Color.FromArgb(sourcePixel.A, sourcePixel.R, sourcePixel.G, sourcePixel.B);
+                        correctionSource.SetPixel(x, y, xColors[x]);
+                    }
+                    if (correctionPixel.B == 255 && correctionPixel.R == 0 && correctionPixel.G == 0 && correctionPixel.A == 255) {
+                        xColors[x] = Color.FromArgb(sourcePixel.A, sourcePixel.R, sourcePixel.G, sourcePixel.B);
+                        correctionSource.SetPixel(x, y, xColors[x]);
+                    } else if (correctionPixel.R == 255 && correctionPixel.G == 0 && correctionPixel.G == 0 && correctionPixel.A == 255) {
+                        correctionSource.SetPixel(x, y, x > 165 ? xColors[x] : correctionColor);
+                    } else {
+                        correctionSource.SetPixel(x, y, Color.FromArgb(0, sourcePixel.R, sourcePixel.G, sourcePixel.B));
+                    }
+                }
+            };
+            source.UnlockBits();
+            correctionSource.UnlockBits();
+            if (blurResult) {
+                var blur = new GaussianBlur(correctionImage);
+                var blurredLips = blur.Process(12);
+                return blurredLips;
+            } else {
+                return correctionImage;
+            }
+        }
+
+        public static Bitmap Blur(Bitmap image, Rectangle rectangle, Int32 blurSize) {
+            Bitmap blurred = new Bitmap(image.Width, image.Height);
+
+            // make an exact copy of the bitmap provided
+            using (Graphics graphics = Graphics.FromImage(blurred)) {
+                graphics.DrawImage(image, new Rectangle(0, 0, image.Width, image.Height),
+                    new Rectangle(0, 0, image.Width, image.Height), GraphicsUnit.Pixel);
+            }
+            // look at every pixel in the blur rectangle
+            for (int xx = rectangle.X; xx < rectangle.X + rectangle.Width; xx++) {
+                for (int yy = rectangle.Y; yy < rectangle.Y + rectangle.Height; yy++) {
+                    int avgA = 0, avgR = 0, avgG = 0, avgB = 0;
+                    int blurPixelCount = 0;
+
+                    // average the color of the red, green and blue for each pixel in the
+                    // blur size while making sure you don't go outside the image bounds
+                    for (int x = xx; (x < xx + blurSize && x < image.Width); x++) {
+                        for (int y = yy; (y < yy + blurSize && y < image.Height); y++) {
+                            Color pixel = image.GetPixel(x, y);
+                            avgA += pixel.A;
+                            avgR += pixel.R;
+                            avgG += pixel.G;
+                            avgB += pixel.B;
+
+                            blurPixelCount++;
+                        }
+                    }
+                    avgA = avgA / blurPixelCount;
+                    avgR = avgR / blurPixelCount;
+                    avgG = avgG / blurPixelCount;
+                    avgB = avgB / blurPixelCount;
+
+                    // now that we know the average for the blur size, set each pixel to that color
+                    for (int x = xx; x < xx + blurSize && x < image.Width && x < rectangle.Width; x++) {
+                        for (int y = yy; y < yy + blurSize && y < image.Height && y < rectangle.Height; y++) {
+                            blurred.SetPixel(x, y, Color.FromArgb(avgA, avgR, avgG, avgB));
+                        }
+                    }
+                }
+            }
+
+            return blurred;
+        }
+
         public static Bitmap ExtractAlpha(Bitmap file) {
             Bitmap image = new Bitmap(file);
             LockBitmap source = new LockBitmap(image);
@@ -620,5 +723,23 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 String.Concat(fName, suffix, fExt)) : "";
         }
 
+        public static void EraseTeeth(Bitmap bitmap) {
+            LockBitmap source = new LockBitmap(bitmap);
+            source.LockBits();
+            for (int y = 0; y < bitmap.Height; y++) {
+                if (y < 280) {
+                    for (int x = 0; x < bitmap.Width; x++) {
+                        Color sourcePixel = source.GetPixel(x, y);
+                        if (x < 509) {
+                            Color col = Color.FromArgb(0, 0, 0, 0);
+                            source.SetPixel(x, y, col);
+                        }
+                    }
+                } else {
+                    break;
+                }
+            };
+            source.UnlockBits();
+        }
     }
 }

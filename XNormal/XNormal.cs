@@ -12,7 +12,7 @@ namespace FFXIVLooseTextureCompiler {
             "  <LowPolyModel DefaultMeshScale=\"100.000000\">\r\n" +
             "    <Mesh Visible=\"true\" File=\"{2}\" AverageNormals=\"UseExportedNormals\" MaxRayDistanceFront=\"100.000000\" MaxRayDistanceBack=\"100.000000\" UseCage=\"false\" NormapMapType=\"Tangent-space\" UsePerVertexColors=\"true\" UseFresnel=\"false\" FresnelRefractiveIndex=\"1.330000\" ReflectHDRMult=\"1.000000\" VectorDisplacementTS=\"false\" VDMSwizzleX=\"X+\" VDMSwizzleY=\"Y+\" VDMSwizzleZ=\"Z+\" BatchProtect=\"false\" CastShadows=\"true\" ReceiveShadows=\"true\" BackfaceCull=\"true\" NMSwizzleX=\"X+\" NMSwizzleY=\"Y+\" NMSwizzleZ=\"Z+\" HighpolyNormalsOverrideTangentSpace=\"true\" TransparencyMode=\"None\" AlphaTestValue=\"127\" Matte=\"false\" Scale=\"100.000000\" MatchUVs=\"false\" UOffset=\"0.000000\" VOffset=\"0.000000\" PositionOffset=\"0.0000;0.0000;0.0000\"/>\r\n" +
             "  </LowPolyModel>\r\n" +
-            "  <GenerateMaps GenNormals=\"false\" Width=\"4096\" Height=\"4096\" EdgePadding=\"8\" BucketSize=\"32\" TangentSpace=\"true\" ClosestIfFails=\"{5}\" DiscardRayBackFacesHits=\"true\" File=\"{3}\" SwizzleX=\"X+\" SwizzleY=\"Y+\" SwizzleZ=\"Z+\" AA=\"8\" BakeHighpolyBaseTex=\"true\" BakeHighpolyBaseTextureDrawObjectIDIfNoTexture=\"false\" GenHeights=\"false\" HeightTonemap=\"Interactive\" HeightTonemapMin=\"-100.000000\" HeightTonemapMax=\"100.000000\" GenAO=\"false\" AORaysPerSample=\"128\" AODistribution=\"Uniform\" AOConeAngle=\"162.000000\" AOBias=\"0.080000\" AOAllowPureOccluded=\"true\" AOLimitRayDistance=\"false\" AOAttenConstant=\"1.000000\" AOAttenLinear=\"0.000000\" AOAttenCuadratic=\"0.000000\" AOJitter=\"false\" AOIgnoreBackfaceHits=\"false\" GenBent=\"false\" BentRaysPerSample=\"128\" BentConeAngle=\"162.000000\" BentBias=\"0.080000\" BentTangentSpace=\"false\" BentLimitRayDistance=\"false\" BentJitter=\"false\" BentDistribution=\"Uniform\" BentSwizzleX=\"X+\" BentSwizzleY=\"Y+\" BentSwizzleZ=\"Z+\" GenPRT=\"false\" PRTRaysPerSample=\"128\" PRTConeAngle=\"179.500000\" PRTBias=\"0.080000\" PRTLimitRayDistance=\"false\" PRTJitter=\"false\" PRTNormalize=\"true\" PRTThreshold=\"0.005000\" GenProximity=\"false\" ProximityRaysPerSample=\"128\" ProximityConeAngle=\"80.000000\" ProximityLimitRayDistance=\"true\" ProximityFlipNormals=\"false\" ProximityFlipValue=\"false\" GenConvexity=\"false\" ConvexityScale=\"1.000000\" GenThickness=\"false\" GenCavity=\"false\" CavityRaysPerSample=\"128\" CavityJitter=\"false\" CavitySearchRadius=\"0.500000\" CavityContrast=\"1.250000\" CavitySteps=\"4\" GenWireRays=\"false\" RenderRayFails=\"true\" RenderWireframe=\"true\" GenDirections=\"false\" DirectionsTS=\"false\" DirectionsSwizzleX=\"X+\" DirectionsSwizzleY=\"Y+\" DirectionsSwizzleZ=\"Z+\" DirectionsTonemap=\"Interactive\" DirectionsTonemapMin=\"false\" DirectionsTonemapMax=\"false\" GenRadiosityNormals=\"false\" RadiosityNormalsRaysPerSample=\"128\" RadiosityNormalsDistribution=\"Uniform\" RadiosityNormalsConeAngle=\"162.000000\" RadiosityNormalsBias=\"0.080000\" RadiosityNormalsLimitRayDistance=\"false\" RadiosityNormalsAttenConstant=\"1.000000\" RadiosityNormalsAttenLinear=\"0.000000\" RadiosityNormalsAttenCuadratic=\"0.000000\" RadiosityNormalsJitter=\"false\" RadiosityNormalsContrast=\"1.000000\" RadiosityNormalsEncodeAO=\"true\" RadiosityNormalsCoordSys=\"AliB\" RadiosityNormalsAllowPureOcclusion=\"false\" BakeHighpolyVCols=\"false\" GenCurv=\"false\" CurvRaysPerSample=\"128\" CurvBias=\"0.000100\" CurvConeAngle=\"162.000000\" CurvJitter=\"false\" CurvSearchDistance=\"1.000000\" CurvTonemap=\"3Col\" CurvDistribution=\"Cosine\" CurvAlgorithm=\"Average\" CurvSmoothing=\"true\" GenDerivNM=\"false\" GenTranslu=\"false\" TransluRaysPerSample=\"128\" TransluDistribution=\"Uniform\" TransluConeAngle=\"162.000000\" TransluBias=\"0.000500\" TransluDist=\"1.000000\" TransluJitter=\"false\">\r\n" +
+            "  <GenerateMaps GenNormals=\"false\" Width=\"{5}\" Height=\"{6}\" EdgePadding=\"8\" BucketSize=\"32\" TangentSpace=\"true\" ClosestIfFails=\"{7}\" DiscardRayBackFacesHits=\"true\" File=\"{3}\" SwizzleX=\"X+\" SwizzleY=\"Y+\" SwizzleZ=\"Z+\" AA=\"8\" BakeHighpolyBaseTex=\"true\" BakeHighpolyBaseTextureDrawObjectIDIfNoTexture=\"false\" GenHeights=\"false\" HeightTonemap=\"Interactive\" HeightTonemapMin=\"-100.000000\" HeightTonemapMax=\"100.000000\" GenAO=\"false\" AORaysPerSample=\"128\" AODistribution=\"Uniform\" AOConeAngle=\"162.000000\" AOBias=\"0.080000\" AOAllowPureOccluded=\"true\" AOLimitRayDistance=\"false\" AOAttenConstant=\"1.000000\" AOAttenLinear=\"0.000000\" AOAttenCuadratic=\"0.000000\" AOJitter=\"false\" AOIgnoreBackfaceHits=\"false\" GenBent=\"false\" BentRaysPerSample=\"128\" BentConeAngle=\"162.000000\" BentBias=\"0.080000\" BentTangentSpace=\"false\" BentLimitRayDistance=\"false\" BentJitter=\"false\" BentDistribution=\"Uniform\" BentSwizzleX=\"X+\" BentSwizzleY=\"Y+\" BentSwizzleZ=\"Z+\" GenPRT=\"false\" PRTRaysPerSample=\"128\" PRTConeAngle=\"179.500000\" PRTBias=\"0.080000\" PRTLimitRayDistance=\"false\" PRTJitter=\"false\" PRTNormalize=\"true\" PRTThreshold=\"0.005000\" GenProximity=\"false\" ProximityRaysPerSample=\"128\" ProximityConeAngle=\"80.000000\" ProximityLimitRayDistance=\"true\" ProximityFlipNormals=\"false\" ProximityFlipValue=\"false\" GenConvexity=\"false\" ConvexityScale=\"1.000000\" GenThickness=\"false\" GenCavity=\"false\" CavityRaysPerSample=\"128\" CavityJitter=\"false\" CavitySearchRadius=\"0.500000\" CavityContrast=\"1.250000\" CavitySteps=\"4\" GenWireRays=\"false\" RenderRayFails=\"true\" RenderWireframe=\"true\" GenDirections=\"false\" DirectionsTS=\"false\" DirectionsSwizzleX=\"X+\" DirectionsSwizzleY=\"Y+\" DirectionsSwizzleZ=\"Z+\" DirectionsTonemap=\"Interactive\" DirectionsTonemapMin=\"false\" DirectionsTonemapMax=\"false\" GenRadiosityNormals=\"false\" RadiosityNormalsRaysPerSample=\"128\" RadiosityNormalsDistribution=\"Uniform\" RadiosityNormalsConeAngle=\"162.000000\" RadiosityNormalsBias=\"0.080000\" RadiosityNormalsLimitRayDistance=\"false\" RadiosityNormalsAttenConstant=\"1.000000\" RadiosityNormalsAttenLinear=\"0.000000\" RadiosityNormalsAttenCuadratic=\"0.000000\" RadiosityNormalsJitter=\"false\" RadiosityNormalsContrast=\"1.000000\" RadiosityNormalsEncodeAO=\"true\" RadiosityNormalsCoordSys=\"AliB\" RadiosityNormalsAllowPureOcclusion=\"false\" BakeHighpolyVCols=\"false\" GenCurv=\"false\" CurvRaysPerSample=\"128\" CurvBias=\"0.000100\" CurvConeAngle=\"162.000000\" CurvJitter=\"false\" CurvSearchDistance=\"1.000000\" CurvTonemap=\"3Col\" CurvDistribution=\"Cosine\" CurvAlgorithm=\"Average\" CurvSmoothing=\"true\" GenDerivNM=\"false\" GenTranslu=\"false\" TransluRaysPerSample=\"128\" TransluDistribution=\"Uniform\" TransluConeAngle=\"162.000000\" TransluBias=\"0.000500\" TransluDist=\"1.000000\" TransluJitter=\"false\">\r\n" +
             "    <NMBackgroundColor R=\"128\" G=\"128\" B=\"255\"/>\r\n" +
             "    <BakeHighpolyBaseTextureNoTexCol R=\"255\" G=\"0\" B=\"0\"/>\r\n" +
             "    <BakeHighpolyBaseTextureBackgroundColor R=\"0\" G=\"0\" B=\"0\"/>\r\n" +
@@ -235,7 +235,7 @@ namespace FFXIVLooseTextureCompiler {
             : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, xNormal);
             Process process = Process.Start(executable);
         }
-        public static void CallXNormal(string inputFBX, string outputFBX, string inputImage, string outputImage) {
+        public static void CallXNormal(string inputFBX, string outputFBX, string inputImage, string outputImage, int width = 4096, int height = 4096) {
             userDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\FFXIVLooseTextureCompiler\";
             string path = Path.Combine(userDataPath, xmlFileName);
             string executable = !string.IsNullOrEmpty(xNormalPathOverride) ? xNormalPathOverride
@@ -245,15 +245,20 @@ namespace FFXIVLooseTextureCompiler {
                 Directory.CreateDirectory(userDataPath);
             }
             using (StreamWriter writer = new StreamWriter(path)) {
+                string inputString = CleanXmlEscapeSequences(Path.Combine(!string.IsNullOrEmpty(basePathOverride) ? basePathOverride : AppDomain.CurrentDomain.BaseDirectory, inputFBX));
+                string inputImageString = CleanXmlEscapeSequences(inputImage);
+                string outputString = CleanXmlEscapeSequences(!string.IsNullOrEmpty(basePathOverride) ? basePathOverride : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, outputFBX));
+                string outputImageString = CleanXmlEscapeSequences(outputImage);
                 writer.Write(string.Format(xmlFile,
-                    CleanXmlEscapeSequences(Path.Combine(!string.IsNullOrEmpty(basePathOverride) ? basePathOverride :
-                    AppDomain.CurrentDomain.BaseDirectory, inputFBX)),
-                    CleanXmlEscapeSequences(inputImage),
-                    CleanXmlEscapeSequences(!string.IsNullOrEmpty(basePathOverride) ? basePathOverride
-                    : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, outputFBX)),
-                    CleanXmlEscapeSequences(outputImage),
+                    inputString,
+                    inputImageString,
+                    outputString,
+                    outputImageString,
                     false.ToString().ToLower(),
-                    outputImage.Contains("gen2").ToString().ToLower()));
+                    width.ToString(),
+                    height.ToString(),
+                    outputImage.Contains("gen2").ToString().ToLower())
+                   );
             }
             ProcessStartInfo processStartInfo = new ProcessStartInfo(@"""" + executable + @"""");
             processStartInfo.UseShellExecute = true;
@@ -261,8 +266,12 @@ namespace FFXIVLooseTextureCompiler {
             Process process = Process.Start(processStartInfo);
             process.WaitForExit();
             Thread.Sleep(100);
+            string output = outputImage.Replace("_baseTexBaked", null);
+            if (File.Exists(outputImage)) {
+                File.Delete(outputImage);
+            }
             File.Move(ImageManipulation.AddSuffix(outputImage.Replace("_baseTexBaked", null), "_baseTexBaked"),
-                outputImage.Replace("_baseTexBaked", null));
+               output);
         }
         public void ProcessBatches() {
             List<XNormalExportJob> exportJobs = new List<XNormalExportJob>();
@@ -303,7 +312,7 @@ namespace FFXIVLooseTextureCompiler {
                             CleanXmlEscapeSequences(Path.Combine(!string.IsNullOrEmpty(basePathOverride)
                             ? basePathOverride : AppDomain.CurrentDomain.BaseDirectory, xNormalExportJob.OutputModel)),
                             CleanXmlEscapeSequences(xNormalExportJob.OutputTexturePath.Replace("_baseTexBaked", null)),
-                            xNormalExportJob.IsNormalMap.ToString().ToLower(), /*true*/
+                            xNormalExportJob.IsNormalMap.ToString().ToLower(), 4096.ToString(), 4096.ToString(),
                             xNormalExportJob.OutputModel.Contains("gen2").ToString().ToLower()));
                         }
                         generationCache.Add(xNormalExportJob.OutputTexturePath, xNormalExportJob.OutputTexturePath);
