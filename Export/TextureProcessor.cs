@@ -515,7 +515,7 @@ namespace FFXIVLooseTextureCompiler {
                         try {
                             JsonSerializer serializer = new JsonSerializer();
                             Group group = (Group)serializer.Deserialize(jsonFile, typeof(Group));
-                            if (group.Description.Contains("-generated")) {
+                            if (!string.IsNullOrEmpty(group.Description) && group.Description.Contains("-generated")) {
                                 isGenerated = true;
                             }
                         } catch {
@@ -694,7 +694,7 @@ namespace FFXIVLooseTextureCompiler {
                                                     g.DrawImage(GetMergedBitmap(inputFile), 0, 0, bitmap.Width, bitmap.Height);
                                                     output = ImageManipulation.MergeNormals(image, diffuse, canvasImage, null, diffuseNormal, modifier);
                                                 } else {
-                                                    output = ImageManipulation.MergeNormals(TexLoader.ResolveBitmap(inputFile), diffuse, canvasImage, null, diffuseNormal,modifier);
+                                                    output = ImageManipulation.MergeNormals(TexLoader.ResolveBitmap(inputFile), diffuse, canvasImage, null, diffuseNormal, modifier);
                                                 }
                                             }
                                         }
