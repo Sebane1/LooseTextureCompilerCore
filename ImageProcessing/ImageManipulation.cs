@@ -1,4 +1,5 @@
-﻿using Lumina.Data.Files;
+﻿using LooseTextureCompilerCore;
+using Lumina.Data.Files;
 using System.Drawing;
 using System.Drawing.Imaging;
 using Color = System.Drawing.Color;
@@ -25,6 +26,27 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return image;
         }
 
+        public static BodyUVType FemaleBodyUVClassifier(string texture) {
+            Bitmap image = new Bitmap(TexLoader.ResolveBitmap(texture));
+            if (image.Width == image.Height / 2) {
+                return BodyUVType.Gen2;
+            } else {
+                LockBitmap source = new LockBitmap(image);
+                source.LockBits();
+                float yPos = 0.244140625f * image.Height;
+                int center = image.Width / 2;
+                Color firstPixel = source.GetPixel(center, (int)yPos);
+                Color secondPixel = source.GetPixel(center, (int)yPos + 1);
+                source.UnlockBits();
+                if (firstPixel.A == 0) {
+                    return BodyUVType.None;
+                } else if (firstPixel.ToArgb() == secondPixel.ToArgb()) {
+                    return BodyUVType.Bibo;
+                } else {
+                    return BodyUVType.Gen3;
+                }
+            }
+        }
         private static int FlattenToThreshold(float colourValue, float threshhold) {
             float nextPixel = ((colourValue / 255f) * (255 - threshhold)) + threshhold;
             if (nextPixel > 255f) {
@@ -552,5 +574,14 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return !string.IsNullOrEmpty(filename) ? Path.Combine(fDir, String.Concat(fName, suffix, fExt)) : "";
         }
 
+    }
+}
+
+namespace LooseTextureCompilerCore {
+    public enum BodyUVType {
+        None,
+        Gen2,
+        Bibo,
+        Gen3,
     }
 }
