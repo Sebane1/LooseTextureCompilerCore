@@ -1,5 +1,6 @@
 ﻿using LooseTextureCompilerCore;
 using Lumina.Data.Files;
+using SixLabors.ImageSharp.Memory;
 using System.Drawing;
 using System.Drawing.Imaging;
 using Color = System.Drawing.Color;
@@ -47,6 +48,23 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 }
             }
         }
+
+        public static UVMapType UVMapTypeClassifier(string texture) {
+            Bitmap image = new Bitmap(TexLoader.ResolveBitmap(texture));
+            LockBitmap source = new LockBitmap(image);
+            source.LockBits();
+            Color uvMapTest = source.GetPixel(0, 0);
+            Color uvMapTest2 = source.GetPixel(image.Width, image.Height);
+            source.UnlockBits();
+            if (uvMapTest.B == 255 && uvMapTest2.B == 255) {
+                return UVMapType.Normal;
+            } else if (uvMapTest.B == 152 && uvMapTest2.B == 152) {
+                return UVMapType.Multi;
+            } else {
+                return UVMapType.Diffuse;
+            }
+        }
+
         private static int FlattenToThreshold(float colourValue, float threshhold) {
             float nextPixel = ((colourValue / 255f) * (255 - threshhold)) + threshhold;
             if (nextPixel > 255f) {
@@ -583,5 +601,10 @@ namespace LooseTextureCompilerCore {
         Gen2,
         Bibo,
         Gen3,
+    }
+    public enum UVMapType {
+        Diffuse,
+        Normal,
+        Multi
     }
 }
