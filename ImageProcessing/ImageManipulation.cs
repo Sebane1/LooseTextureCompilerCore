@@ -26,6 +26,12 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return image;
         }
 
+        public static void BulkDDSToPng(IEnumerable<string> paths) {
+            foreach (string path in paths) {
+                TexLoader.ResolveBitmap(path).Save(ImageManipulation.ReplaceExtension(path, ".png"), ImageFormat.Png);
+            }
+        }
+
         private static int FlattenToThreshold(float colourValue, float threshhold) {
             float nextPixel = ((colourValue / 255f) * (255 - threshhold)) + threshhold;
             if (nextPixel > 255f) {
