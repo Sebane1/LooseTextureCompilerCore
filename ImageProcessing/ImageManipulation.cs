@@ -268,6 +268,43 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 return correctionImage;
             }
         }
+        public static Bitmap EyeCorrection(Bitmap correctionMap, Bitmap file, bool blurResult) {
+            Bitmap image = new Bitmap(file);
+            Bitmap correctionImage = new Bitmap(correctionMap);
+            LockBitmap source = new LockBitmap(image);
+            LockBitmap correctionSource = new LockBitmap(correctionImage);
+            Color[] xColors = new Color[correctionMap.Width];
+            source.LockBits();
+            correctionSource.LockBits();
+            Color correctionColor = Color.White;
+            for (int y = correctionMap.Height - 1; y > 0; y--) {
+                for (int x = correctionMap.Width - 1; x > 0; x--) {
+                    Color correctionPixel = correctionSource.GetPixel(x, y);
+                    Color sourcePixel = source.GetPixel(x, y);
+                    if (correctionPixel.B == 0 && correctionPixel.R == 0 && correctionPixel.G == 255 && correctionPixel.A == 255) {
+                        correctionColor = Color.FromArgb(sourcePixel.A, sourcePixel.R, sourcePixel.G, sourcePixel.B);
+                        correctionSource.SetPixel(x, y, xColors[x]);
+                    }
+                    if (correctionPixel.B == 255 && correctionPixel.R == 0 && correctionPixel.G == 0 && correctionPixel.A == 255) {
+                        xColors[x] = Color.FromArgb(sourcePixel.A, sourcePixel.R, sourcePixel.G, sourcePixel.B);
+                        correctionSource.SetPixel(x, y, xColors[x]);
+                    } else if (correctionPixel.R == 255 && correctionPixel.G == 0 && correctionPixel.G == 0 && correctionPixel.A == 255) {
+                        correctionSource.SetPixel(x, y, x > 165 ? xColors[x] : correctionColor);
+                    } else {
+                        correctionSource.SetPixel(x, y, Color.FromArgb(0, sourcePixel.R, sourcePixel.G, sourcePixel.B));
+                    }
+                }
+            };
+            source.UnlockBits();
+            correctionSource.UnlockBits();
+            if (blurResult) {
+                var blur = new GaussianBlur(correctionImage);
+                var blurredEye = blur.Process(3);
+                return blurredEye;
+            } else {
+                return correctionImage;
+            }
+        }
 
         public static Bitmap Blur(Bitmap image, Rectangle rectangle, Int32 blurSize) {
             Bitmap blurred = new Bitmap(image.Width, image.Height);
