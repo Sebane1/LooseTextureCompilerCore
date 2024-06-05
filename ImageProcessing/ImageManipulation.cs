@@ -784,5 +784,20 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             };
             source.UnlockBits();
         }
+
+        public static void ClearOldHorns(Bitmap bitmap) {
+            LockBitmap source = new LockBitmap(bitmap);
+            source.LockBits();
+            for (int y = 0; y < bitmap.Height; y++) {
+                for (int x = 0; x < bitmap.Width; x++) {
+                    Color sourcePixel = source.GetPixel(x, y);
+                    if (x > bitmap.Width / 2) {
+                        Color col = Color.FromArgb(0, 0, 0, 0);
+                        source.SetPixel(x, y, col);
+                    }
+                }
+            };
+            source.UnlockBits();
+        }
     }
 }
