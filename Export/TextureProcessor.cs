@@ -618,21 +618,16 @@ namespace FFXIVLooseTextureCompiler {
                         if (stream.Length > 0) {
                             PenumbraTextureImporter.PngToTex(stream, out data);
                             stream.Position = 0;
-                            Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
-                            while (File.Exists(outputFile) && TexLoader.IsFileLocked(outputFile)) {
-                                Thread.Sleep(500);
-                            }
-                            File.WriteAllBytesAsync(outputFile.Replace(".tex", ".png"), stream.ToArray());
                         }
                     }
                 }
-                //if (data.Length > 0) {
-                //    Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
-                //    while (File.Exists(outputFile) && TexLoader.IsFileLocked(outputFile)) {
-                //        Thread.Sleep(500);
-                //    }
-                //    File.WriteAllBytesAsync(outputFile, data);
-                //}
+                if (data.Length > 0) {
+                    Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
+                    while (File.Exists(outputFile) && TexLoader.IsFileLocked(outputFile)) {
+                        Thread.Sleep(500);
+                    }
+                    File.WriteAllBytesAsync(outputFile, data);
+                }
                 if (OnProgressChange != null) {
                     OnProgressChange.Invoke(this, EventArgs.Empty);
                 }

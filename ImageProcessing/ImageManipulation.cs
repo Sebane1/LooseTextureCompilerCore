@@ -1,6 +1,7 @@
 ﻿using Lumina.Data.Files;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using Color = System.Drawing.Color;
 using Point = System.Drawing.Point;
 using Rectangle = System.Drawing.Rectangle;
@@ -798,6 +799,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 }
             };
             source.UnlockBits();
+        }
+
+        public static void ConvertTextureToTex(string fileName) {
+            
+            TexLoader.ResolveBitmap(fileName).Save(ImageManipulation.ReplaceExtension(fileName, ".tex"), ImageFormat.Png);
         }
     }
 }
