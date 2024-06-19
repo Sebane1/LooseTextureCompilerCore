@@ -32,9 +32,9 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             } else if (textureSet.InternalDiffusePath.Contains("chara/human/c1101/obj/body/b0001/texture/v01_c1101b0001_g_d")) {
                 ConfigureOtopopCrossCompatibility(textureSet, race);
             } else if (textureSet.InternalDiffusePath.Contains("--c1101b0001_")) {
-                ConfigureLalafellVanillaCrossCompatibility(textureSet, race);
+                ConfigureLalafelVanillaCrossCompatibility(textureSet, race);
             } else if (textureSet.InternalDiffusePath.Contains("v01_c1101b0001_b")) {
-                ConfigureAsymLalafellCrossCompatibility(textureSet, race);
+                ConfigureAsymLalafelCrossCompatibility(textureSet, race);
             } else if (textureSet.InternalDiffusePath.Contains("_b_d")
                 && !textureSet.InternalDiffusePath.Contains("fac")) {
                 ConfigureTBSECrossCompatibility(textureSet, race);
@@ -90,8 +90,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Normal)).Save(faceVanilla.Normal);
             }
 
-            if (!string.IsNullOrEmpty(textureSet.Multi)) {
-                ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Multi)).Save(faceVanilla.Multi);
+            if (!string.IsNullOrEmpty(textureSet.Mask)) {
+                ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Mask)).Save(faceVanilla.Mask);
             }
 
             if (!string.IsNullOrEmpty(textureSet.Glow)) {
@@ -116,8 +116,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             if (!string.IsNullOrEmpty(textureSet.Normal)) {
                 ImageManipulation.MirrorAndDuplicate(TexLoader.ResolveBitmap(textureSet.Normal)).Save(asymFace.Normal);
             }
-            if (!string.IsNullOrEmpty(textureSet.Multi)) {
-                ImageManipulation.MirrorAndDuplicate(TexLoader.ResolveBitmap(textureSet.Multi)).Save(asymFace.Multi);
+            if (!string.IsNullOrEmpty(textureSet.Mask)) {
+                ImageManipulation.MirrorAndDuplicate(TexLoader.ResolveBitmap(textureSet.Mask)).Save(asymFace.Mask);
             }
 
             if (!string.IsNullOrEmpty(textureSet.Glow)) {
@@ -138,17 +138,17 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 case 0:
                     destinationTextureSet.InternalDiffusePath = RacePaths.GetBodyTexturePath(0, gender, body, race, 0, uniqueAuRa);
                     destinationTextureSet.InternalNormalPath = RacePaths.GetBodyTexturePath(1, gender, body, race, 0, uniqueAuRa);
-                    destinationTextureSet.InternalMultiPath = RacePaths.GetBodyTexturePath(2, gender, body, race, 0, uniqueAuRa);
+                    destinationTextureSet.InternalMaskPath = RacePaths.GetBodyTexturePath(2, gender, body, race, 0, uniqueAuRa);
                     break;
                 case 1:
                     if (asymFace) {
                         destinationTextureSet.InternalDiffusePath = baseTextureSet.InternalDiffusePath.Replace("fac_b_", "fac_");
                         destinationTextureSet.InternalNormalPath = baseTextureSet.InternalNormalPath.Replace("fac_b_", "fac_");
-                        destinationTextureSet.InternalMultiPath = baseTextureSet.InternalMultiPath.Replace("fac_b_", "fac_");
+                        destinationTextureSet.InternalMaskPath = baseTextureSet.InternalMaskPath.Replace("fac_b_", "fac_");
                     } else {
                         destinationTextureSet.InternalDiffusePath = baseTextureSet.InternalDiffusePath.Replace("fac_", "fac_b_");
                         destinationTextureSet.InternalNormalPath = baseTextureSet.InternalNormalPath.Replace("fac_", "fac_b_");
-                        destinationTextureSet.InternalMultiPath = baseTextureSet.InternalMultiPath.Replace("fac_", "fac_b_");
+                        destinationTextureSet.InternalMaskPath = baseTextureSet.InternalMaskPath.Replace("fac_", "fac_b_");
                     }
                     destinationTextureSet.BackupTexturePaths = null;
                     break;
@@ -157,14 +157,14 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 ImageManipulation.AddSuffix(baseTextureSet.Diffuse, $"_{prefix}_d_baseTexBaked"), ".png");
             destinationTextureSet.Normal = ImageManipulation.ReplaceExtension(
                 ImageManipulation.AddSuffix(baseTextureSet.Normal, $"_{prefix}_n_baseTexBaked"), ".png");
-            destinationTextureSet.Multi = ImageManipulation.ReplaceExtension(
-                ImageManipulation.AddSuffix(baseTextureSet.Multi, $"_{prefix}_m_baseTexBaked"), ".png");
+            destinationTextureSet.Mask = ImageManipulation.ReplaceExtension(
+                ImageManipulation.AddSuffix(baseTextureSet.Mask, $"_{prefix}_m_baseTexBaked"), ".png");
             destinationTextureSet.Glow = ImageManipulation.ReplaceExtension(
                 ImageManipulation.AddSuffix(baseTextureSet.Glow, $"_{prefix}_g_baseTexBaked"), ".png");
             destinationTextureSet.NormalMask = ImageManipulation.ReplaceExtension(
                 ImageManipulation.AddSuffix(baseTextureSet.NormalMask, $"_{prefix}_nm_baseTexBaked"), ".png");
             destinationTextureSet.IgnoreNormalGeneration = baseTextureSet.IgnoreNormalGeneration;
-            destinationTextureSet.IgnoreMultiGeneration = baseTextureSet.IgnoreMultiGeneration;
+            destinationTextureSet.IgnoreMaskGeneration = baseTextureSet.IgnoreMaskGeneration;
             destinationTextureSet.InvertNormalGeneration = baseTextureSet.InvertNormalGeneration;
         }
 
@@ -173,14 +173,14 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             destinationTextureSet.TextureSetName = name;
             destinationTextureSet.InternalDiffusePath = RacePaths.GetBodyTexturePath(0, gender, body, 0, race);
             destinationTextureSet.InternalNormalPath = RacePaths.GetBodyTexturePath(1, gender, body, 0, race);
-            destinationTextureSet.InternalMultiPath = RacePaths.GetBodyTexturePath(2, gender, body, 0, race);
+            destinationTextureSet.InternalMaskPath = RacePaths.GetBodyTexturePath(2, gender, body, 0, race);
             destinationTextureSet.Diffuse = baseTextureSet.Diffuse;
             destinationTextureSet.Normal = baseTextureSet.Normal;
-            destinationTextureSet.Multi = baseTextureSet.Multi;
+            destinationTextureSet.Mask = baseTextureSet.Mask;
             destinationTextureSet.Glow = baseTextureSet.Glow;
             destinationTextureSet.NormalMask = baseTextureSet.NormalMask;
             destinationTextureSet.IgnoreNormalGeneration = baseTextureSet.IgnoreNormalGeneration;
-            destinationTextureSet.IgnoreMultiGeneration = baseTextureSet.IgnoreMultiGeneration;
+            destinationTextureSet.IgnoreMaskGeneration = baseTextureSet.IgnoreMaskGeneration;
             destinationTextureSet.InvertNormalGeneration = baseTextureSet.InvertNormalGeneration;
         }
 
@@ -207,12 +207,12 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             }
             string vanillaRaen =
                  Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                 tbseVanilla.BackupTexturePaths.DiffuseRaen);
+                 tbseVanilla.BackupTexturePaths.DiffuseSecondary);
             if (!File.Exists(vanillaRaen)) {
                 TexLoader.WriteImageToXOR(ImageManipulation.CutInHalf(
                      TexLoader.ResolveBitmap(
                      Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                     textureSet.BackupTexturePaths.DiffuseRaen))), vanillaRaen);
+                     textureSet.BackupTexturePaths.DiffuseSecondary))), vanillaRaen);
             }
             string vanillaNormal = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                 tbseVanilla.BackupTexturePaths.Normal);
@@ -227,8 +227,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             if (File.Exists(textureSet.Normal)) {
                 ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Normal)).Save(tbseVanilla.Normal);
             }
-            if (File.Exists(textureSet.Multi)) {
-                ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Multi)).Save(tbseVanilla.Multi);
+            if (File.Exists(textureSet.Mask)) {
+                ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Mask)).Save(tbseVanilla.Mask);
             }
             if (File.Exists(textureSet.Glow)) {
                 ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Glow)).Save(tbseVanilla.Glow);
@@ -240,7 +240,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             textureSet.ChildSets.Add(tbseVanilla);
         }
 
-        private static void ConfigureLalafellVanillaCrossCompatibility(TextureSet textureSet, int race) {
+        private static void ConfigureLalafelVanillaCrossCompatibility(TextureSet textureSet, int race) {
             textureSet.BackupTexturePaths = BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[2];
 
             TextureSet otopop = new TextureSet();
@@ -255,7 +255,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             textureSet.ChildSets.Add(otopop);
         }
 
-        private static void ConfigureAsymLalafellCrossCompatibility(TextureSet textureSet, int race) {
+        private static void ConfigureAsymLalafelCrossCompatibility(TextureSet textureSet, int race) {
             textureSet.BackupTexturePaths = BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
 
             TextureSet otopop = new TextureSet();
@@ -277,11 +277,11 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             ConfigureTextureSet("Vanilla [IsChild]", "vanilla_lala", race, 0, 0, vanilla, textureSet);
             vanilla.BackupTexturePaths = BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
 
-            TextureSet asymLalafell = new TextureSet();
-            ConfigureTextureSet("Asym Lala [IsChild]", "asym_lala", race, 0, 8, asymLalafell, textureSet);
-            asymLalafell.BackupTexturePaths = BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
+            TextureSet asymLalafel = new TextureSet();
+            ConfigureTextureSet("Asym Lala [IsChild]", "asym_lala", race, 0, 8, asymLalafel, textureSet);
+            asymLalafel.BackupTexturePaths = BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
 
-            textureSet.ChildSets.Add(asymLalafell);
+            textureSet.ChildSets.Add(asymLalafel);
             textureSet.ChildSets.Add(vanilla);
         }
 

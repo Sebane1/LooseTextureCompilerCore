@@ -174,11 +174,11 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     }
                     break;
                 case 8:
-                    // Asymmetrical Vanilla Lalafell
+                    // Asymmetrical Vanilla Lalafel
                     if (race == 5) {
                         result = @"chara/human/c1101/obj/body/b0001/texture/v01_c1101b0001_b" + GetTextureType(texture, baseBody) + ".tex";
                     } else {
-                        result = "Asymmetrical Vanilla Lalafell is only compatible with lalafells";
+                        result = "Asymmetrical Vanilla Lalafel is only compatible with lalafells";
                     }
                     break;
             }
@@ -227,9 +227,44 @@ namespace FFXIVLooseTextureCompiler.Racial {
             return null;
         }
 
-        public static string GetFaceTexturePath(int selectedIndex)
-        {
-           return "chara/common/texture/decal_face/_decal_" + (selectedIndex + 1) + ".tex";
+        public static string GetFaceTexturePath(int selectedIndex) {
+            return "chara/common/texture/decal_face/_decal_" + (selectedIndex + 1) + ".tex";
+        }
+        public static string OldEyePathToNewEyeDiffusePath(string value) {
+            if (value.Contains("c0201") || value.Contains("c0401") || value.Contains("c1801")) {
+                return "chara/common/texture/eye/eye01_d.tex";
+            }
+            if (value.Contains("c0601") || value.Contains("c0501")) {
+                return "chara/common/texture/eye/eye09_d.tex";
+            }
+            if (value.Contains("c0801") || value.Contains("c0701")) {
+                return value.Contains("f010") ? "chara/common/texture/eye/eye03_d.tex" : "chara/common/texture/eye/eye02_d.tex";
+            }
+            if (value.Contains("c1001") || value.Contains("c1401") || value.Contains("c1301")) {
+                return "chara/common/texture/eye/eye10_d.tex";
+            }
+            if (value.Contains("c1201") || value.Contains("c1101")) {
+                return value.Contains("f010") ? "chara/common/texture/eye/eye05_d.tex" : "chara/common/texture/eye/eye04_d.tex";
+            }
+            if (value.Contains("c0101") || value.Contains("c0301") || value.Contains("c1701")) {
+                return "chara/common/texture/eye/eye11_d.tex";
+            }
+            if (value.Contains("c1501") || value.Contains("c1601")) {
+                return value.Contains("f010") ? "chara/common/texture/eye/eye07_d.tex" : "chara/common/texture/eye/eye06_d.tex";
+            }
+            return "";
+        }
+        public static string OldEyePathToNewEyeNormalPath(string value) {
+            if (value.Contains("c1501") || value.Contains("c1601")) {
+                return "chara/common/texture/eye/eye06_n.tex";
+            }
+            return "chara/common/texture/eye/eye01_n.tex";
+        }
+        public static string OldEyePathToNewEyeMultiPath(string value) {
+            if (value.Contains("c1501") || value.Contains("c1601")) {
+                return "chara/common/texture/eye/eye06_s.tex";
+            }
+            return "chara/common/texture/eye/eye01_s.tex";
         }
     }
 }

@@ -5,9 +5,9 @@ namespace FFXIVLooseTextureCompiler.Racial {
         private static List<string> subRaces = new List<string>() { "Midlander" , "Highlander","Wildwood","Duskwight","Seeker",
             "Keeper", "Sea Wolf", "Hellsguard", "Plainsfolk", "Dunesfolk", "Raen", "Xaela", "Helion", "The Lost", "Rava", "Veena" };
         private static List<string> races = new List<string>() { "Midlander","Highlander","Elezen","Miqo'te","Roegadyn",
-            "Lalafell","Raen","Xaela","Hrothgar","Viera",};
+            "Lalafel","Raen","Xaela","Hrothgar","Viera",};
         private static List<string> modelRaces = new List<string>() { "Midlander","Highlander","Elezen","Miqote","Roegadyn",
-            "Lalafell","Aura","Hrothgar","Viera",};
+            "Lalafel","Aura","Hrothgar","Viera",};
 
         private static RaceCode raceCodeBody = new RaceCode(new string[] {
             "0101","0301","0101","0101","0901","1101","1301","1301","1501","1701"}, new string[] {
@@ -23,7 +23,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
 
         private static List<RacialBodyIdentifiers> bodyIdentifiers = new List<RacialBodyIdentifiers>(){
             new RacialBodyIdentifiers("VANILLA",
-                new List<string>() { "201", "401", "201", "201", "401", "1101", "1401", "1401", "Invalid", "1801" }),
+                new List<string>() { "201", "401", "201", "201", "401", "1101", "1401", "1401", "1601", "1801" }),
             new RacialBodyIdentifiers("BIBO+",
                 new List<string>() { "midlander", "highlander", "midlander", "midlander", "highlander", "Invalid", "raen", "xaela", "Invalid", "viera" }),
             new RacialBodyIdentifiers("EVE",

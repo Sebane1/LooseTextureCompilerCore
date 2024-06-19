@@ -182,7 +182,7 @@ namespace LooseTextureCompilerCore.Racial {
             if (paths != null && paths.Length > 0) {
                 textureSet.InternalDiffusePath = paths[0];
                 textureSet.InternalNormalPath = paths[1];
-                textureSet.InternalMultiPath = paths[2];
+                textureSet.InternalMaskPath = paths[2];
             }
         }
     }

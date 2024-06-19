@@ -4,8 +4,8 @@ using System.Runtime.InteropServices;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
-    public static class MultiplyFilter {
-        public static Bitmap MultiplyImage(this Bitmap bitmap, byte r, byte g, byte b, PixelFormat format = PixelFormat.Format32bppArgb) {
+    public static class MaskplyFilter {
+        public static Bitmap MaskplyImage(this Bitmap bitmap, byte r, byte g, byte b, PixelFormat format = PixelFormat.Format32bppArgb) {
             var size = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
             var bitmapData = bitmap.LockBits(size, ImageLockMode.ReadOnly, format);
 

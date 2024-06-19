@@ -496,7 +496,7 @@ namespace KVImage {
             return ((Src < Dst) ? Src : Dst);
         }
 
-        // Multiply
+        // Maskply
         private byte BlendMultiply(ref byte Src, ref byte Dst) {
             return (byte)Math.Max(Math.Min((Src / 255.0f * Dst / 255.0f) * 255.0f, 255), 0);
         }

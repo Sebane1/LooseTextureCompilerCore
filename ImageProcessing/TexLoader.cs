@@ -139,7 +139,20 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     return new Bitmap(bitmap);
                 }
             } catch {
-                return new Bitmap(4096, 4096);
+                while (IsFileLocked(inputFile)) {
+                    Thread.Sleep(400);
+                }
+                try {
+                    using (Bitmap bitmap =
+                        inputFile.EndsWith(".tex") ? TexToBitmap(inputFile, dontUseAlpha) :
+                        inputFile.EndsWith(".dds") ? DDSToBitmap(inputFile, dontUseAlpha) :
+                        inputFile.EndsWith(".ltct") ? OpenImageFromXOR(inputFile) :
+                        new Bitmap(inputFile)) {
+                        return new Bitmap(bitmap);
+                    }
+                } catch {
+                    return new Bitmap(4096, 4096);
+                }
             }
         }
 

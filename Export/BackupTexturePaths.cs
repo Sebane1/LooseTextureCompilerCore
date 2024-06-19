@@ -1,21 +1,41 @@
 ﻿using FFXIVLooseTextureCompiler.ImageProcessing;
 using FFXIVLooseTextureCompiler.PathOrganization;
+using FFXIVLooseTextureCompiler.Racial;
 using LooseTextureCompilerCore.Export;
-using Lumina.Models.Materials;
+using Newtonsoft.Json;
 
 namespace FFXIVLooseTextureCompiler.Export {
     public class BackupTexturePaths {
-        public BackupTexturePaths(string path) {
+        public BackupTexturePaths(string path, bool isFace = false, int gender = 0, int subRace = 0, int face = 0) {
             _path = path;
+            if (!isFace) {
+                _diffuse = "diffuse.ltct";
+                _diffuseSecondary = "diffuseRaen.ltct";
+                _normal = "normal.ltct";
+            } else {
+                string fileName = (((subRace == 5 && gender == 1) || subRace == 11 ? 101 : 1) + face) + ".png";
+                _diffuse = "\\" + fileName;
+                _diffuseSecondary = "\\alpha\\" + fileName;
+                _normal = "\\" + (face + 1) + "n.png";
+            }
+            _isFace = isFace;
         }
-        const string _diffuse = "diffuse.ltct";
-        const string _diffuseRaen = "diffuseRaen.ltct";
-        const string _normal = "normal.ltct";
+        [JsonProperty]
+        string _diffuse = "";
+        [JsonProperty]
+        string _diffuseSecondary = "";
+        [JsonProperty]
+        string _normal = "";
+        [JsonProperty]
         string _path;
 
+        [JsonIgnore]
         public string Diffuse { get => _path + _diffuse; }
-        public string DiffuseRaen { get => _path + _diffuseRaen; }
+        [JsonIgnore]
+        public string DiffuseSecondary { get => _path + _diffuseSecondary; }
+        [JsonIgnore]
         public string Normal { get => _path + _normal; }
+        [JsonIgnore]
         public string InternalPath {
             get => _path; set {
                 _path = value;
@@ -81,8 +101,17 @@ namespace FFXIVLooseTextureCompiler.Export {
                          new BackupTexturePaths(@"res\textures\otopop\asym\"),
                          new BackupTexturePaths(@"res\textures\otopop\vanilla\")),
         };
+        private bool _isFace;
 
-        public static void AddBackupPaths(int gender, int race, TextureSet textureSet) {
+        public static void AddFaceBackupPaths(int gender, int subRace, int face, TextureSet textureSet) {
+            string outputTexture = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+            @"res\textures\face\" + (gender == 1 ? "feminine" : "masculine") + @"\" +
+            RaceInfo.ModelRaces[RaceInfo.SubRaceToModelRace(subRace)].ToLower());
+
+            textureSet.BackupTexturePaths = new BackupTexturePaths(outputTexture, true, gender, subRace, face);
+        }
+
+        public static void AddBodyBackupPaths(int gender, int race, TextureSet textureSet) {
             if (gender != 0) {
                 if (textureSet.SkinType > -1) {
                     if (textureSet.InternalDiffusePath.Contains("bibo")) {
@@ -142,5 +171,6 @@ namespace FFXIVLooseTextureCompiler.Export {
         internal static List<SkinType> Gen3SkinTypes { get => _gen3SkinTypes; set => _gen3SkinTypes = value; }
         internal static List<SkinType> TbseSkinTypes { get => _tbseSkinTypes; set => _tbseSkinTypes = value; }
         internal static List<SkinType> OtopopSkinTypes { get => _otopopSkinTypes; set => _otopopSkinTypes = value; }
+        public bool IsFace { get => _isFace; set => _isFace = value; }
     }
 }
