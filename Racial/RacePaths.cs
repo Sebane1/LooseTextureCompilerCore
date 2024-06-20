@@ -15,7 +15,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
             string selectedText = RaceInfo.SubRaces[subRaceValue];
             string faceIdCheck = "00";
             if (facePart == 2 && asym) {
-                if (selectedText.ToLower() == "the lost" || selectedText.ToLower() == "hellsgaurd" || selectedText.ToLower() == "highlander"
+                if (selectedText.ToLower() == "the lost" || selectedText.ToLower() == "hellsguard" || selectedText.ToLower() == "highlander"
                     || selectedText.ToLower() == "duskwight" || selectedText.ToLower() == "keeper" || selectedText.ToLower() == "dunesfolk"
                     || (selectedText.ToLower() == "xaela") || (selectedText.ToLower() == "veena")) {
                     faceIdCheck = "10";
@@ -40,27 +40,32 @@ namespace FFXIVLooseTextureCompiler.Racial {
                 string subRace = (gender == 0 ? RaceInfo.RaceCodeFace.Masculine[subRaceValue]
                     : RaceInfo.RaceCodeFace.Feminine[subRaceValue]);
                 int faceOffset = (faceType + (subRaceValue == 12 || subRaceValue == 13 ? 4 : 0)) + 1;
-                return "chara/human/c" + subRace + "/obj/face/f" + faceIdCheck + faceOffset + "/texture/--c"
+                return "chara/human/c" + subRace + "/obj/face/f" + faceIdCheck + faceOffset + "/texture/c"
                     + subRace + "f" + faceIdCheck + faceOffset
-                    + GetFacePart(facePart, asym) + GetTextureType(material, 0, true) + ".tex";
+                    + GetFacePart(facePart, asym) + GetTextureType(material, 0, true, true) + ".tex";
             } else {
-                return "chara/common/texture/catchlight_1.tex";
+                return "";
             }
         }
-
+        public static string PathCorrector(string path) {
+            if (path.Contains("obj/face") || path.Contains("obj/body") || path.Contains("texture/eye") || path.Contains("obj/hair")) {
+                return path.Replace("--", null).Replace("_d.tex", "_base.tex").Replace("_n.tex", "_norm.tex").Replace("_s.tex", "_mask.tex");
+            }
+            return path;
+        }
         public static string GetBodyTexturePath(int texture, int genderValue, int baseBody, int race, int tail, bool uniqueAuRa = false) {
             string result = "";
             string unique = RaceInfo.Races[race].Contains("Xaela") ? "0101" : "0001";
             switch (baseBody) {
                 case 0:
                     // Vanila
-                    if (texture == 2 && race == 5) {
-                        result = @"chara/common/texture/skin_m.tex";
+                    if (texture == 2) {
+                        result = @"chara/common/texture/skin_mask.tex";
                     } else {
                         string genderCode = (genderValue == 0 ? RaceInfo.RaceCodeBody.Masculine[race]
                             : RaceInfo.RaceCodeBody.Feminine[race]);
                         result = @"chara/human/c" + genderCode + @"/obj/body/b" + unique
-                            + @"/texture/--c" + genderCode + "b" + unique + GetTextureType(texture, baseBody) + ".tex";
+                            + @"/texture/c" + genderCode + "b" + unique + GetTextureType(texture, baseBody) + ".tex";
                     }
                     break;
                 case 1:
@@ -145,7 +150,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                             result = "TBSE and HRBODY are only compatible with masculine characters";
                         }
                     } else {
-                        result = "TBSE and HRBODY are not compatible with lalafells";
+                        result = "TBSE and HRBODY are not compatible with lalafels";
                     }
                     break;
                 case 6:
@@ -196,14 +201,14 @@ namespace FFXIVLooseTextureCompiler.Racial {
         public static string GetTextureType(int material, int baseBodyIndex, bool isface = false, bool isVerbose = false) {
             switch (material) {
                 case 0:
-                    return isVerbose ? "_diffuse" : "_d";
+                    return isVerbose ? "_base" : "_d";
                 case 1:
-                    return isVerbose ? "_normal" : "_n";
+                    return isVerbose ? "_norm" : "_n";
                 case 2:
                     if (baseBodyIndex == 1 && !isface) {
-                        return isVerbose ? "_multi" : "_m";
+                        return isVerbose ? "_mask" : "_m";
                     } else {
-                        return isVerbose ? "_multi" : "_s";
+                        return isVerbose ? "_mask" : "_s";
                     }
                 case 3:
                     return "_catchlight";
@@ -232,39 +237,39 @@ namespace FFXIVLooseTextureCompiler.Racial {
         }
         public static string OldEyePathToNewEyeDiffusePath(string value) {
             if (value.Contains("c0201") || value.Contains("c0401") || value.Contains("c1801")) {
-                return "chara/common/texture/eye/eye01_d.tex";
+                return "chara/common/texture/eye/eye01_base.tex";
             }
             if (value.Contains("c0601") || value.Contains("c0501")) {
-                return "chara/common/texture/eye/eye09_d.tex";
+                return "chara/common/texture/eye/eye09_base.tex";
             }
             if (value.Contains("c0801") || value.Contains("c0701")) {
-                return value.Contains("f010") ? "chara/common/texture/eye/eye03_d.tex" : "chara/common/texture/eye/eye02_d.tex";
+                return value.Contains("f010") ? "chara/common/texture/eye/eye03_base.tex" : "chara/common/texture/eye/eye02_base.tex";
             }
             if (value.Contains("c1001") || value.Contains("c1401") || value.Contains("c1301")) {
                 return "chara/common/texture/eye/eye10_d.tex";
             }
             if (value.Contains("c1201") || value.Contains("c1101")) {
-                return value.Contains("f010") ? "chara/common/texture/eye/eye05_d.tex" : "chara/common/texture/eye/eye04_d.tex";
+                return value.Contains("f010") ? "chara/common/texture/eye/eye05_base.tex" : "chara/common/texture/eye/eye04_base.tex";
             }
             if (value.Contains("c0101") || value.Contains("c0301") || value.Contains("c1701")) {
                 return "chara/common/texture/eye/eye11_d.tex";
             }
             if (value.Contains("c1501") || value.Contains("c1601")) {
-                return value.Contains("f010") ? "chara/common/texture/eye/eye07_d.tex" : "chara/common/texture/eye/eye06_d.tex";
+                return value.Contains("f010") ? "chara/common/texture/eye/eye07_base.tex" : "chara/common/texture/eye/eye06_base.tex";
             }
             return "";
         }
         public static string OldEyePathToNewEyeNormalPath(string value) {
             if (value.Contains("c1501") || value.Contains("c1601")) {
-                return "chara/common/texture/eye/eye06_n.tex";
+                return "chara/common/texture/eye/eye06_norm.tex";
             }
-            return "chara/common/texture/eye/eye01_n.tex";
+            return "chara/common/texture/eye/eye01_norm.tex";
         }
         public static string OldEyePathToNewEyeMultiPath(string value) {
             if (value.Contains("c1501") || value.Contains("c1601")) {
-                return "chara/common/texture/eye/eye06_s.tex";
+                return "chara/common/texture/eye/eye06_mask.tex";
             }
-            return "chara/common/texture/eye/eye01_s.tex";
+            return "chara/common/texture/eye/eye01_mask.tex";
         }
     }
 }
