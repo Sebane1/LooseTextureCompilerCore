@@ -150,7 +150,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                             result = "TBSE and HRBODY are only compatible with masculine characters";
                         }
                     } else {
-                        result = "TBSE and HRBODY are not compatible with lalafels";
+                        result = "TBSE and HRBODY are not compatible with lalafells";
                     }
                     break;
                 case 6:
@@ -179,11 +179,11 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     }
                     break;
                 case 8:
-                    // Asymmetrical Vanilla Lalafel
+                    // Asymmetrical Vanilla Lalafell
                     if (race == 5) {
                         result = @"chara/human/c1101/obj/body/b0001/texture/v01_c1101b0001_b" + GetTextureType(texture, baseBody) + ".tex";
                     } else {
-                        result = "Asymmetrical Vanilla Lalafel is only compatible with lalafells";
+                        result = "Asymmetrical Vanilla Lalafell is only compatible with lalafells";
                     }
                     break;
             }

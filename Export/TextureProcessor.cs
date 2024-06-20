@@ -383,7 +383,8 @@ namespace FFXIVLooseTextureCompiler {
         private bool MaskLogic(TextureSet textureSet, string multiDiskPath, bool skipTexExport) {
             bool outputGenerated = false;
             if (!string.IsNullOrEmpty(textureSet.Mask) && !string.IsNullOrEmpty(textureSet.InternalMaskPath)) {
-                if (!string.IsNullOrEmpty(textureSet.Diffuse) && !textureSet.InternalMaskPath.Contains("iri")) {
+                if (!string.IsNullOrEmpty(textureSet.Diffuse) && !textureSet.InternalMaskPath.Contains("/eye/") 
+                    && (textureSet.InternalMaskPath.Contains("obj/face") || textureSet.InternalMaskPath.Contains("obj/body"))) {
                     if (!skipTexExport) {
                         Task.Run(() => ExportTex(textureSet.Mask, multiDiskPath, ExportType.DTMulti, "", textureSet.Diffuse));
                     }

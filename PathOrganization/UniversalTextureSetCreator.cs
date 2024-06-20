@@ -32,9 +32,9 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             } else if (textureSet.InternalDiffusePath.Contains("chara/human/c1101/obj/body/b0001/texture/v01_c1101b0001_g_d")) {
                 ConfigureOtopopCrossCompatibility(textureSet, race);
             } else if (textureSet.InternalDiffusePath.Contains("--c1101b0001_")) {
-                ConfigureLalafelVanillaCrossCompatibility(textureSet, race);
+                ConfigureLalafellVanillaCrossCompatibility(textureSet, race);
             } else if (textureSet.InternalDiffusePath.Contains("v01_c1101b0001_b")) {
-                ConfigureAsymLalafelCrossCompatibility(textureSet, race);
+                ConfigureAsymLalafellCrossCompatibility(textureSet, race);
             } else if (textureSet.InternalDiffusePath.Contains("_b_d")
                 && !textureSet.InternalDiffusePath.Contains("fac")) {
                 ConfigureTBSECrossCompatibility(textureSet, race);
@@ -240,7 +240,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             textureSet.ChildSets.Add(tbseVanilla);
         }
 
-        private static void ConfigureLalafelVanillaCrossCompatibility(TextureSet textureSet, int race) {
+        private static void ConfigureLalafellVanillaCrossCompatibility(TextureSet textureSet, int race) {
             textureSet.BackupTexturePaths = BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[2];
 
             TextureSet otopop = new TextureSet();
@@ -255,7 +255,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             textureSet.ChildSets.Add(otopop);
         }
 
-        private static void ConfigureAsymLalafelCrossCompatibility(TextureSet textureSet, int race) {
+        private static void ConfigureAsymLalafellCrossCompatibility(TextureSet textureSet, int race) {
             textureSet.BackupTexturePaths = BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
 
             TextureSet otopop = new TextureSet();
@@ -277,11 +277,11 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             ConfigureTextureSet("Vanilla [IsChild]", "vanilla_lala", race, 0, 0, vanilla, textureSet);
             vanilla.BackupTexturePaths = BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
 
-            TextureSet asymLalafel = new TextureSet();
-            ConfigureTextureSet("Asym Lala [IsChild]", "asym_lala", race, 0, 8, asymLalafel, textureSet);
-            asymLalafel.BackupTexturePaths = BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
+            TextureSet asymLalafell = new TextureSet();
+            ConfigureTextureSet("Asym Lala [IsChild]", "asym_lala", race, 0, 8, asymLalafell, textureSet);
+            asymLalafell.BackupTexturePaths = BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
 
-            textureSet.ChildSets.Add(asymLalafel);
+            textureSet.ChildSets.Add(asymLalafell);
             textureSet.ChildSets.Add(vanilla);
         }
 

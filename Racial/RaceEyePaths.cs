@@ -90,22 +90,22 @@ namespace LooseTextureCompilerCore.Racial {
             "chara/common/texture/eye/eye10_d.tex",
             "chara/common/texture/eye/eye01_n.tex",
             "chara/common/texture/eye/eye01_s.tex"},
-        //Lalafel Male
+        //Lalafell Male
         new string[] {
             "chara/common/texture/eye/eye04_d.tex",
             "chara/common/texture/eye/eye01_n.tex",
             "chara/common/texture/eye/eye01_s.tex"},
-        //Lalafel Female
+        //Lalafell Female
         new string[] {
             "chara/common/texture/eye/eye04_d.tex",
             "chara/common/texture/eye/eye01_n.tex",
             "chara/common/texture/eye/eye01_s.tex"},
-        //Lalafel Male 0101
+        //Lalafell Male 0101
         new string[] {
             "chara/common/texture/eye/eye05_d.tex",
             "chara/common/texture/eye/eye01_n.tex",
             "chara/common/texture/eye/eye01_s.tex"},
-        //Lalafel Female 0101
+        //Lalafell Female 0101
         new string[] {
             "chara/common/texture/eye/eye05_d.tex",
             "chara/common/texture/eye/eye01_n.tex",

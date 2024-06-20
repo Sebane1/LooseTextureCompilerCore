@@ -5,9 +5,9 @@ namespace FFXIVLooseTextureCompiler.Racial {
         private static List<string> subRaces = new List<string>() { "Midlander" , "Highlander","Wildwood","Duskwight","Seeker",
             "Keeper", "Sea Wolf", "Hellsguard", "Plainsfolk", "Dunesfolk", "Raen", "Xaela", "Helion", "The Lost", "Rava", "Veena" };
         private static List<string> races = new List<string>() { "Midlander","Highlander","Elezen","Miqo'te","Roegadyn",
-            "Lalafel","Raen","Xaela","Hrothgar","Viera",};
+            "Lalafell","Raen","Xaela","Hrothgar","Viera",};
         private static List<string> modelRaces = new List<string>() { "Midlander","Highlander","Elezen","Miqote","Roegadyn",
-            "Lalafel","Aura","Hrothgar","Viera",};
+            "Lalafell","Aura","Hrothgar","Viera",};
 
         private static RaceCode raceCodeBody = new RaceCode(new string[] {
             "0101","0301","0101","0101","0901","1101","1301","1301","1501","1701"}, new string[] {
