@@ -245,7 +245,7 @@ namespace FFXIVLooseTextureCompiler {
                             if (!string.IsNullOrEmpty(textureSet.Diffuse) && !string.IsNullOrEmpty(textureSet.InternalDiffusePath)) {
                                 if (DiffuseLogic(textureSet, diffuseDiskPath, skipTexExport)) {
                                     AddDetailedGroupOption(textureSet.InternalDiffusePath,
-                                        diffuseDiskPath.Replace(modPath, null), "Diffuse", "Normal", textureSet,
+                                        diffuseDiskPath.Replace(modPath + "\\", null), "Diffuse", "Normal", textureSet,
                                         textureSets, group, diffuseOption, out diffuseOption);
                                 } else {
                                     OnProgressChange.Invoke(this, EventArgs.Empty);
@@ -256,7 +256,7 @@ namespace FFXIVLooseTextureCompiler {
                             if (!string.IsNullOrEmpty(textureSet.InternalNormalPath)) {
                                 if (NormalLogic(textureSet, normalDiskPath, skipTexExport)) {
                                     AddDetailedGroupOption(textureSet.InternalNormalPath,
-                                        normalDiskPath.Replace(modPath, null), "Normal", "Multi", textureSet,
+                                        normalDiskPath.Replace(modPath + "\\", null), "Normal", "Multi", textureSet,
                                         textureSets, group, normalOption, out normalOption);
                                 } else {
                                     OnProgressChange.Invoke(this, EventArgs.Empty);
@@ -267,7 +267,7 @@ namespace FFXIVLooseTextureCompiler {
                             if (!string.IsNullOrEmpty(textureSet.InternalMaskPath)) {
                                 if (MaskLogic(textureSet, multiDiskPath, skipTexExport)) {
                                     AddDetailedGroupOption(textureSet.InternalMaskPath,
-                                        multiDiskPath.Replace(modPath, null), "Mask", "Catchlight", textureSet,
+                                        multiDiskPath.Replace(modPath + "\\", null), "Mask", "Catchlight", textureSet,
                                         textureSets, group, multiOption, out multiOption);
                                 } else {
                                     OnProgressChange.Invoke(this, EventArgs.Empty);
@@ -292,7 +292,7 @@ namespace FFXIVLooseTextureCompiler {
                             if (!string.IsNullOrEmpty(textureSet.Diffuse) && !string.IsNullOrEmpty(textureSet.InternalDiffusePath)) {
                                 if (DiffuseLogic(textureSet, diffuseDiskPath, skipTexExport)) {
                                     option.Files[textureSet.InternalDiffusePath] =
-                                       diffuseDiskPath.Replace(modPath, null);
+                                       diffuseDiskPath.Replace(modPath + "\\", null);
                                 } else {
                                     OnProgressChange.Invoke(this, EventArgs.Empty);
                                 }
@@ -302,7 +302,7 @@ namespace FFXIVLooseTextureCompiler {
                             if (!string.IsNullOrEmpty(textureSet.InternalNormalPath)) {
                                 if (NormalLogic(textureSet, normalDiskPath, skipTexExport)) {
                                     option.Files[textureSet.InternalNormalPath] =
-                                        normalDiskPath.Replace(modPath, null);
+                                        normalDiskPath.Replace(modPath + "\\", null);
                                 } else {
                                     OnProgressChange.Invoke(this, EventArgs.Empty);
                                 }
@@ -312,7 +312,7 @@ namespace FFXIVLooseTextureCompiler {
                             if (!string.IsNullOrEmpty(textureSet.InternalMaskPath)) {
                                 if (MaskLogic(textureSet, multiDiskPath, skipTexExport)) {
                                     option.Files[textureSet.InternalMaskPath] =
-                                       multiDiskPath.Replace(modPath, null);
+                                       multiDiskPath.Replace(modPath + "\\", null);
                                 } else {
                                     OnProgressChange.Invoke(this, EventArgs.Empty);
                                 }
@@ -383,7 +383,7 @@ namespace FFXIVLooseTextureCompiler {
         private bool MaskLogic(TextureSet textureSet, string multiDiskPath, bool skipTexExport) {
             bool outputGenerated = false;
             if (!string.IsNullOrEmpty(textureSet.Mask) && !string.IsNullOrEmpty(textureSet.InternalMaskPath)) {
-                if (!string.IsNullOrEmpty(textureSet.Diffuse) && !textureSet.InternalMaskPath.Contains("/eye/") 
+                if (!string.IsNullOrEmpty(textureSet.Diffuse) && !textureSet.InternalMaskPath.Contains("/eye/")
                     && (textureSet.InternalMaskPath.Contains("obj/face") || textureSet.InternalMaskPath.Contains("obj/body"))) {
                     if (!skipTexExport) {
                         Task.Run(() => ExportTex(textureSet.Mask, multiDiskPath, ExportType.DTMulti, "", textureSet.Diffuse));
@@ -696,9 +696,6 @@ namespace FFXIVLooseTextureCompiler {
                                                         layeringImage));
                                                     Graphics g = Graphics.FromImage(image);
                                                     g.Clear(Color.Transparent);
-                                                    //g.CompositingQuality = CompositingQuality.HighQuality;
-                                                    //g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                                                    //g.SmoothingMode = SmoothingMode.HighQuality;
                                                     g.DrawImage(layer, 0, 0, bitmap.Width, bitmap.Height);
                                                     g.DrawImage(GetMergedBitmap(inputFile), 0, 0, bitmap.Width, bitmap.Height);
                                                     output = ImageManipulation.MergeNormals(image, diffuse, canvasImage, null, diffuseNormal, modifier);

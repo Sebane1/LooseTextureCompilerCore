@@ -65,6 +65,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             #endregion
             for (int y = 0; y < h + 1; y++) {
                 for (int x = 0; x < w + 1; x++) {
+                    Color originalPixel = source.GetPixel(x, y);
                     if (normalMask == null || maskReference?.GetPixel(x, y).A == 0) {
                         sample_l = x > 0 ? source.GetPixel(x - 1, y).GetBrightness() : source.GetPixel(x, y).GetBrightness();
                         sample_r = x < w ? source.GetPixel(x + 1, y).GetBrightness() : source.GetPixel(x, y).GetBrightness();
@@ -83,10 +84,12 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             source.UnlockBits();
             maskReference?.UnlockBits();
             normal.RotateFlip(RotateFlipType.RotateNoneFlipX);
+            Bitmap normal1 = new Bitmap(normal);
             Bitmap normal2 = new Bitmap(normal);
             KVImage.ImageBlender imageBlender = new KVImage.ImageBlender();
-            return imageBlender.BlendImages(normal, 0, 0, normal.Width, normal.Height,
-                Contrast.AdjustContrast(normal2, 120), 0, 0, KVImage.ImageBlender.BlendOperation.Blend_Overlay);
+            image.RotateFlip(RotateFlipType.RotateNoneFlipX);
+            return ImageManipulation.MergeAlphaToRGB(ImageManipulation.ExtractAlpha(image), imageBlender.BlendImages(normal1, 0, 0, normal1.Width, normal1.Height,
+                Contrast.AdjustContrast(normal2, 120), 0, 0, KVImage.ImageBlender.BlendOperation.Blend_Overlay));
         }
     }
 }

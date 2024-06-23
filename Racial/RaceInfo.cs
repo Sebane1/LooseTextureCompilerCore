@@ -5,13 +5,13 @@ namespace FFXIVLooseTextureCompiler.Racial {
         private static List<string> subRaces = new List<string>() { "Midlander" , "Highlander","Wildwood","Duskwight","Seeker",
             "Keeper", "Sea Wolf", "Hellsguard", "Plainsfolk", "Dunesfolk", "Raen", "Xaela", "Helion", "The Lost", "Rava", "Veena" };
         private static List<string> races = new List<string>() { "Midlander","Highlander","Elezen","Miqo'te","Roegadyn",
-            "Lalafell","Raen","Xaela","Hrothgar","Viera",};
+            "Lalafell","Raen","Xaela","Helion","The Lost","Viera",};
         private static List<string> modelRaces = new List<string>() { "Midlander","Highlander","Elezen","Miqote","Roegadyn",
             "Lalafell","Aura","Hrothgar","Viera",};
 
         private static RaceCode raceCodeBody = new RaceCode(new string[] {
-            "0101","0301","0101","0101","0901","1101","1301","1301","1501","1701"}, new string[] {
-            "0201","0401","0201","0201","0401","1101","1401","1401","1601","1801"});
+            "0101","0301","0101","0101","0901","1101","1301","1301","1501","1501","1701"}, new string[] {
+            "0201","0401","0201","0201","0401","1101","1401","1401","1601","1601","1801"});
 
         private static RaceCode raceCodeFace = new RaceCode(new string[] {
                 "0101", "0301", "0501", "0501", "0701",
@@ -23,17 +23,17 @@ namespace FFXIVLooseTextureCompiler.Racial {
 
         private static List<RacialBodyIdentifiers> bodyIdentifiers = new List<RacialBodyIdentifiers>(){
             new RacialBodyIdentifiers("VANILLA",
-                new List<string>() { "201", "401", "201", "201", "401", "1101", "1401", "1401", "1601", "1801" }),
+                new List<string>() { "201", "401", "201", "201", "401", "1101", "1401", "1401", "1601", "1601", "1801" }),
             new RacialBodyIdentifiers("BIBO+",
-                new List<string>() { "midlander", "highlander", "midlander", "midlander", "highlander", "Invalid", "raen", "xaela", "Invalid", "viera" }),
+                new List<string>() { "mid", "high", "mid", "mid", "high", "Invalid", "raen", "xaela", "helion", "lost", "viera" }),
             new RacialBodyIdentifiers("EVE",
-                new List<string>() { "middie", "buffie", "middie", "middie", "buffie", "Invalid", "lizard", "lizard2", "Invalid", "bunny" }),
+                new List<string>() { "middie", "buffie", "middie", "middie", "buffie", "Invalid", "lizard", "lizard2", "furry1", "furry2", "bunny" }),
             new RacialBodyIdentifiers("GEN3",
-                new List<string>() { "mid", "high", "mid", "mid", "high", "Invalid", "raen", "xaela", "Invalid", "viera" }),
+                new List<string>() { "mid", "high", "mid", "mid", "high", "Invalid", "raen", "xaela", "helion", "lost", "viera" }),
             new RacialBodyIdentifiers("SCALE+",
-                new List<string>() { "Invalid", "Invalid", "Invalid", "Invalid", "Invalid", "Invalid", "raen", "xaela", "Invalid", "Invalid" }),
+                new List<string>() { "Invalid", "Invalid", "Invalid", "Invalid", "Invalid", "Invalid", "raen", "xaela", "Invalid", "Invalid", "Invalid" }),
             new RacialBodyIdentifiers("TBSE/HRBODY",
-                new List<string>() { "0101", "0301", "0101", "0101", "0901", "Invalid", "1301", "1301", "1501", "1701" }),
+                new List<string>() { "0101", "0301", "0101", "0101", "0901", "Invalid", "1301", "1301", "1501", "1501", "1701" }),
             new RacialBodyIdentifiers("TAIL",
                 new List<string>() { "1", "2", "3", "4", "5", "6", "7", "8", "", "" }) };
 
@@ -60,7 +60,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
         }
         public static int ReverseRaceLookup(string path) {
             if (!string.IsNullOrEmpty(path)) {
-                for (int i = 0; i < 10; i++) {
+                for (int i = 0; i < 11; i++) {
                     string bibo = bodyIdentifiers[1].RaceIdentifiers[i];
                     string eve = bodyIdentifiers[2].RaceIdentifiers[i];
                     string tnf = bodyIdentifiers[3].RaceIdentifiers[i];
@@ -115,11 +115,12 @@ namespace FFXIVLooseTextureCompiler.Racial {
                 case 11:
                     return 7;
                 case 12:
-                case 13:
                     return 8;
+                case 13:
+                    return 9;
                 case 14:
                 case 15:
-                    return 9;
+                    return 10;
             }
             return -1;
         }

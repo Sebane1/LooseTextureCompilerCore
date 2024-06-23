@@ -30,6 +30,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         byte B = row[columnOffset];
                         byte G = row[columnOffset + 1];
                         byte R = row[columnOffset + 2];
+                        byte A = row[columnOffset + 3];
 
                         float Red = R / 255.0f;
                         float Green = G / 255.0f;
@@ -48,6 +49,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         row[columnOffset] = (byte)iB;
                         row[columnOffset + 1] = (byte)iG;
                         row[columnOffset + 2] = (byte)iR;
+                        row[columnOffset + 3] = (byte)A;
 
                         columnOffset += 4;
                     }

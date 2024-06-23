@@ -235,7 +235,7 @@ namespace FFXIVLooseTextureCompiler {
             : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, xNormal);
             Process process = Process.Start(executable);
         }
-        public static void CallXNormal(string inputFBX, string outputFBX, string inputImage, string outputImage, int width = 4096, int height = 4096) {
+        public static void CallXNormal(string inputFBX, string outputFBX, string inputImage, string outputImage, int width = 4096, int height = 4096, bool isNormalMap = false) {
             userDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\FFXIVLooseTextureCompiler\";
             string path = Path.Combine(userDataPath, xmlFileName);
             string executable = !string.IsNullOrEmpty(xNormalPathOverride) ? xNormalPathOverride
@@ -254,7 +254,7 @@ namespace FFXIVLooseTextureCompiler {
                     inputImageString,
                     outputString,
                     outputImageString,
-                    false.ToString().ToLower(),
+                    isNormalMap.ToString().ToLower(),
                     width.ToString(),
                     height.ToString(),
                     outputImage.Contains("gen2").ToString().ToLower())

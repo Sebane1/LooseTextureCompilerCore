@@ -171,7 +171,7 @@ namespace LooseTextureCompilerCore.Racial {
             "chara/common/texture/eye/eye01_s.tex"},
         //Viera Female 0101
         new string[] {
-            "chara/common/texture/eye/eye01_d.tex",
+            "chara/common/texture/eye/eye12_d.tex",
             "chara/common/texture/eye/eye01_n.tex",
             "chara/common/texture/eye/eye01_s.tex"},
         };
