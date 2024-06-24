@@ -524,7 +524,7 @@ namespace FFXIVLooseTextureCompiler {
                         try {
                             JsonSerializer serializer = new JsonSerializer();
                             Group group = (Group)serializer.Deserialize(jsonFile, typeof(Group));
-                            if (group.Description.Contains("-generated")) {
+                            if (!string.IsNullOrEmpty(group.Description) && group.Description.Contains("-generated")) {
                                 isGenerated = true;
                             }
                         } catch {
