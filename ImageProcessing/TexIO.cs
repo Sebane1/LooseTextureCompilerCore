@@ -1,19 +1,26 @@
-﻿using OtterTex;
+﻿using Lumina.Data.Files;
+using OtterTex;
 using Penumbra.LTCImport.Dds;
 using Penumbra.LTCImport.Textures;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
+using Color = System.Drawing.Color;
 using Rectangle = System.Drawing.Rectangle;
 using Size = System.Drawing.Size;
 
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
-    public static class TexLoader {
+    public static class TexIO {
         public static Bitmap DDSToBitmap(string inputFile, bool noAlpha = false) {
             using (var scratch = ScratchImage.LoadDDS(inputFile)) {
                 var rgba = scratch.GetRGBA(out var f).ThrowIfError(f);
                 byte[] ddsFile = rgba.Pixels[..(f.Meta.Width * f.Meta.Height * f.Meta.Format.BitsPerPixel() / 8)].ToArray();
-                return RGBAToBitmap(ddsFile, scratch.Meta.Width, scratch.Meta.Height, noAlpha);
+                var bitmap = RGBAToBitmap(ddsFile, scratch.Meta.Width, scratch.Meta.Height, noAlpha);
+                return bitmap;
             }
         }
 
@@ -51,7 +58,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 RGBAPixels[i] = B;
                 RGBAPixels[i + 1] = G;
                 RGBAPixels[i + 2] = R;
-                RGBAPixels[i + 3] = noAlpha ? (byte)255 : (A == (byte)0 ? (byte)1 : A);
+                RGBAPixels[i + 3] = noAlpha ? (byte)255 : A;
 
             }
             System.Runtime.InteropServices.Marshal.Copy(RGBAPixels, 0, ptr, RGBAPixels.Length);
@@ -101,7 +108,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 var scratch = PenumbraTexFileParser.Parse(stream);
                 var rgba = scratch.GetRGBA(out var f).ThrowIfError(f);
                 byte[] RGBAPixels = rgba.Pixels[..(f.Meta.Width * f.Meta.Height * f.Meta.Format.BitsPerPixel() / 8)].ToArray();
-                return RGBAToBitmap(RGBAPixels, f.Meta.Width, f.Meta.Height, noAlpha);
+                var bitmap = RGBAToBitmap(RGBAPixels, scratch.Meta.Width, scratch.Meta.Height, false);
+                return bitmap;
             }
         }
 
@@ -121,7 +129,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             rgba.Pixels[..(f.Meta.Width * f.Meta.Height * f.Meta.Format.BitsPerPixel() / 8)].ToArray());
         }
 
-        public static Bitmap ResolveBitmap(string inputFile, bool dontUseAlpha = false) {
+        public static Bitmap ResolveBitmap(string inputFile, bool noAlpha = false) {
             if (string.IsNullOrEmpty(inputFile) || !File.Exists(inputFile)) {
                 return new Bitmap(4096, 4096);
             }
@@ -131,31 +139,104 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
 
             try {
-                using (Bitmap bitmap =
-                    inputFile.EndsWith(".tex") ? TexToBitmap(inputFile, dontUseAlpha) :
-                    inputFile.EndsWith(".dds") ? DDSToBitmap(inputFile, dontUseAlpha) :
-                    inputFile.EndsWith(".ltct") ? OpenImageFromXOR(inputFile) :
-                    new Bitmap(inputFile)) {
-                    return new Bitmap(bitmap);
-                }
+                Bitmap bitmap =
+                inputFile.EndsWith(".tex") ? TexToBitmap(inputFile, noAlpha) :
+                inputFile.EndsWith(".dds") ? DDSToBitmap(inputFile, noAlpha) :
+                inputFile.EndsWith(".ltct") ? OpenImageFromXOR(inputFile, noAlpha) :
+                SafeLoad(inputFile, noAlpha);
+                return bitmap;
+
             } catch {
                 while (IsFileLocked(inputFile)) {
                     Thread.Sleep(400);
                 }
                 try {
-                    using (Bitmap bitmap =
-                        inputFile.EndsWith(".tex") ? TexToBitmap(inputFile, dontUseAlpha) :
-                        inputFile.EndsWith(".dds") ? DDSToBitmap(inputFile, dontUseAlpha) :
-                        inputFile.EndsWith(".ltct") ? OpenImageFromXOR(inputFile) :
-                        new Bitmap(inputFile)) {
-                        return new Bitmap(bitmap);
-                    }
+                    Bitmap bitmap =
+                    inputFile.EndsWith(".tex") ? TexToBitmap(inputFile, noAlpha) :
+                    inputFile.EndsWith(".dds") ? DDSToBitmap(inputFile, noAlpha) :
+                    inputFile.EndsWith(".ltct") ? OpenImageFromXOR(inputFile, noAlpha) :
+                    SafeLoad(inputFile, noAlpha);
+                    return bitmap;
                 } catch {
                     return new Bitmap(4096, 4096);
                 }
             }
         }
+        public static Bitmap SafeLoad(string path, bool noAlpha = false) {
+            MemoryStream memoryStream = new MemoryStream();
+            using (FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+                fileStream.CopyTo(memoryStream);
+            }
+            memoryStream.Position = 0;
+            var newImage = SixLabors.ImageSharp.Image.Load<Rgba32>(memoryStream);
+            return ImageSharpToBitmap(newImage, noAlpha);
+        }
+        public static Bitmap Clone(Bitmap bitmap, Rectangle rectangle) {
+            var newImage = BitmapToImageSharp(bitmap);
+            newImage.Mutate(i => i.Crop(new SixLabors.ImageSharp.Rectangle(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height)));
+            return ImageSharpToBitmap(newImage.Clone());
+        }
+        public static Bitmap Resize(Bitmap bitmap, int width, int height) {
+            var newImage = BitmapToImageSharp(bitmap);
+            newImage.Mutate(i => i.Resize(width, height));
+            return ImageSharpToBitmap(newImage.Clone());
+        }
 
+        public static Image<Rgba32> BitmapToImageSharp(Bitmap bitmap) {
+            var newImage = new SixLabors.ImageSharp.Image<Rgba32>(bitmap.Width, bitmap.Height);
+            LockBitmap startingData = new LockBitmap(bitmap);
+            startingData.LockBits();
+            for (int y = 0; y < bitmap.Height; y++) {
+                for (int x = 0; x < bitmap.Width; x++) {
+                    var rgbPixel = startingData.GetPixel(x, y);
+                    newImage[x, y] = new Rgba32(rgbPixel.R, rgbPixel.G, rgbPixel.B, rgbPixel.A);
+                }
+            };
+            startingData.UnlockBits();
+            return newImage;
+        }
+        public static Bitmap ImageSharpToBitmap(Image<Rgba32> newImage, bool noAlpha = false) {
+            Bitmap canvas = new Bitmap(newImage.Width, newImage.Height, PixelFormat.Format32bppArgb);
+            LockBitmap destination = new LockBitmap(canvas);
+            destination.LockBits();
+            for (int y = 0; y < canvas.Height; y++) {
+                for (int x = 0; x < canvas.Width; x++) {
+                    var rgbPixel = newImage[x, y];
+                    Color col = Color.FromArgb(noAlpha ? 255 : rgbPixel.A, rgbPixel.R, rgbPixel.G, rgbPixel.B);
+                    destination.SetPixel(x, y, col);
+                }
+            };
+            destination.UnlockBits();
+            return canvas;
+        }
+        public static void SaveBitmap(Bitmap bitmap, string path) {
+            var newImage = BitmapToImageSharp(bitmap);
+            var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder() {
+                TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
+                ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
+            };
+            newImage.SaveAsPng(path, encoder);
+        }
+        public static Bitmap NewBitmap(Bitmap bitmap, bool noAlpha = false) {
+            Bitmap destinationBitmap = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb);
+            LockBitmap startingData = new LockBitmap(bitmap);
+            LockBitmap destination = new LockBitmap(destinationBitmap);
+            startingData.LockBits();
+            destination.LockBits();
+            for (int y = 0; y < bitmap.Height; y++) {
+                for (int x = 0; x < bitmap.Width; x++) {
+                    var rgbPixel = startingData.GetPixel(x, y);
+                    destination.SetPixel(x, y, Color.FromArgb(noAlpha ? 255 : rgbPixel.A, rgbPixel.R, rgbPixel.G, rgbPixel.B));
+                }
+            };
+            startingData.UnlockBits();
+            destination.UnlockBits();
+            return destinationBitmap;
+        }
+        public static Bitmap NewBitmap(int width, int height) {
+            Bitmap destinationBitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+            return destinationBitmap;
+        }
         public static byte[] GetTexBytes(string inputFile) {
             byte[] data = new byte[0];
             KeyValuePair<Size, byte[]> keyValuePair = ResolveImageBytes(inputFile);
@@ -181,11 +262,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             File.WriteAllBytes(filename, bytes);
         }
 
-        public static Bitmap OpenImageFromXOR(string filename) {
+        public static Bitmap OpenImageFromXOR(string filename, bool noAlpha = false) {
             byte[] file = File.ReadAllBytes(filename);
             ObfuscateOrDeobfuscate(file);
             MemoryStream memoryStream = new MemoryStream(file);
-            return new Bitmap(memoryStream);
+            return ImageSharpToBitmap(SixLabors.ImageSharp.Image.Load<Rgba32>(memoryStream), noAlpha);
         }
 
         public static void ConvertToLtct(string rootDirectory) {

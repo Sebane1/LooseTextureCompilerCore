@@ -42,7 +42,7 @@ namespace FFXIVLooseTextureCompiler.Export {
             }
         }
         private static List<SkinType> _biboSkinTypes = new List<SkinType>() {
-            new SkinType("Bibo Default",
+            new SkinType("Bibo Detailed",
                          new BackupTexturePaths(@"res\textures\bibo\bibo\"),
                          new BackupTexturePaths(@"res\textures\bibo\gen3\"),
                          new BackupTexturePaths(@"res\textures\bibo\gen2\")),
@@ -50,10 +50,6 @@ namespace FFXIVLooseTextureCompiler.Export {
                          new BackupTexturePaths(@"res\textures\biboSmooth\bibo\"),
                          new BackupTexturePaths(@"res\textures\biboSmooth\gen3\"),
                          new BackupTexturePaths(@"res\textures\biboSmooth\gen2\")),
-            new SkinType("Bibo Soft Finger",
-                         new BackupTexturePaths(@"res\textures\biboSoftFinger\bibo\"),
-                         new BackupTexturePaths(@"res\textures\biboSoftFinger\gen3\"),
-                         new BackupTexturePaths(@"res\textures\biboSoftFinger\gen2\")),
             new SkinType("Gen3 Default",
                          new BackupTexturePaths(@"res\textures\gen3\bibo\"),
                          new BackupTexturePaths(@"res\textures\gen3\gen3\"),
@@ -69,7 +65,7 @@ namespace FFXIVLooseTextureCompiler.Export {
                          new BackupTexturePaths(@"res\textures\gen3\bibo\"),
                          new BackupTexturePaths(@"res\textures\gen3\gen3\"),
                          new BackupTexturePaths(@"res\textures\gen3\gen2\")),
-            new SkinType("Bibo Default",
+            new SkinType("Bibo Detailed",
                          new BackupTexturePaths(@"res\textures\bibo\bibo\"),
                          new BackupTexturePaths(@"res\textures\bibo\gen3\"),
                          new BackupTexturePaths(@"res\textures\bibo\gen2\")),
@@ -77,10 +73,6 @@ namespace FFXIVLooseTextureCompiler.Export {
                          new BackupTexturePaths(@"res\textures\biboSmooth\bibo\"),
                          new BackupTexturePaths(@"res\textures\biboSmooth\gen3\"),
                          new BackupTexturePaths(@"res\textures\biboSmooth\gen2\")),
-            new SkinType("Bibo Soft Finger",
-                         new BackupTexturePaths(@"res\textures\biboSoftFinger\bibo\"),
-                         new BackupTexturePaths(@"res\textures\biboSoftFinger\gen3\"),
-                         new BackupTexturePaths(@"res\textures\biboSoftFinger\gen2\")),
             new SkinType("Pythia",
                          new BackupTexturePaths(@"res\textures\pythia\bibo\"),
                          new BackupTexturePaths(@"res\textures\pythia\gen3\"),
@@ -152,14 +144,14 @@ namespace FFXIVLooseTextureCompiler.Export {
                 AppDomain.CurrentDomain.BaseDirectory,
                 _otopopSkinTypes[skinType].BackupTextures[1].Diffuse)));
 
-                TexLoader.WriteImageToXOR(ImageManipulation.MirrorAndDuplicate(
-                TexLoader.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                TexIO.WriteImageToXOR(ImageManipulation.MirrorAndDuplicate(
+                TexIO.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                     _otopopSkinTypes[skinType].BackupTextures[2].Diffuse))),
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                     _otopopSkinTypes[skinType].BackupTextures[1].Diffuse));
 
-                TexLoader.WriteImageToXOR(ImageManipulation.MirrorAndDuplicate(
-                    TexLoader.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                TexIO.WriteImageToXOR(ImageManipulation.MirrorAndDuplicate(
+                    TexIO.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                     _otopopSkinTypes[skinType].BackupTextures[2].Normal))),
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                     _otopopSkinTypes[skinType].BackupTextures[1].Normal));

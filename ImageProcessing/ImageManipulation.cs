@@ -10,7 +10,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
     public class ImageManipulation {
 
         public static Bitmap BoostAboveThreshold(Bitmap file, int threshhold) {
-            Bitmap image = new Bitmap(file);
+            Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
             for (int y = 0; y < image.Height; y++) {
@@ -29,7 +29,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public static void BulkDDSToPng(IEnumerable<string> paths) {
             foreach (string path in paths) {
-                TexLoader.ResolveBitmap(path).Save(ImageManipulation.ReplaceExtension(path, ".png"), ImageFormat.Png);
+                TexIO.ResolveBitmap(path).Save(ImageManipulation.ReplaceExtension(path, ".png"), ImageFormat.Png);
             }
         }
 
@@ -41,8 +41,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return (int)nextPixel;
         }
 
-        public static Bitmap SaniitizeArtifacts(Bitmap file) {
-            Bitmap image = new Bitmap(file);
+        public static Bitmap SanitizeArtifacts(Bitmap file) {
+            Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
             for (int y = 0; y < image.Height; y++) {
@@ -58,18 +58,14 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return image;
         }
         public static Bitmap Resize(Bitmap file, int width, int height) {
-            Bitmap image = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-            Graphics g = Graphics.FromImage(image);
-            g.Clear(Color.Transparent);
-            g.DrawImage(file, 0, 0, width, height);
-            return image;
+            return TexIO.Resize(file, width, height);
         }
         public static Bitmap CutInHalf(Bitmap file) {
             return file.Clone(new Rectangle(file.Width / 2, 0, file.Width / 2, file.Height), PixelFormat.Format32bppArgb);
         }
 
         public static Bitmap InvertImage(Bitmap file) {
-            Bitmap invertedImage = new Bitmap(file);
+            Bitmap invertedImage = TexIO.NewBitmap(file);
             using (LockBitmap invertedBits = new LockBitmap(invertedImage)) {
                 for (int y = 0; y < invertedBits.Height; y++) {
                     for (int x = 0; x < invertedBits.Width; x++) {
@@ -89,7 +85,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return image;
         }
         public static Bitmap ExtractTransparency(Bitmap file) {
-            Bitmap image = new Bitmap(file);
+            Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
             for (int y = 0; y < image.Height; y++) {
@@ -103,7 +99,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return image;
         }
         public static Bitmap ReplaceBlackWithBackingImage(Bitmap file, Bitmap backingImage) {
-            Bitmap image = new Bitmap(file);
+            Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             Bitmap backingImageCopy = new Bitmap(backingImage);
             LockBitmap backingImageSource = new LockBitmap(backingImageCopy);
@@ -122,7 +118,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return image;
         }
         public static Bitmap ExtractRGB(Bitmap file, bool isNormal = false) {
-            Bitmap image = new Bitmap(file);
+            Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
             for (int y = 0; y < image.Height; y++) {
@@ -141,7 +137,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return image;
         }
         public static Bitmap ExtractRed(Bitmap file) {
-            Bitmap image = new Bitmap(file);
+            Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
             for (int y = 0; y < image.Height; y++) {
@@ -155,7 +151,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return image;
         }
         public static Bitmap ExtractGreen(Bitmap file) {
-            Bitmap image = new Bitmap(file);
+            Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
             for (int y = 0; y < image.Height; y++) {
@@ -225,7 +221,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap ExtractBlue(Bitmap file) {
-            Bitmap image = new Bitmap(file);
+            Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
             for (int y = 0; y < image.Height; y++) {
@@ -240,7 +236,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap LipCorrection(Bitmap correctionMap, Bitmap file, bool blurResult) {
-            Bitmap image = new Bitmap(file);
+            Bitmap image = TexIO.NewBitmap(file);
             Bitmap correctionImage = new Bitmap(correctionMap, (int)((float)image.Height * 0.5f), image.Height);
             LockBitmap source = new LockBitmap(image);
             LockBitmap correctionSource = new LockBitmap(correctionImage);
@@ -277,7 +273,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
         }
         public static Bitmap EyeCorrection(Bitmap correctionMap, Bitmap file, bool blurResult) {
-            Bitmap image = new Bitmap(file);
+            Bitmap image = TexIO.NewBitmap(file);
             Bitmap correctionImage = new Bitmap(correctionMap, (int)((float)image.Height * 0.5f), image.Height);
             LockBitmap source = new LockBitmap(image);
             LockBitmap correctionSource = new LockBitmap(correctionImage);
@@ -359,7 +355,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap ExtractAlpha(Bitmap file) {
-            Bitmap image = new Bitmap(file);
+            Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
             for (int y = 0; y < image.Height; y++) {
@@ -421,16 +417,22 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Graphics graphics = Graphics.FromImage(canvas);
             graphics.Clear(Color.Black);
             Bitmap white = new Bitmap(enforcedSize, enforcedSize);
+            Bitmap black = new Bitmap(enforcedSize, enforcedSize);
             graphics = Graphics.FromImage(white);
             graphics.Clear(Color.White);
+            graphics = Graphics.FromImage(black);
+            graphics.Clear(Color.Black);
             var bitmapTemplate = new Bitmap(template);
             graphics = Graphics.FromImage(canvas);
-            graphics.DrawImage(new Bitmap(newEye),
+            var mergedImage = MergeGrayscalesToRGBA(new Bitmap(newEye), new Bitmap(black, image.Width, image.Height),
+                new Bitmap(white, image.Width, image.Height), new Bitmap(white, image.Width, image.Height));
+            graphics.DrawImage(mergedImage,
+
                (enforcedSize / 2) - (((float)enforcedSize * 0.4096f) / 2), (enforcedSize / 2) - (((float)enforcedSize * 0.4096f) / 2),
                 (float)enforcedSize * 0.4096f, (float)enforcedSize * 0.4096f);
             graphics.DrawImage(bitmapTemplate, 0, 0, enforcedSize, enforcedSize);
 
-            return MergeGrayscalesToRGBA(ImageManipulation.InvertImage(white), new Bitmap(new Bitmap(canvas), enforcedSize, enforcedSize),
+            return MergeGrayscalesToRGBA(new Bitmap(canvas), new Bitmap(new Bitmap(canvas), enforcedSize, enforcedSize),
                 ImageManipulation.InvertImage(ExtractAlpha(new Bitmap(bitmapTemplate, enforcedSize, enforcedSize))), new Bitmap(white));
         }
 
@@ -457,7 +459,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap GrayscaleToAlpha(Bitmap file) {
-            Bitmap image = new Bitmap(file);
+            Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
             for (int y = 0; y < image.Height; y++) {
@@ -490,7 +492,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         Color greenPixel = greenBits.GetPixel(x, y);
                         Color bluePixel = blueBits.GetPixel(x, y);
                         Color alphaPixel = alphaBits.GetPixel(x, y);
-                        Color col = Color.FromArgb(alphaPixel.R == 0 ? 1 : alphaPixel.R, redPixel.R, greenPixel.G, bluePixel.B);
+                        Color col = Color.FromArgb(alphaPixel.R, redPixel.R, greenPixel.G, bluePixel.B);
                         destination.SetPixel(x, y, col);
                     }
                 };
@@ -506,7 +508,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static void HairDiffuseToHairMaps(string filename) {
-            Bitmap image = TexLoader.ResolveBitmap(filename);
+            Bitmap image = TexIO.ResolveBitmap(filename);
             Bitmap rgb = ImageManipulation.ExtractRGB(image);
             Bitmap alpha = ImageManipulation.ExtractAlpha(image);
             Bitmap hairNormalConversion = Normal.Calculate(rgb);
@@ -526,12 +528,12 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static void DiffuseToNormaMap(string filename) {
-            Bitmap image = TexLoader.ResolveBitmap(filename);
+            Bitmap image = TexIO.ResolveBitmap(filename);
             Normal.Calculate(image)
                 .Save(ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(filename, "_norm"), ".png"), ImageFormat.Png);
         }
         public static void DiffuseToInvertedNormaMap(string filename) {
-            Bitmap image = TexLoader.ResolveBitmap(filename);
+            Bitmap image = TexIO.ResolveBitmap(filename);
             Normal.Calculate(ImageManipulation.InvertImage(image))
                 .Save(ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(filename, "_norm"), ".png"), ImageFormat.Png);
         }
@@ -548,7 +550,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static void ClothingDiffuseToClothingMultiAndNormalMaps(string filename) {
-            Bitmap image = TexLoader.ResolveBitmap(filename);
+            Bitmap image = TexIO.ResolveBitmap(filename);
             Bitmap rgb = ImageManipulation.ExtractRGB(image);
             Bitmap alpha = ImageManipulation.ExtractAlpha(image);
             Bitmap clothingNormalConversion = Normal.Calculate(rgb);
@@ -570,6 +572,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
         public static Bitmap MergeAlphaToRGB(Bitmap alpha, Bitmap rgb) {
             Bitmap image = new Bitmap(rgb.Width, rgb.Height, PixelFormat.Format32bppArgb);
+            Graphics.FromImage(image).Clear(Color.Transparent);
             LockBitmap destination = new LockBitmap(image);
             LockBitmap alphaBits = new LockBitmap(alpha);
             LockBitmap rgbBits = new LockBitmap(rgb);
@@ -580,7 +583,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 for (int x = 0; x < image.Width; x++) {
                     Color alphaPixel = alphaBits.GetPixel(x, y);
                     Color rgbPixel = rgbBits.GetPixel(x, y);
-                    Color col = Color.FromArgb(rgbPixel.A != 0 ? alphaPixel.R : 1, rgbPixel.R, rgbPixel.G, rgbPixel.B);
+                    Color col = Color.FromArgb(Math.Clamp(alphaPixel.R, (byte)1, (byte)255), rgbPixel.R, rgbPixel.G, rgbPixel.B);
                     destination.SetPixel(x, y, col);
                 }
             };
@@ -594,7 +597,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             g.Clear(Color.Transparent);
             g.DrawImage(diffuse, 0, 0, diffuse.Width, diffuse.Height);
             Bitmap normal = Normal.Calculate(canvasImage, normalMask);
-            using (Bitmap originalNormal = TexLoader.ResolveBitmap(inputFile)) {
+            using (Bitmap originalNormal = TexIO.ResolveBitmap(inputFile)) {
                 using (Bitmap destination = new Bitmap(originalNormal, originalNormal.Width, originalNormal.Height)) {
                     try {
                         Bitmap resize = new Bitmap(originalNormal);
@@ -635,7 +638,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap MirrorAndDuplicate(Bitmap file) {
-            Bitmap canvas = new Bitmap(file.Width * 2, file.Height);
+            Bitmap canvas = TexIO.NewBitmap(file.Width * 2, file.Height);
             Graphics graphics = Graphics.FromImage(canvas);
             graphics.DrawImage(file, new Point(file.Width, 0));
             canvas.RotateFlip(RotateFlipType.RotateNoneFlipX);
@@ -661,7 +664,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap ImageToEyeNormal(Bitmap file, string baseDirectory = null) {
-            Bitmap newFile = new Bitmap(file);
+            Bitmap newFile = TexIO.NewBitmap(file);
             string normalTemplate = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
                 : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\normal.png");
             Bitmap normal = Normal.Calculate(InvertImage(Brightness.BrightenImage(Grayscale.MakeGrayscale(newFile), 0.8f, 1.5f, 1)));
@@ -682,14 +685,14 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
 
         public static void ConvertImageToAsymEyeMaps(string filename1, string filename2, string output) {
-            Bitmap image = TexLoader.ResolveBitmap(filename1);
+            Bitmap image = TexIO.ResolveBitmap(filename1);
             Bitmap eyeMulti = BitmapToEyeMulti(image);
             Bitmap eyeGlow = GrayscaleToAlpha(eyeMulti);
             Bitmap catchLight = ImageToCatchlightLegacy(eyeMulti);
             Bitmap normal = ImageToEyeNormal(eyeMulti);
 
             if (filename1 != filename2) {
-                Bitmap image2 = TexLoader.ResolveBitmap(filename2);
+                Bitmap image2 = TexIO.ResolveBitmap(filename2);
                 Bitmap eyeMulti2 = BitmapToEyeMulti(image2);
                 Bitmap eyeGlow2 = GrayscaleToAlpha(eyeMulti2);
                 Bitmap catchLight2 = ImageToCatchlightLegacy(eyeMulti2);
@@ -707,7 +710,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
         }
         public static void ConvertImageToEyeMapsLegacy(string filename, string baseDirectory = null) {
-            Bitmap image = TexLoader.ResolveBitmap(filename);
+            Bitmap image = TexIO.ResolveBitmap(filename);
             Bitmap eyeMulti = BitmapToEyeMulti(image, baseDirectory);
             Bitmap eyeGlow = GrayscaleToAlpha(eyeMulti);
             Bitmap catchLight = ImageToCatchlightLegacy(eyeMulti, baseDirectory);
@@ -721,15 +724,15 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public static string[] ConvertImageToEyeMapsDawntrail(string filename, string baseDirectory = null,
             bool ignoreIfExists = false, bool wasEyeMulti = false) {
             string[] strings = new string[] {
-                ReplaceExtension(AddSuffix(filename, "_eye_diffuse"), ".png"),
-                ReplaceExtension(AddSuffix(filename, "_eye_normormal"), ".png"),
-                ReplaceExtension(AddSuffix(filename, "_eye_maskulti"), ".png")
+                ReplaceExtension(AddSuffix(filename, "_eye_base"), ".png"),
+                ReplaceExtension(AddSuffix(filename, "_eye_norm"), ".png"),
+                ReplaceExtension(AddSuffix(filename, "_eye_mask"), ".png")
             };
             if (!ignoreIfExists || !File.Exists(strings[0])) {
-                Bitmap image = !wasEyeMulti ? TexLoader.ResolveBitmap(filename) : ExtractRed(TexLoader.ResolveBitmap(filename));
+                Bitmap image = !wasEyeMulti ? TexIO.ResolveBitmap(filename) : ExtractRed(TexIO.ResolveBitmap(filename));
                 Bitmap eyeDiffuse = BitmapToEyeDiffuseDawntrail(image, baseDirectory);
                 Bitmap eyeMulti = BitmapToEyeMultiDawntrail(image, baseDirectory);
-                Bitmap normal = ImageToEyeNormalDawntrail(eyeMulti, baseDirectory);
+                Bitmap normal = ImageToEyeNormalDawntrail(image, baseDirectory);
                 eyeDiffuse.Save(strings[0], ImageFormat.Png);
                 normal.Save(strings[1], ImageFormat.Png);
                 eyeMulti.Save(strings[2], ImageFormat.Png);
@@ -738,14 +741,14 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static void ConvertOldEyeMultiToDawntrailEyeMaps(string filename, string baseDirectory = null) {
-            Bitmap image = ExtractRed(TexLoader.ResolveBitmap(filename));
+            Bitmap image = ExtractRed(TexIO.ResolveBitmap(filename));
             Bitmap eyeDiffuse = BitmapToEyeDiffuseDawntrail(image, baseDirectory);
             Bitmap eyeMulti = BitmapToEyeMultiDawntrail(image, baseDirectory);
-            Bitmap normal = ImageToEyeNormalDawntrail(eyeMulti, baseDirectory);
+            Bitmap normal = ImageToEyeNormalDawntrail(image, baseDirectory);
 
-            eyeDiffuse.Save(ReplaceExtension(AddSuffix(filename, "_eye_diffuse"), ".png"), ImageFormat.Png);
-            eyeMulti.Save(ReplaceExtension(AddSuffix(filename, "_eye_maskulti"), ".png"), ImageFormat.Png);
-            normal.Save(ReplaceExtension(AddSuffix(filename, "_eye_normormal"), ".png"), ImageFormat.Png);
+            eyeDiffuse.Save(ReplaceExtension(AddSuffix(filename, "_eye_base"), ".png"), ImageFormat.Png);
+            eyeMulti.Save(ReplaceExtension(AddSuffix(filename, "_eye_norm"), ".png"), ImageFormat.Png);
+            normal.Save(ReplaceExtension(AddSuffix(filename, "_eye_mask"), ".png"), ImageFormat.Png);
         }
 
         private static Bitmap ImageToEyeNormalDawntrail(Bitmap image, string baseDirectory) {
@@ -757,15 +760,15 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             Graphics graphics = Graphics.FromImage(canvas);
             graphics.Clear(Color.Black);
-            Bitmap white = new Bitmap(enforcedSize, enforcedSize);
-            graphics = Graphics.FromImage(white);
-            graphics.Clear(Color.White);
+            //Bitmap white = new Bitmap(enforcedSize, enforcedSize);
+            //graphics = Graphics.FromImage(white);
+            //graphics.Clear(Color.White);
 
             graphics = Graphics.FromImage(canvas);
-            graphics.DrawImage(new Bitmap(normal),
+            graphics.DrawImage(TexIO.NewBitmap(normal),
                (enforcedSize / 2) - (((float)enforcedSize * 0.4096f) / 2), (enforcedSize / 2) - (((float)enforcedSize * 0.4096f) / 2),
                 (float)enforcedSize * 0.4096f, (float)enforcedSize * 0.4096f);
-            graphics.DrawImage(new Bitmap(template), 0, 0, enforcedSize, enforcedSize);
+            graphics.DrawImage(TexIO.ResolveBitmap(template), 0, 0, enforcedSize, enforcedSize);
 
             return canvas;
         }
@@ -800,24 +803,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             source.UnlockBits();
         }
 
-        public static void ClearOldHorns(Bitmap bitmap) {
-            LockBitmap source = new LockBitmap(bitmap);
-            source.LockBits();
-            for (int y = 0; y < bitmap.Height; y++) {
-                for (int x = 0; x < bitmap.Width; x++) {
-                    Color sourcePixel = source.GetPixel(x, y);
-                    if (x > bitmap.Width / 2) {
-                        Color col = Color.FromArgb(0, 0, 0, 0);
-                        source.SetPixel(x, y, col);
-                    }
-                }
-            };
-            source.UnlockBits();
+        public static Bitmap ClearOldHorns(Bitmap bitmap) {
+            return TexIO.Clone(bitmap, new Rectangle(0, 0, bitmap.Width / 2, bitmap.Height));
         }
 
         public static void ConvertTextureToTex(string fileName) {
 
-            TexLoader.ResolveBitmap(fileName).Save(ImageManipulation.ReplaceExtension(fileName, ".tex"), ImageFormat.Png);
+            TexIO.ResolveBitmap(fileName).Save(ImageManipulation.ReplaceExtension(fileName, ".tex"), ImageFormat.Png);
         }
     }
 }

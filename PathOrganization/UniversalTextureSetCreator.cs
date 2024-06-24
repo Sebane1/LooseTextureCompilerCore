@@ -83,23 +83,23 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             ConfigureTextureSet("Vanilla Face [IsChild]", "face_vanilla", race, 0, 0, faceVanilla, textureSet, 1, true);
 
             if (!string.IsNullOrEmpty(textureSet.Diffuse)) {
-                ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Diffuse)).Save(faceVanilla.Diffuse);
+                TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Diffuse), faceVanilla.Diffuse);
             }
 
             if (!string.IsNullOrEmpty(textureSet.Normal)) {
-                ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Normal)).Save(faceVanilla.Normal);
+                TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Normal), faceVanilla.Normal);
             }
 
             if (!string.IsNullOrEmpty(textureSet.Mask)) {
-                ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Mask)).Save(faceVanilla.Mask);
+                TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Mask), faceVanilla.Mask);
             }
 
             if (!string.IsNullOrEmpty(textureSet.Glow)) {
-                ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Glow)).Save(faceVanilla.Glow);
+                TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Glow), faceVanilla.Glow);
             }
 
             if (!string.IsNullOrEmpty(textureSet.NormalMask)) {
-                ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.NormalMask)).Save(faceVanilla.NormalMask);
+                TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.NormalMask), faceVanilla.NormalMask);
             }
             textureSet.BackupTexturePaths = null;
             textureSet.ChildSets.Add(faceVanilla);
@@ -110,22 +110,22 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             ConfigureTextureSet("Asym Face [IsChild]", "face_asym", race, 0, 0, asymFace, textureSet, 1);
 
             if (!string.IsNullOrEmpty(textureSet.Diffuse)) {
-                ImageManipulation.MirrorAndDuplicate(TexLoader.ResolveBitmap(textureSet.Diffuse)).Save(asymFace.Diffuse);
+                TexIO.SaveBitmap(ImageManipulation.MirrorAndDuplicate(TexIO.ResolveBitmap(textureSet.Diffuse)), asymFace.Diffuse);
             }
 
             if (!string.IsNullOrEmpty(textureSet.Normal)) {
-                ImageManipulation.MirrorAndDuplicate(TexLoader.ResolveBitmap(textureSet.Normal)).Save(asymFace.Normal);
+                TexIO.SaveBitmap(ImageManipulation.MirrorAndDuplicate(TexIO.ResolveBitmap(textureSet.Normal)), asymFace.Normal);
             }
             if (!string.IsNullOrEmpty(textureSet.Mask)) {
-                ImageManipulation.MirrorAndDuplicate(TexLoader.ResolveBitmap(textureSet.Mask)).Save(asymFace.Mask);
+                TexIO.SaveBitmap(ImageManipulation.MirrorAndDuplicate(TexIO.ResolveBitmap(textureSet.Mask)), asymFace.Mask);
             }
 
             if (!string.IsNullOrEmpty(textureSet.Glow)) {
-                ImageManipulation.MirrorAndDuplicate(TexLoader.ResolveBitmap(textureSet.Glow)).Save(asymFace.Glow);
+                TexIO.SaveBitmap(ImageManipulation.MirrorAndDuplicate(TexIO.ResolveBitmap(textureSet.Glow)), asymFace.Glow);
             }
 
             if (!string.IsNullOrEmpty(textureSet.NormalMask)) {
-                ImageManipulation.MirrorAndDuplicate(TexLoader.ResolveBitmap(textureSet.NormalMask)).Save(asymFace.NormalMask);
+                TexIO.SaveBitmap(ImageManipulation.MirrorAndDuplicate(TexIO.ResolveBitmap(textureSet.NormalMask)), asymFace.NormalMask);
             }
             textureSet.BackupTexturePaths = null;
             textureSet.ChildSets.Add(asymFace);
@@ -200,8 +200,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                 tbseVanilla.BackupTexturePaths.Diffuse);
             if (!File.Exists(vanillaDiffuse)) {
-                TexLoader.WriteImageToXOR(ImageManipulation.CutInHalf(
-                    TexLoader.ResolveBitmap(
+                TexIO.WriteImageToXOR(ImageManipulation.CutInHalf(
+                    TexIO.ResolveBitmap(
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                     textureSet.BackupTexturePaths.Diffuse))), vanillaDiffuse);
             }
@@ -209,32 +209,32 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                  Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                  tbseVanilla.BackupTexturePaths.DiffuseSecondary);
             if (!File.Exists(vanillaRaen)) {
-                TexLoader.WriteImageToXOR(ImageManipulation.CutInHalf(
-                     TexLoader.ResolveBitmap(
+                TexIO.WriteImageToXOR(ImageManipulation.CutInHalf(
+                     TexIO.ResolveBitmap(
                      Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                      textureSet.BackupTexturePaths.DiffuseSecondary))), vanillaRaen);
             }
             string vanillaNormal = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                 tbseVanilla.BackupTexturePaths.Normal);
             if (!File.Exists(vanillaNormal)) {
-                TexLoader.WriteImageToXOR(ImageManipulation.CutInHalf(
-                    TexLoader.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                TexIO.WriteImageToXOR(ImageManipulation.CutInHalf(
+                    TexIO.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                     textureSet.BackupTexturePaths.Normal))), vanillaNormal);
             }
             if (File.Exists(textureSet.Diffuse)) {
-                ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Diffuse)).Save(tbseVanilla.Diffuse);
+                TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Diffuse), tbseVanilla.Diffuse);
             }
             if (File.Exists(textureSet.Normal)) {
-                ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Normal)).Save(tbseVanilla.Normal);
+                TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Normal), tbseVanilla.Normal);
             }
             if (File.Exists(textureSet.Mask)) {
-                ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Mask)).Save(tbseVanilla.Mask);
+                TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Mask), tbseVanilla.Mask);
             }
             if (File.Exists(textureSet.Glow)) {
-                ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Glow)).Save(tbseVanilla.Glow);
+                TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Glow), tbseVanilla.Glow);
             }
             if (File.Exists(textureSet.NormalMask)) {
-                ImageManipulation.CutInHalf(TexLoader.ResolveBitmap(textureSet.Glow)).Save(tbseVanilla.NormalMask);
+                TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Glow), tbseVanilla.NormalMask);
             }
 
             textureSet.ChildSets.Add(tbseVanilla);
