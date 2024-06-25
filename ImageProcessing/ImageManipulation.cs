@@ -716,10 +716,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap catchLight = ImageToCatchlightLegacy(eyeMulti, baseDirectory);
             Bitmap normal = ImageToEyeNormal(eyeMulti, baseDirectory);
 
-            eyeMulti.Save(ReplaceExtension(AddSuffix(filename, "_eye_maskulti"), ".png"), ImageFormat.Png);
-            eyeGlow.Save(ReplaceExtension(AddSuffix(filename, "_eye_glow"), ".png"), ImageFormat.Png);
-            catchLight.Save(ReplaceExtension(AddSuffix(filename, "_eye_catchlight"), ".png"), ImageFormat.Png);
-            normal.Save(ReplaceExtension(AddSuffix(filename, "_eye_normormal"), ".png"), ImageFormat.Png);
+            TexIO.SaveBitmap(eyeMulti, ReplaceExtension(AddSuffix(filename, "_eye_maskulti"), ".png"));
+            TexIO.SaveBitmap(eyeGlow, ReplaceExtension(AddSuffix(filename, "_eye_glow"), ".png"));
+            TexIO.SaveBitmap(catchLight, ReplaceExtension(AddSuffix(filename, "_eye_catchlight"), ".png"));
+            TexIO.SaveBitmap(normal, ReplaceExtension(AddSuffix(filename, "_eye_normormal"), ".png"));
         }
         public static string[] ConvertImageToEyeMapsDawntrail(string filename, string baseDirectory = null,
             bool ignoreIfExists = false, bool wasEyeMulti = false) {
@@ -733,9 +733,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 Bitmap eyeDiffuse = BitmapToEyeDiffuseDawntrail(image, baseDirectory);
                 Bitmap eyeMulti = BitmapToEyeMultiDawntrail(image, baseDirectory);
                 Bitmap normal = ImageToEyeNormalDawntrail(image, baseDirectory);
-                eyeDiffuse.Save(strings[0], ImageFormat.Png);
-                normal.Save(strings[1], ImageFormat.Png);
-                eyeMulti.Save(strings[2], ImageFormat.Png);
+                TexIO.SaveBitmap(eyeDiffuse, strings[0]);
+                TexIO.SaveBitmap(normal, strings[1]);
+                TexIO.SaveBitmap(eyeMulti, strings[2]);
             }
             return strings;
         }
@@ -746,9 +746,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap eyeMulti = BitmapToEyeMultiDawntrail(image, baseDirectory);
             Bitmap normal = ImageToEyeNormalDawntrail(image, baseDirectory);
 
-            eyeDiffuse.Save(ReplaceExtension(AddSuffix(filename, "_eye_base"), ".png"), ImageFormat.Png);
-            eyeMulti.Save(ReplaceExtension(AddSuffix(filename, "_eye_norm"), ".png"), ImageFormat.Png);
-            normal.Save(ReplaceExtension(AddSuffix(filename, "_eye_mask"), ".png"), ImageFormat.Png);
+            TexIO.SaveBitmap(eyeDiffuse, ReplaceExtension(AddSuffix(filename, "_eye_base"), ".png"));
+            TexIO.SaveBitmap(normal, ReplaceExtension(AddSuffix(filename, "_eye_norm"), ".png"));
+            TexIO.SaveBitmap(eyeMulti, ReplaceExtension(AddSuffix(filename, "_eye_mask"), ".png"));
         }
 
         private static Bitmap ImageToEyeNormalDawntrail(Bitmap image, string baseDirectory) {
@@ -808,8 +808,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static void ConvertTextureToTex(string fileName) {
-
-            TexIO.ResolveBitmap(fileName).Save(ImageManipulation.ReplaceExtension(fileName, ".tex"), ImageFormat.Png);
+            TexIO.SaveBitmap(TexIO.ResolveBitmap(fileName), ImageManipulation.ReplaceExtension(fileName, ".tex"));
         }
     }
 }
