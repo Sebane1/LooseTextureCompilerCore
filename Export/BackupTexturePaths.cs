@@ -15,7 +15,6 @@ namespace FFXIVLooseTextureCompiler.Export {
             } else {
                 string fileName = (((subRace == 5 && gender == 1) || subRace == 11 ? 101 : 1) + face) + ".png";
                 _diffuse = "\\" + fileName;
-                _diffuseSecondary = "\\alpha\\" + fileName;
                 _normal = "\\" + (face + 1) + "n.png";
             }
             _isFace = isFace;
@@ -96,9 +95,8 @@ namespace FFXIVLooseTextureCompiler.Export {
         private bool _isFace;
 
         public static void AddFaceBackupPaths(int gender, int subRace, int face, TextureSet textureSet) {
-            string outputTexture = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-            @"res\textures\face\" + (gender == 1 ? "feminine" : "masculine") + @"\" +
-            RaceInfo.ModelRaces[RaceInfo.SubRaceToModelRace(subRace)].ToLower());
+            string outputTexture = @"res\textures\face\" + (gender == 1 ? "feminine" : "masculine") + @"\" +
+            RaceInfo.ModelRaces[RaceInfo.SubRaceToModelRace(subRace)].ToLower();
 
             textureSet.BackupTexturePaths = new BackupTexturePaths(outputTexture, true, gender, subRace, face);
         }

@@ -12,7 +12,6 @@ using System.IO;
 using Color = System.Drawing.Color;
 using Rectangle = System.Drawing.Rectangle;
 using Size = System.Drawing.Size;
-
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
     public static class TexIO {
         public static Bitmap DDSToBitmap(string inputFile, bool noAlpha = false) {
@@ -157,7 +156,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     inputFile.EndsWith(".ltct") ? OpenImageFromXOR(inputFile, noAlpha) :
                     SafeLoad(inputFile, noAlpha);
                     return bitmap;
-                } catch {
+                } catch (Exception e){
                     return new Bitmap(4096, 4096);
                 }
             }
