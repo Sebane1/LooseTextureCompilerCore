@@ -3,10 +3,10 @@ using Bitmap = System.Drawing;
 
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
     public class MapWriting {
-        public static Bitmap.Bitmap CalculateDiffuse(Bitmap.Bitmap file, Bitmap.Bitmap glow) {
+        public static Bitmap.Bitmap CalculateBase(Bitmap.Bitmap file, Bitmap.Bitmap glow) {
             Bitmap.Bitmap image = new Bitmap.Bitmap(glow, file.Width, file.Height);
-            Bitmap.Bitmap diffuse = new Bitmap.Bitmap(file);
-            Bitmap.Bitmap mergedImage = new Bitmap.Bitmap(diffuse);
+            Bitmap.Bitmap baseTexture = new Bitmap.Bitmap(file);
+            Bitmap.Bitmap mergedImage = new Bitmap.Bitmap(baseTexture);
             //Bitmap.Bitmap  debugImage = new Bitmap.Bitmap (file.Width, file.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
             Bitmap.Bitmap glowMultiply = new Bitmap.Bitmap(mergedImage);
@@ -16,7 +16,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             new KVImage.ImageBlender().BlendImages(mergedImage, glowMultiply, KVImage.ImageBlender.BlendOperation.Blend_Multiply);
 
             LockBitmap source = new LockBitmap(image);
-            LockBitmap destination = new LockBitmap(diffuse);
+            LockBitmap destination = new LockBitmap(baseTexture);
             LockBitmap mergedImagePixels = new LockBitmap(mergedImage);
             //LockBitmap debug = new LockBitmap(debugImage);
 
@@ -52,7 +52,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             mergedImagePixels.UnlockBits();
             //debug.UnlockBits();
             //debugImage.Save(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "atramentumTest.png"));
-            return diffuse;
+            return baseTexture;
         }
         public static Bitmap.Color FlattenColours(Bitmap.Color colour, int minBrightness = 90) {
             return Bitmap.Color.FromArgb(colour.A,
@@ -137,8 +137,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public static Bitmap.Bitmap TransplantData(Bitmap.Bitmap file, Bitmap.Bitmap glow) {
             Bitmap.Bitmap image = glow;
-            Bitmap.Bitmap diffuse = new Bitmap.Bitmap(file);
-            Bitmap.Bitmap mergedImage = new Bitmap.Bitmap(diffuse);
+            Bitmap.Bitmap baseTexture = new Bitmap.Bitmap(file);
+            Bitmap.Bitmap mergedImage = new Bitmap.Bitmap(baseTexture);
 
             Bitmap.Bitmap glowMultiply = new Bitmap.Bitmap(mergedImage);
             Graphics g = Graphics.FromImage(glowMultiply);
@@ -147,7 +147,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             new KVImage.ImageBlender().BlendImages(mergedImage, glowMultiply, KVImage.ImageBlender.BlendOperation.Blend_Multiply);
 
             LockBitmap source = new LockBitmap(image);
-            LockBitmap destination = new LockBitmap(diffuse);
+            LockBitmap destination = new LockBitmap(baseTexture);
             LockBitmap mergedImagePixels = new LockBitmap(mergedImage);
             source.LockBits();
             destination.LockBits();
@@ -167,10 +167,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             destination.UnlockBits();
             source.UnlockBits();
             mergedImagePixels.UnlockBits();
-            return diffuse;
+            return baseTexture;
         }
 
-        public static Bitmap.Bitmap ExtractGlowMapFromDiffuse(Bitmap.Bitmap file) {
+        public static Bitmap.Bitmap ExtractGlowMapFromBase(Bitmap.Bitmap file) {
             Bitmap.Bitmap image = new Bitmap.Bitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();

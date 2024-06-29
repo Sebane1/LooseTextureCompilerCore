@@ -12,60 +12,60 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public static void ConfigureOmniConfiguration(TextureSet textureSet) {
             textureSet.OmniExportMode = true;
             textureSet.ChildSets.Clear();
-            int race = RaceInfo.ReverseRaceLookup(textureSet.InternalDiffusePath);
-            if (((textureSet.InternalDiffusePath.Contains("0001_d.tex") &&
-                !textureSet.InternalDiffusePath.Contains("fac"))
-                || (textureSet.InternalDiffusePath.Contains("0101_d.tex")
-                && !textureSet.InternalDiffusePath.Contains("fac")))
-                && !textureSet.InternalDiffusePath.Contains("--c1101b0001_")) {
+            int race = RaceInfo.ReverseRaceLookup(textureSet.InternalBasePath);
+            if (((textureSet.InternalBasePath.Contains("0001_d.tex") &&
+                !textureSet.InternalBasePath.Contains("fac"))
+                || (textureSet.InternalBasePath.Contains("0101_d.tex")
+                && !textureSet.InternalBasePath.Contains("fac")))
+                && !textureSet.InternalBasePath.Contains("--c1101b0001_")) {
                 ConfigureVanillaFemaleCrossCompatibility(textureSet, race);
-            } else if (textureSet.InternalDiffusePath.Contains("fac_b")) {
+            } else if (textureSet.InternalBasePath.Contains("fac_b")) {
                 ConfigureAsymFaceCrossCompatibility(textureSet, race);
-            } else if (textureSet.InternalDiffusePath.Contains("fac_")) {
+            } else if (textureSet.InternalBasePath.Contains("fac_")) {
                 ConfigureVanillaFaceCrossCompatibility(textureSet, race);
-            } else if (textureSet.InternalDiffusePath.Contains("bibo")) {
+            } else if (textureSet.InternalBasePath.Contains("bibo")) {
                 ConfigureBiboFemaleCrossCompatibility(textureSet, race);
-            } else if (textureSet.InternalDiffusePath.Contains("eve")) {
+            } else if (textureSet.InternalBasePath.Contains("eve")) {
                 ConfigureEveFemaleCrossCompatibility(textureSet, race);
-            } else if (textureSet.InternalDiffusePath.Contains("gen3")) {
+            } else if (textureSet.InternalBasePath.Contains("gen3")) {
                 ConfigureGen3FemaleCrossCompatibility(textureSet, race);
-            } else if (textureSet.InternalDiffusePath.Contains("chara/human/c1101/obj/body/b0001/texture/v01_c1101b0001_g_d")) {
+            } else if (textureSet.InternalBasePath.Contains("chara/human/c1101/obj/body/b0001/texture/v01_c1101b0001_g_d")) {
                 ConfigureOtopopCrossCompatibility(textureSet, race);
-            } else if (textureSet.InternalDiffusePath.Contains("--c1101b0001_")) {
+            } else if (textureSet.InternalBasePath.Contains("--c1101b0001_")) {
                 ConfigureLalafellVanillaCrossCompatibility(textureSet, race);
-            } else if (textureSet.InternalDiffusePath.Contains("v01_c1101b0001_b")) {
+            } else if (textureSet.InternalBasePath.Contains("v01_c1101b0001_b")) {
                 ConfigureAsymLalafellCrossCompatibility(textureSet, race);
-            } else if (textureSet.InternalDiffusePath.Contains("_b_d")
-                && !textureSet.InternalDiffusePath.Contains("fac")) {
+            } else if (textureSet.InternalBasePath.Contains("_b_d")
+                && !textureSet.InternalBasePath.Contains("fac")) {
                 ConfigureTBSECrossCompatibility(textureSet, race);
             }
         }
         public static List<string> GetSkinTypeNames(TextureSet textureSet) {
-            int race = RaceInfo.ReverseRaceLookup(textureSet.InternalDiffusePath);
-            if (((textureSet.InternalDiffusePath.Contains("0001_d.tex") &&
-                !textureSet.InternalDiffusePath.Contains("fac"))
-                || (textureSet.InternalDiffusePath.Contains("0101_d.tex")
-                && !textureSet.InternalDiffusePath.Contains("fac")))
-                && !textureSet.InternalDiffusePath.Contains("--c1101b0001_")) {
+            int race = RaceInfo.ReverseRaceLookup(textureSet.InternalBasePath);
+            if (((textureSet.InternalBasePath.Contains("0001_d.tex") &&
+                !textureSet.InternalBasePath.Contains("fac"))
+                || (textureSet.InternalBasePath.Contains("0101_d.tex")
+                && !textureSet.InternalBasePath.Contains("fac")))
+                && !textureSet.InternalBasePath.Contains("--c1101b0001_")) {
                 return GetSkinNames(BackupTexturePaths.Gen3SkinTypes);
-            } else if (textureSet.InternalDiffusePath.Contains("fac_b")) {
+            } else if (textureSet.InternalBasePath.Contains("fac_b")) {
                 return null;
-            } else if (textureSet.InternalDiffusePath.Contains("fac_")) {
+            } else if (textureSet.InternalBasePath.Contains("fac_")) {
                 return null;
-            } else if (textureSet.InternalDiffusePath.Contains("bibo")) {
+            } else if (textureSet.InternalBasePath.Contains("bibo")) {
                 return GetSkinNames(BackupTexturePaths.BiboSkinTypes);
-            } else if (textureSet.InternalDiffusePath.Contains("eve")) {
+            } else if (textureSet.InternalBasePath.Contains("eve")) {
                 return GetSkinNames(BackupTexturePaths.Gen3SkinTypes);
-            } else if (textureSet.InternalDiffusePath.Contains("gen3")) {
+            } else if (textureSet.InternalBasePath.Contains("gen3")) {
                 return GetSkinNames(BackupTexturePaths.Gen3SkinTypes);
-            } else if (textureSet.InternalDiffusePath.Contains("chara/human/c1101/obj/body/b0001/texture/v01_c1101b0001_g_d")) {
+            } else if (textureSet.InternalBasePath.Contains("chara/human/c1101/obj/body/b0001/texture/v01_c1101b0001_g_d")) {
                 return GetSkinNames(BackupTexturePaths.OtopopSkinTypes);
-            } else if (textureSet.InternalDiffusePath.Contains("--c1101b0001_")) {
+            } else if (textureSet.InternalBasePath.Contains("--c1101b0001_")) {
                 return GetSkinNames(BackupTexturePaths.OtopopSkinTypes);
-            } else if (textureSet.InternalDiffusePath.Contains("v01_c1101b0001_b")) {
+            } else if (textureSet.InternalBasePath.Contains("v01_c1101b0001_b")) {
                 return GetSkinNames(BackupTexturePaths.OtopopSkinTypes);
-            } else if (textureSet.InternalDiffusePath.Contains("_b_d")
-                && !textureSet.InternalDiffusePath.Contains("fac")) {
+            } else if (textureSet.InternalBasePath.Contains("_b_d")
+                && !textureSet.InternalBasePath.Contains("fac")) {
                 return GetSkinNames(BackupTexturePaths.TbseSkinTypes);
             }
             return null;
@@ -82,8 +82,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             TextureSet faceVanilla = new TextureSet();
             ConfigureTextureSet("Vanilla Face [IsChild]", "face_vanilla", race, 0, 0, faceVanilla, textureSet, 1, true);
 
-            if (!string.IsNullOrEmpty(textureSet.Diffuse)) {
-                TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Diffuse), faceVanilla.Diffuse);
+            if (!string.IsNullOrEmpty(textureSet.Base)) {
+                TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Base), faceVanilla.Base);
             }
 
             if (!string.IsNullOrEmpty(textureSet.Normal)) {
@@ -109,8 +109,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             TextureSet asymFace = new TextureSet();
             ConfigureTextureSet("Asym Face [IsChild]", "face_asym", race, 0, 0, asymFace, textureSet, 1);
 
-            if (!string.IsNullOrEmpty(textureSet.Diffuse)) {
-                TexIO.SaveBitmap(ImageManipulation.MirrorAndDuplicate(TexIO.ResolveBitmap(textureSet.Diffuse)), asymFace.Diffuse);
+            if (!string.IsNullOrEmpty(textureSet.Base)) {
+                TexIO.SaveBitmap(ImageManipulation.MirrorAndDuplicate(TexIO.ResolveBitmap(textureSet.Base)), asymFace.Base);
             }
 
             if (!string.IsNullOrEmpty(textureSet.Normal)) {
@@ -136,25 +136,25 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             destinationTextureSet.TextureSetName = name;
             switch (bodyPart) {
                 case 0:
-                    destinationTextureSet.InternalDiffusePath = RacePaths.GetBodyTexturePath(0, gender, body, race, 0, uniqueAuRa);
+                    destinationTextureSet.InternalBasePath = RacePaths.GetBodyTexturePath(0, gender, body, race, 0, uniqueAuRa);
                     destinationTextureSet.InternalNormalPath = RacePaths.GetBodyTexturePath(1, gender, body, race, 0, uniqueAuRa);
                     destinationTextureSet.InternalMaskPath = RacePaths.GetBodyTexturePath(2, gender, body, race, 0, uniqueAuRa);
                     break;
                 case 1:
                     if (asymFace) {
-                        destinationTextureSet.InternalDiffusePath = baseTextureSet.InternalDiffusePath.Replace("fac_b_", "fac_");
+                        destinationTextureSet.InternalBasePath = baseTextureSet.InternalBasePath.Replace("fac_b_", "fac_");
                         destinationTextureSet.InternalNormalPath = baseTextureSet.InternalNormalPath.Replace("fac_b_", "fac_");
                         destinationTextureSet.InternalMaskPath = baseTextureSet.InternalMaskPath.Replace("fac_b_", "fac_");
                     } else {
-                        destinationTextureSet.InternalDiffusePath = baseTextureSet.InternalDiffusePath.Replace("fac_", "fac_b_");
+                        destinationTextureSet.InternalBasePath = baseTextureSet.InternalBasePath.Replace("fac_", "fac_b_");
                         destinationTextureSet.InternalNormalPath = baseTextureSet.InternalNormalPath.Replace("fac_", "fac_b_");
                         destinationTextureSet.InternalMaskPath = baseTextureSet.InternalMaskPath.Replace("fac_", "fac_b_");
                     }
                     destinationTextureSet.BackupTexturePaths = null;
                     break;
             }
-            destinationTextureSet.Diffuse = ImageManipulation.ReplaceExtension(
-                ImageManipulation.AddSuffix(baseTextureSet.Diffuse, $"_{prefix}_d_baseTexBaked"), ".png");
+            destinationTextureSet.Base = ImageManipulation.ReplaceExtension(
+                ImageManipulation.AddSuffix(baseTextureSet.Base, $"_{prefix}_d_baseTexBaked"), ".png");
             destinationTextureSet.Normal = ImageManipulation.ReplaceExtension(
                 ImageManipulation.AddSuffix(baseTextureSet.Normal, $"_{prefix}_n_baseTexBaked"), ".png");
             destinationTextureSet.Mask = ImageManipulation.ReplaceExtension(
@@ -171,10 +171,10 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private static void ConfigureTextureSet(string name, int race, int gender, int body,
            TextureSet destinationTextureSet, TextureSet baseTextureSet) {
             destinationTextureSet.TextureSetName = name;
-            destinationTextureSet.InternalDiffusePath = RacePaths.GetBodyTexturePath(0, gender, body, 0, race);
+            destinationTextureSet.InternalBasePath = RacePaths.GetBodyTexturePath(0, gender, body, 0, race);
             destinationTextureSet.InternalNormalPath = RacePaths.GetBodyTexturePath(1, gender, body, 0, race);
             destinationTextureSet.InternalMaskPath = RacePaths.GetBodyTexturePath(2, gender, body, 0, race);
-            destinationTextureSet.Diffuse = baseTextureSet.Diffuse;
+            destinationTextureSet.Base = baseTextureSet.Base;
             destinationTextureSet.Normal = baseTextureSet.Normal;
             destinationTextureSet.Mask = baseTextureSet.Mask;
             destinationTextureSet.Glow = baseTextureSet.Glow;
@@ -194,25 +194,25 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 Path.GetDirectoryName(
                 Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
-                tbseVanilla.BackupTexturePaths.Diffuse)));
+                tbseVanilla.BackupTexturePaths.Base)));
 
-            string vanillaDiffuse =
+            string vanillaBase =
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                tbseVanilla.BackupTexturePaths.Diffuse);
-            if (!File.Exists(vanillaDiffuse)) {
+                tbseVanilla.BackupTexturePaths.Base);
+            if (!File.Exists(vanillaBase)) {
                 TexIO.WriteImageToXOR(ImageManipulation.CutInHalf(
                     TexIO.ResolveBitmap(
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                    textureSet.BackupTexturePaths.Diffuse))), vanillaDiffuse);
+                    textureSet.BackupTexturePaths.Base))), vanillaBase);
             }
             string vanillaRaen =
                  Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                 tbseVanilla.BackupTexturePaths.DiffuseSecondary);
+                 tbseVanilla.BackupTexturePaths.BaseSecondary);
             if (!File.Exists(vanillaRaen)) {
                 TexIO.WriteImageToXOR(ImageManipulation.CutInHalf(
                      TexIO.ResolveBitmap(
                      Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                     textureSet.BackupTexturePaths.DiffuseSecondary))), vanillaRaen);
+                     textureSet.BackupTexturePaths.BaseSecondary))), vanillaRaen);
             }
             string vanillaNormal = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                 tbseVanilla.BackupTexturePaths.Normal);
@@ -221,8 +221,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                     TexIO.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
                     textureSet.BackupTexturePaths.Normal))), vanillaNormal);
             }
-            if (File.Exists(textureSet.Diffuse)) {
-                TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Diffuse), tbseVanilla.Diffuse);
+            if (File.Exists(textureSet.Base)) {
+                TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Base), tbseVanilla.Base);
             }
             if (File.Exists(textureSet.Normal)) {
                 TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Normal), tbseVanilla.Normal);

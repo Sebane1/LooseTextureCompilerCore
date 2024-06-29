@@ -5,11 +5,11 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private string _textureSetName = "";
         private string _groupName = "";
 
-        private string _diffuse = "";
+        private string _baseTexture = "";
         private string _normal = "";
         private string _mask = "";
 
-        private string _internalDiffusePath = "";
+        private string _internalBasePath = "";
         private string _internalNormalPath = "";
         private string _internalMaskPath = "";
         private string _normalMask = "";
@@ -63,10 +63,17 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         /// This only exists for backwards compatibility
         /// </summary>
         public bool IgnoreMultiGeneration { set => IgnoreMaskGeneration = value; }
+
+
+        [Obsolete("This property is only here for backwards compatibility, please use Base instead.")]
+        /// <summary>
+        /// This only exists for backwards compatibility
+        /// </summary>
+        public string Diffuse { set => _baseTexture = value; }
         #endregion
 
 
-        public string Diffuse { get { if (_diffuse == null) { _diffuse = ""; } return _diffuse; } set => _diffuse = value; }
+        public string Base { get { if (_baseTexture == null) { _baseTexture = ""; } return _baseTexture; } set => _baseTexture = value; }
         public string Normal { get { if (_normal == null) { _normal = ""; } return _normal; } set => _normal = value; }
         public string Mask { get { if (_mask == null) { _mask = ""; } return _mask; } set => _mask = value; }
         public string NormalMask { get { if (_normalMask == null) { _normalMask = ""; } return _normalMask; } set => _normalMask = value; }
@@ -85,11 +92,11 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 _glow = value;
             }
         }
-        public string InternalDiffusePath {
+        public string InternalBasePath {
             get {
-                return _internalDiffusePath == null ? _internalDiffusePath = "" : _internalDiffusePath;
+                return _internalBasePath == null ? _internalBasePath = "" : _internalBasePath;
             }
-            set => _internalDiffusePath = value;
+            set => _internalBasePath = value;
         }
         public string InternalNormalPath {
             get {

@@ -180,7 +180,7 @@ namespace LooseTextureCompilerCore.Racial {
             int index = ((1 + subRace) * 2) - (gender ? 0 : 1);
             string[] paths = racialStrings[index - 1];
             if (paths != null && paths.Length > 0) {
-                textureSet.InternalDiffusePath = paths[0];
+                textureSet.InternalBasePath = paths[0];
                 textureSet.InternalNormalPath = paths[1];
                 textureSet.InternalMaskPath = paths[2];
             }

@@ -53,7 +53,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
             }
             if (path.Contains("bibo")) {
                 if (path.Contains("_d")) {
-                    return BiboPathUpgraderDiffuse(path);
+                    return BiboPathUpgraderBase(path);
                 }
                 if (path.Contains("_n")) {
                     return BiboPathUpgraderNormal(path);
@@ -83,9 +83,8 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     // Bibo+
                     if (race != 5) {
                         if (genderValue == 1) {
-                            result = @"chara/human/c" + (genderValue == 0 ? RaceInfo.RaceCodeBody.Masculine[race]
-                                    : RaceInfo.RaceCodeBody.Feminine[race]) + @"/obj/body/b" + "0001" + @"/texture/bibo/bibo_" + RaceInfo.BodyIdentifiers[baseBody].RaceIdentifiers[race]
-                                + GetTextureType(texture, baseBody, false, true, true) + ".tex";
+                            result = @"chara/bibo_" + RaceInfo.BodyIdentifiers[baseBody].RaceIdentifiers[race]
+                                + GetTextureType(texture, baseBody, false, true) + ".tex";
                         } else {
                             result = "";
                         }
@@ -134,9 +133,8 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     if (race != 5) {
                         if (race == 6 || race == 7) {
                             if (genderValue == 1) {
-                                result = @"chara/human/c" + RaceInfo.RaceCodeBody.Feminine[race]
-                                    + @"/obj/body/b" + "0001" + @"/texture/bibo/bibo_" + RaceInfo.BodyIdentifiers[baseBody].RaceIdentifiers[race]
-                                    + GetTextureType(texture, baseBody, false, true, true) + ".tex";
+                                result = @"chara/bibo_" + RaceInfo.BodyIdentifiers[baseBody].RaceIdentifiers[race]
+                                    + GetTextureType(texture, baseBody, false, true) + ".tex";
                             } else {
                                 result = "Scales+ is only compatible with feminine Au Ra characters";
                             }
@@ -209,10 +207,10 @@ namespace FFXIVLooseTextureCompiler.Racial {
             return "chara/human/c" + genderCode + "/obj/hair/h" + hairValue + "/texture/--c"
                 + genderCode + "h" + hairValue + "_hir" + GetTextureType(material, 0, true) + ".tex";
         }
-        public static string GetTextureType(int material, int baseBodyIndex, bool isface = false, bool isVerbose = false, bool isBibo = false) {
+        public static string GetTextureType(int material, int baseBodyIndex, bool isface = false, bool isVerbose = false) {
             switch (material) {
                 case 0:
-                    return isBibo ? "_dif" : (isVerbose ? "_base" : "_d");
+                    return (isVerbose ? "_base" : "_d");
                 case 1:
                     return isVerbose ? "_norm" : "_n";
                 case 2:
@@ -243,75 +241,75 @@ namespace FFXIVLooseTextureCompiler.Racial {
             return null;
         }
 
-        public static string BiboPathUpgraderDiffuse(string biboPath) {
+        public static string BiboPathUpgraderBase(string biboPath) {
             if (biboPath.ToLower().Contains("mid")) {
-                return "chara/human/c0201/obj/body/b0001/texture/bibo/bibo_mid_dif.tex";
+                return "chara/bibo_mid_base.tex";
             }
             if (biboPath.ToLower().Contains("high")) {
-                return "chara/human/c0401/obj/body/b0001/texture/bibo/bibo_high_dif.tex";
+                return "chara/bibo_high_base.tex";
             }
             if (biboPath.ToLower().Contains("viera")) {
-                return "chara/human/c1401/obj/body/b0001/texture/bibo/bibo_viera_dif.tex";
+                return "chara/bibo_viera_base.tex";
             }
             if (biboPath.ToLower().Contains("raen")) {
-                return "chara/human/c1401/obj/body/b0101/texture/bibo/bibo_raen_dif.tex";
+                return "chara/bibo_raen_base.tex";
             }
             if (biboPath.ToLower().Contains("xaela")) {
-                return "chara/human/c1401/obj/body/b0101/texture/bibo/bibo_xaela_dif.tex";
+                return "chara/bibo_xaela_base.tex";
             }
             if (biboPath.ToLower().Contains("helion")) {
-                return "chara/human/c1601/obj/body/b0001/texture/bibo/bibo_helion_dif.tex";
+                return "chara/bibo_hroth_base.tex";
             }
             if (biboPath.ToLower().Contains("lost")) {
-                return "chara/human/c1601/obj/body/b0201/texture/bibo/bibo_lost_dif.tex";
+                return "chara/bibo/bibo_hroth_base.tex";
             }
             return biboPath;
         }
         public static string BiboPathUpgraderNormal(string biboPath) {
             if (biboPath.ToLower().Contains("mid")) {
-                return "chara/human/c0201/obj/body/b0001/texture/bibo/bibo_mid_norm.tex";
+                return "chara/bibo_mid_norm.tex";
             }
             if (biboPath.ToLower().Contains("high")) {
-                return "chara/human/c0401/obj/body/b0001/texture/bibo/bibo_high_norm.tex";
+                return "chara/bibo_high_norm.tex";
             }
             if (biboPath.ToLower().Contains("viera")) {
-                return "chara/human/c1401/obj/body/b0001/texture/bibo/bibo_viera_norm.tex";
+                return "chara/bibo_viera_norm.tex";
             }
             if (biboPath.ToLower().Contains("raen")) {
-                return "chara/human/c1401/obj/body/b0101/texture/bibo/bibo_raen_norm.tex";
+                return "chara/bibo_raen_norm.tex";
             }
             if (biboPath.ToLower().Contains("xaela")) {
-                return "chara/human/c1401/obj/body/b0101/texture/bibo/bibo_xaela_norm.tex";
+                return "chara/bibo_xaela_norm.tex";
             }
             if (biboPath.ToLower().Contains("helion")) {
-                return "chara/human/c1601/obj/body/b0001/texture/bibo/bibo_helion_norm.tex";
+                return "chara/bibo_hroth_norm.tex";
             }
             if (biboPath.ToLower().Contains("lost")) {
-                return "chara/human/c1601/obj/body/b0201/texture/bibo/bibo_lost_norm.tex";
+                return "chara/bibo_hroth_norm.tex";
             }
             return biboPath;
         }
         public static string BiboPathUpgraderMask(string biboPath) {
             if (biboPath.ToLower().Contains("mid")) {
-                return "chara/human/c0201/obj/body/b0001/texture/bibo/bibo_mid_mask.tex";
+                return "chara/bibo_mid_mask.tex";
             }
             if (biboPath.ToLower().Contains("high")) {
-                return "chara/human/c0401/obj/body/b0001/texture/bibo/bibo_high_mask.tex";
+                return "chara/bibo_high_mask.tex";
             }
             if (biboPath.ToLower().Contains("viera")) {
-                return "chara/human/c1401/obj/body/b0001/texture/bibo/bibo_viera_mask.tex";
+                return "chara/bibo_viera_mask.tex";
             }
             if (biboPath.ToLower().Contains("raen")) {
-                return "chara/human/c1401/obj/body/b0101/texture/bibo/bibo_raen_mask.tex";
+                return "chara/bibo_raen_mask.tex";
             }
             if (biboPath.ToLower().Contains("xaela")) {
-                return "chara/human/c1401/obj/body/b0101/texture/bibo/bibo_xaela_mask.tex";
+                return "chara/bibo_xaela_mask.tex";
             }
             if (biboPath.ToLower().Contains("helion")) {
-                return "chara/human/c1601/obj/body/b0001/texture/bibo/bibo_helion_mask.tex";
+                return "chara/bibo_hroth_mask.tex";
             }
             if (biboPath.ToLower().Contains("lost")) {
-                return "chara/human/c1601/obj/body/b0201/texture/bibo/bibo_lost_mask.tex";
+                return "chara/bibo_hroth_mask.tex";
             }
             return biboPath;
         }
@@ -319,7 +317,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
         public static string GetFaceTexturePath(int selectedIndex) {
             return "chara/common/texture/decal_face/_decal_" + (selectedIndex + 1) + ".tex";
         }
-        public static string OldEyePathToNewEyeDiffusePath(string value) {
+        public static string OldEyePathToNewEyeBasePath(string value) {
             if (value.Contains("c0201") || value.Contains("c0401") || value.Contains("c1801")) {
                 return "chara/common/texture/eye/eye01_base.tex";
             }

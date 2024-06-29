@@ -60,26 +60,26 @@ namespace FFXIVLooseTextureCompiler {
         }
 
         public void BatchTextureSet(TextureSet parent, TextureSet child) {
-            if (!string.IsNullOrEmpty(child.Diffuse)) {
-                if (!_xnormalCache.ContainsKey(child.Diffuse)) {
-                    string diffuseAlpha = ImageManipulation.ReplaceExtension(
-                    ImageManipulation.AddSuffix(parent.Diffuse, "_alpha"), ".png");
-                    string diffuseRGB = ImageManipulation.ReplaceExtension(
-                    ImageManipulation.AddSuffix(parent.Diffuse, "_rgb"), ".png");
-                    if (_finalizeResults || !File.Exists(child.Diffuse.Replace("baseTexBaked", "rgb_baseTexBaked"))
-                        || !File.Exists(child.Diffuse.Replace("baseTexBaked", "alpha_baseTexBaked"))) {
-                        if (child.Diffuse.Contains("baseTexBaked")) {
-                            _xnormalCache.Add(child.Diffuse, child.Diffuse);
-                            Bitmap diffuse = TexIO.ResolveBitmap(parent.Diffuse);
-                            if (Directory.Exists(Path.GetDirectoryName(diffuseAlpha))
-                                && Directory.Exists(Path.GetDirectoryName(diffuseRGB))) {
-                                string childAlpha = child.Diffuse.Replace("baseTexBaked", "alpha");
-                                string childRGB = child.Diffuse.Replace("baseTexBaked", "rgb");
-                                ImageManipulation.ExtractTransparency(diffuse).Save(diffuseAlpha, ImageFormat.Png);
-                                ImageManipulation.ExtractRGB(diffuse).Save(diffuseRGB, ImageFormat.Png);
+            if (!string.IsNullOrEmpty(child.Base)) {
+                if (!_xnormalCache.ContainsKey(child.Base)) {
+                    string baseTextureAlpha = ImageManipulation.ReplaceExtension(
+                    ImageManipulation.AddSuffix(parent.Base, "_alpha"), ".png");
+                    string baseTextureRGB = ImageManipulation.ReplaceExtension(
+                    ImageManipulation.AddSuffix(parent.Base, "_rgb"), ".png");
+                    if (_finalizeResults || !File.Exists(child.Base.Replace("baseTexBaked", "rgb_baseTexBaked"))
+                        || !File.Exists(child.Base.Replace("baseTexBaked", "alpha_baseTexBaked"))) {
+                        if (child.Base.Contains("baseTexBaked")) {
+                            _xnormalCache.Add(child.Base, child.Base);
+                            Bitmap baseTexture = TexIO.ResolveBitmap(parent.Base);
+                            if (Directory.Exists(Path.GetDirectoryName(baseTextureAlpha))
+                                && Directory.Exists(Path.GetDirectoryName(baseTextureRGB))) {
+                                string childAlpha = child.Base.Replace("baseTexBaked", "alpha");
+                                string childRGB = child.Base.Replace("baseTexBaked", "rgb");
+                                ImageManipulation.ExtractTransparency(baseTexture).Save(baseTextureAlpha, ImageFormat.Png);
+                                ImageManipulation.ExtractRGB(baseTexture).Save(baseTextureRGB, ImageFormat.Png);
                                 if (_finalizeResults) {
-                                    _xnormal.AddToBatch(parent.InternalDiffusePath, diffuseAlpha, childAlpha, false);
-                                    _xnormal.AddToBatch(parent.InternalDiffusePath, diffuseRGB, childRGB, false);
+                                    _xnormal.AddToBatch(parent.InternalBasePath, baseTextureAlpha, childAlpha, false);
+                                    _xnormal.AddToBatch(parent.InternalBasePath, baseTextureRGB, childRGB, false);
                                 } else {
                                     if (!File.Exists(childAlpha)) {
                                         new Bitmap(1024, 1024).Save(ImageManipulation.AddSuffix(childAlpha, "_baseTexBaked"), ImageFormat.Png);
@@ -89,7 +89,7 @@ namespace FFXIVLooseTextureCompiler {
                                     }
                                 }
                             } else {
-                                //MessageBox.Show("Something has gone terribly wrong. " + parent.Diffuse + "is missing");
+                                //MessageBox.Show("Something has gone terribly wrong. " + parent.Base + "is missing");
                             }
                         }
                     }
@@ -106,8 +106,8 @@ namespace FFXIVLooseTextureCompiler {
                             Bitmap normal = TexIO.ResolveBitmap(parent.Normal);
                             ImageManipulation.ExtractTransparency(normal).Save(normalAlpha, ImageFormat.Png);
                             ImageManipulation.ExtractRGB(normal, true).Save(normalRGB, ImageFormat.Png);
-                            _xnormal.AddToBatch(parent.InternalDiffusePath, normalAlpha, child.Normal.Replace("baseTexBaked", "alpha"), false);
-                            _xnormal.AddToBatch(parent.InternalDiffusePath, normalRGB, child.Normal.Replace("baseTexBaked", "rgb"), true);
+                            _xnormal.AddToBatch(parent.InternalBasePath, normalAlpha, child.Normal.Replace("baseTexBaked", "alpha"), false);
+                            _xnormal.AddToBatch(parent.InternalBasePath, normalRGB, child.Normal.Replace("baseTexBaked", "rgb"), true);
                         }
                     }
                 }
@@ -133,8 +133,8 @@ namespace FFXIVLooseTextureCompiler {
                             Bitmap glow = TexIO.ResolveBitmap(parent.Glow);
                             ImageManipulation.ExtractTransparency(glow).Save(glowAlpha, ImageFormat.Png);
                             ImageManipulation.ExtractRGB(glow).Save(glowRGB, ImageFormat.Png);
-                            _xnormal.AddToBatch(parent.InternalDiffusePath, glowAlpha, child.Glow.Replace("baseTexBaked", "alpha"), false);
-                            _xnormal.AddToBatch(parent.InternalDiffusePath, glowRGB, child.Glow.Replace("baseTexBaked", "rgb"), false);
+                            _xnormal.AddToBatch(parent.InternalBasePath, glowAlpha, child.Glow.Replace("baseTexBaked", "alpha"), false);
+                            _xnormal.AddToBatch(parent.InternalBasePath, glowRGB, child.Glow.Replace("baseTexBaked", "rgb"), false);
                         }
                     }
                 }
@@ -150,8 +150,8 @@ namespace FFXIVLooseTextureCompiler {
                             Bitmap normalMask = TexIO.ResolveBitmap(parent.NormalMask);
                             ImageManipulation.ExtractTransparency(normalMask).Save(normalMaskAlpha, ImageFormat.Png);
                             ImageManipulation.ExtractRGB(normalMask).Save(normalMaskRGB, ImageFormat.Png);
-                            _xnormal.AddToBatch(parent.InternalDiffusePath, normalMaskAlpha, child.NormalMask.Replace("baseTexBaked", "alpha"), false);
-                            _xnormal.AddToBatch(parent.InternalDiffusePath, normalMaskRGB, child.NormalMask.Replace("baseTexBaked", "rgb"), false);
+                            _xnormal.AddToBatch(parent.InternalBasePath, normalMaskAlpha, child.NormalMask.Replace("baseTexBaked", "alpha"), false);
+                            _xnormal.AddToBatch(parent.InternalBasePath, normalMaskRGB, child.NormalMask.Replace("baseTexBaked", "rgb"), false);
                         }
                     }
                 }
@@ -219,34 +219,34 @@ namespace FFXIVLooseTextureCompiler {
                 Group group = new Group(textureSets[0].GroupName.Replace(@"/", "-").Replace(@"\", "-"), "", 0,
                     (choiceOption == 2 && textureSets.Count > 1) ? "Single" : "Multi", 0);
                 Option option = null;
-                Option diffuseOption = null;
+                Option baseTextureOption = null;
                 Option normalOption = null;
                 Option multiOption = null;
                 bool alreadySetOption = false;
                 foreach (TextureSet textureSet in textureSets) {
                     string textureSetHash = GetHashFromTextureSet(textureSet);
-                    string diffuseDiskPath = "";
+                    string baseTextureDiskPath = "";
                     string normalDiskPath = "";
                     string multiDiskPath = "";
                     bool skipTexExport = false;
                     if (_redirectionCache.ContainsKey(textureSetHash)) {
-                        diffuseDiskPath = GetDiskPath(_redirectionCache[textureSetHash].InternalDiffusePath, modPath, textureSetHash);
+                        baseTextureDiskPath = GetDiskPath(_redirectionCache[textureSetHash].InternalBasePath, modPath, textureSetHash);
                         normalDiskPath = GetDiskPath(_redirectionCache[textureSetHash].InternalNormalPath, modPath, textureSetHash);
                         multiDiskPath = GetDiskPath(_redirectionCache[textureSetHash].InternalMaskPath, modPath, textureSetHash);
                         skipTexExport = true;
                     } else {
-                        diffuseDiskPath = GetDiskPath(textureSet.InternalDiffusePath, modPath, textureSetHash);
+                        baseTextureDiskPath = GetDiskPath(textureSet.InternalBasePath, modPath, textureSetHash);
                         normalDiskPath = GetDiskPath(textureSet.InternalNormalPath, modPath, textureSetHash);
                         multiDiskPath = GetDiskPath(textureSet.InternalMaskPath, modPath, textureSetHash);
                         _redirectionCache.Add(textureSetHash, textureSet);
                     }
                     switch (choiceOption) {
                         case 0:
-                            if (!string.IsNullOrEmpty(textureSet.Diffuse) && !string.IsNullOrEmpty(textureSet.InternalDiffusePath)) {
-                                if (DiffuseLogic(textureSet, diffuseDiskPath, skipTexExport)) {
-                                    AddDetailedGroupOption(textureSet.InternalDiffusePath,
-                                        diffuseDiskPath.Replace(modPath + "\\", null), "Diffuse", "Normal", textureSet,
-                                        textureSets, group, diffuseOption, out diffuseOption);
+                            if (!string.IsNullOrEmpty(textureSet.Base) && !string.IsNullOrEmpty(textureSet.InternalBasePath)) {
+                                if (BaseLogic(textureSet, baseTextureDiskPath, skipTexExport)) {
+                                    AddDetailedGroupOption(textureSet.InternalBasePath,
+                                        baseTextureDiskPath.Replace(modPath + "\\", null), "Base", "Normal", textureSet,
+                                        textureSets, group, baseTextureOption, out baseTextureOption);
                                 } else {
                                     OnProgressChange.Invoke(this, EventArgs.Empty);
                                 }
@@ -280,7 +280,7 @@ namespace FFXIVLooseTextureCompiler {
                         case 2:
                         case 3:
                             if ((!textureSet.IsChildSet && choiceOption != 3) || (choiceOption == 3 && !alreadySetOption)) {
-                                if (!string.IsNullOrEmpty(textureSet.Diffuse) ||
+                                if (!string.IsNullOrEmpty(textureSet.Base) ||
                                     !string.IsNullOrEmpty(textureSet.Normal) ||
                                     !string.IsNullOrEmpty(textureSet.Mask)) {
                                     option = new Option(textureSet.TextureSetName == textureSet.GroupName || choiceOption == 3 ? "Enable"
@@ -289,10 +289,10 @@ namespace FFXIVLooseTextureCompiler {
                                     alreadySetOption = true;
                                 }
                             }
-                            if (!string.IsNullOrEmpty(textureSet.Diffuse) && !string.IsNullOrEmpty(textureSet.InternalDiffusePath)) {
-                                if (DiffuseLogic(textureSet, diffuseDiskPath, skipTexExport)) {
-                                    option.Files[textureSet.InternalDiffusePath] =
-                                       diffuseDiskPath.Replace(modPath + "\\", null);
+                            if (!string.IsNullOrEmpty(textureSet.Base) && !string.IsNullOrEmpty(textureSet.InternalBasePath)) {
+                                if (BaseLogic(textureSet, baseTextureDiskPath, skipTexExport)) {
+                                    option.Files[textureSet.InternalBasePath] =
+                                       baseTextureDiskPath.Replace(modPath + "\\", null);
                                 } else {
                                     OnProgressChange.Invoke(this, EventArgs.Empty);
                                 }
@@ -353,13 +353,13 @@ namespace FFXIVLooseTextureCompiler {
             string backupHash = "";
             if (textureSet.BackupTexturePaths != null) {
                 if (!textureSet.BackupTexturePaths.IsFace) {
-                    backupHash = (RaceInfo.ReverseRaceLookup(textureSet.InternalDiffusePath) == 6 ?
-                    textureSet.BackupTexturePaths.DiffuseSecondary : textureSet.BackupTexturePaths.Diffuse).GetHashCode().ToString();
+                    backupHash = (RaceInfo.ReverseRaceLookup(textureSet.InternalBasePath) == 6 ?
+                    textureSet.BackupTexturePaths.BaseSecondary : textureSet.BackupTexturePaths.Base).GetHashCode().ToString();
                 } else {
-                    backupHash = (textureSet.BackupTexturePaths.Diffuse + textureSet.BackupTexturePaths.DiffuseSecondary).GetHashCode().ToString();
+                    backupHash = (textureSet.BackupTexturePaths.Base + textureSet.BackupTexturePaths.BaseSecondary).GetHashCode().ToString();
                 }
             }
-            return textureSet.Diffuse.GetHashCode().ToString() +
+            return textureSet.Base.GetHashCode().ToString() +
                 textureSet.Normal.GetHashCode().ToString() +
                 textureSet.Mask.GetHashCode().ToString() +
                 textureSet.Glow.GetHashCode().ToString() +
@@ -383,10 +383,10 @@ namespace FFXIVLooseTextureCompiler {
         private bool MaskLogic(TextureSet textureSet, string multiDiskPath, bool skipTexExport) {
             bool outputGenerated = false;
             if (!string.IsNullOrEmpty(textureSet.Mask) && !string.IsNullOrEmpty(textureSet.InternalMaskPath)) {
-                if (!string.IsNullOrEmpty(textureSet.Diffuse) && !textureSet.InternalMaskPath.Contains("/eye/")
+                if (!string.IsNullOrEmpty(textureSet.Base) && !textureSet.InternalMaskPath.Contains("/eye/")
                     && (textureSet.InternalMaskPath.Contains("obj/face") || textureSet.InternalMaskPath.Contains("obj/body"))) {
                     if (!skipTexExport) {
-                        Task.Run(() => ExportTex(textureSet.Mask, multiDiskPath, ExportType.DTMulti, "", textureSet.Diffuse));
+                        Task.Run(() => ExportTex(textureSet.Mask, multiDiskPath, ExportType.DTMulti, "", textureSet.Base));
                     }
                 } else if (textureSet.InternalMaskPath.Contains("etc_") || textureSet.InternalMaskPath.Contains("hair")) {
                     if (!skipTexExport) {
@@ -398,28 +398,28 @@ namespace FFXIVLooseTextureCompiler {
                     }
                 }
                 outputGenerated = true;
-            } else if (!string.IsNullOrEmpty(textureSet.Diffuse) && !string.IsNullOrEmpty(textureSet.InternalMaskPath)
+            } else if (!string.IsNullOrEmpty(textureSet.Base) && !string.IsNullOrEmpty(textureSet.InternalMaskPath)
                     && _generateMulti && !(textureSet.InternalMaskPath.ToLower().Contains("iri"))) {
                 if (!textureSet.IgnoreMaskGeneration) {
-                    if (textureSet.InternalDiffusePath.Contains("b0001_b_d") || textureSet.InternalDiffusePath.Contains("b0101_b_d")) {
+                    if (textureSet.InternalBasePath.Contains("b0001_b_d") || textureSet.InternalBasePath.Contains("b0101_b_d")) {
                         if (!skipTexExport) {
-                            Task.Run(() => ExportTex(textureSet.Diffuse, multiDiskPath, ExportType.MaskTbse, "",
-                            textureSet.Diffuse, textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Diffuse : ""));
+                            Task.Run(() => ExportTex(textureSet.Base, multiDiskPath, ExportType.MaskTbse, "",
+                            textureSet.Base, textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Base : ""));
                         }
-                    } else if (textureSet.InternalDiffusePath.Contains("fac_b_d")) {
+                    } else if (textureSet.InternalBasePath.Contains("fac_b_d")) {
                         if (!skipTexExport) {
-                            Task.Run(() => ExportTex(textureSet.Diffuse, multiDiskPath, ExportType.MaskFaceAsym, "",
-                            textureSet.Diffuse, textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Diffuse : ""));
+                            Task.Run(() => ExportTex(textureSet.Base, multiDiskPath, ExportType.MaskFaceAsym, "",
+                            textureSet.Base, textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Base : ""));
                         }
-                    } else if (textureSet.InternalDiffusePath.Contains("fac_d")) {
+                    } else if (textureSet.InternalBasePath.Contains("fac_d")) {
                         if (!skipTexExport) {
-                            Task.Run(() => ExportTex(textureSet.Diffuse, multiDiskPath, ExportType.MaskFace, "",
-                            textureSet.Diffuse, textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Diffuse : ""));
+                            Task.Run(() => ExportTex(textureSet.Base, multiDiskPath, ExportType.MaskFace, "",
+                            textureSet.Base, textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Base : ""));
                         }
                     } else {
                         if (!skipTexExport) {
-                            Task.Run(() => ExportTex(textureSet.Diffuse, multiDiskPath, ExportType.Mask, "",
-                            textureSet.Diffuse, textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Diffuse : ""));
+                            Task.Run(() => ExportTex(textureSet.Base, multiDiskPath, ExportType.Mask, "",
+                            textureSet.Base, textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Base : ""));
                         }
                     }
                     outputGenerated = true;
@@ -437,7 +437,7 @@ namespace FFXIVLooseTextureCompiler {
                 if (_generateNormals) {
                     if (!skipTexExport) {
                         Task.Run(() => ExportTex(textureSet.Normal, normalDiskPath, ExportType.MergeNormal,
-                        textureSet.Diffuse, textureSet.NormalMask,
+                        textureSet.Base, textureSet.NormalMask,
                         textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Normal : "", textureSet.NormalCorrection));
                     }
                     outputGenerated = true;
@@ -455,21 +455,21 @@ namespace FFXIVLooseTextureCompiler {
                         outputGenerated = true;
                     }
                 }
-            } else if (!string.IsNullOrEmpty(textureSet.Diffuse) && !string.IsNullOrEmpty(textureSet.InternalNormalPath) && _generateNormals) {
+            } else if (!string.IsNullOrEmpty(textureSet.Base) && !string.IsNullOrEmpty(textureSet.InternalNormalPath) && _generateNormals) {
                 if (!textureSet.IgnoreNormalGeneration) {
                     if (textureSet.BackupTexturePaths != null) {
                         if (!skipTexExport) {
                             Task.Run(() => ExportTex((Path.Combine(_basePath, textureSet.BackupTexturePaths.Normal)),
-                            normalDiskPath, ExportType.MergeNormal, textureSet.Diffuse, textureSet.NormalMask,
+                            normalDiskPath, ExportType.MergeNormal, textureSet.Base, textureSet.NormalMask,
                             (textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Normal : ""),
                             textureSet.NormalCorrection, textureSet.InvertNormalGeneration));
                         }
                         outputGenerated = true;
                     } else {
                         if (!skipTexExport) {
-                            Task.Run(() => ExportTex(textureSet.Diffuse, normalDiskPath,
+                            Task.Run(() => ExportTex(textureSet.Base, normalDiskPath,
                             ExportType.Normal, "", textureSet.NormalMask, textureSet.BackupTexturePaths != null ?
-                            textureSet.BackupTexturePaths.Diffuse : "",
+                            textureSet.BackupTexturePaths.Base : "",
                             textureSet.NormalCorrection, textureSet.InvertNormalGeneration));
                         }
                         outputGenerated = true;
@@ -482,28 +482,28 @@ namespace FFXIVLooseTextureCompiler {
             return outputGenerated;
         }
 
-        private bool DiffuseLogic(TextureSet textureSet, string diffuseDiskPath, bool skipTexExport) {
+        private bool BaseLogic(TextureSet textureSet, string baseTextureDiskPath, bool skipTexExport) {
             bool outputGenerated = false;
             string underlay = "";
             if (textureSet.BackupTexturePaths != null) {
                 if (!textureSet.BackupTexturePaths.IsFace) {
-                    underlay = (RaceInfo.ReverseRaceLookup(textureSet.InternalDiffusePath) == 6 ?
-                         textureSet.BackupTexturePaths.DiffuseSecondary : textureSet.BackupTexturePaths.Diffuse);
+                    underlay = (RaceInfo.ReverseRaceLookup(textureSet.InternalBasePath) == 6 ?
+                         textureSet.BackupTexturePaths.BaseSecondary : textureSet.BackupTexturePaths.Base);
                 } else {
-                    underlay = textureSet.BackupTexturePaths.Diffuse;
-                    if (File.Exists(textureSet.BackupTexturePaths.DiffuseSecondary)) {
-                        File.Delete(textureSet.BackupTexturePaths.DiffuseSecondary);
+                    underlay = textureSet.BackupTexturePaths.Base;
+                    if (File.Exists(textureSet.BackupTexturePaths.BaseSecondary)) {
+                        File.Delete(textureSet.BackupTexturePaths.BaseSecondary);
                     }
                 }
             }
             if (string.IsNullOrEmpty(textureSet.Glow)) {
                 if (!skipTexExport) {
-                    Task.Run(() => ExportTex(textureSet.Diffuse, diffuseDiskPath, ExportType.None, "", "", underlay));
+                    Task.Run(() => ExportTex(textureSet.Base, baseTextureDiskPath, ExportType.None, "", "", underlay));
                 }
                 outputGenerated = true;
             } else {
                 if (!skipTexExport) {
-                    Task.Run(() => ExportTex(textureSet.Diffuse, diffuseDiskPath, ExportType.Glow, "", textureSet.Glow, underlay));
+                    Task.Run(() => ExportTex(textureSet.Base, baseTextureDiskPath, ExportType.Glow, "", textureSet.Glow, underlay));
                 }
                 outputGenerated = true;
             }
@@ -581,7 +581,7 @@ namespace FFXIVLooseTextureCompiler {
             MaskFaceAsym
         }
         public async Task<bool> ExportTex(string inputFile, string outputFile, ExportType exportType = ExportType.None,
-            string diffuseNormal = "", string modifierMap = "", string layeringImage = "", string normalCorrection = "", bool modifier = false) {
+            string baseTextureNormal = "", string modifierMap = "", string layeringImage = "", string normalCorrection = "", bool modifier = false) {
             byte[] data = new byte[0];
             int contrast = 500;
             int contrastFace = 100;
@@ -615,10 +615,10 @@ namespace FFXIVLooseTextureCompiler {
                             ExportTypeMulti(inputFile, layeringImage, exportType, modifierMap, stream);
                             break;
                         case ExportType.MergeNormal:
-                            ExportTypeMergeNormal(inputFile, outputFile, layeringImage, diffuseNormal, modifierMap, normalCorrection, stream, modifier);
+                            ExportTypeMergeNormal(inputFile, outputFile, layeringImage, baseTextureNormal, modifierMap, normalCorrection, stream, modifier);
                             break;
                         case ExportType.XNormalImport:
-                            ExportTypeXNormalImport(inputFile, diffuseNormal, stream);
+                            ExportTypeXNormalImport(inputFile, baseTextureNormal, stream);
                             break;
                     }
                     if (!skipPngTexConversion) {
@@ -648,17 +648,17 @@ namespace FFXIVLooseTextureCompiler {
             return true;
         }
 
-        private void ExportTypeXNormalImport(string inputFile, string diffuseNormal, Stream stream) {
+        private void ExportTypeXNormalImport(string inputFile, string baseTextureNormal, Stream stream) {
             using (Bitmap bitmap = TexIO.ResolveBitmap(inputFile)) {
                 if (bitmap != null) {
                     Bitmap underlay = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb);
                     Graphics g = Graphics.FromImage(underlay);
                     g.Clear(Color.FromArgb(255, 160, 113, 94));
-                    if (!string.IsNullOrEmpty(diffuseNormal)) {
+                    if (!string.IsNullOrEmpty(baseTextureNormal)) {
                         //g.CompositingQuality = CompositingQuality.HighQuality;
                         //g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                         //g.SmoothingMode = SmoothingMode.HighQuality;
-                        g.DrawImage(TexIO.ResolveBitmap(diffuseNormal), 0, 0, bitmap.Width, bitmap.Height);
+                        g.DrawImage(TexIO.ResolveBitmap(baseTextureNormal), 0, 0, bitmap.Width, bitmap.Height);
                     }
                     MapWriting.TransplantData(underlay, bitmap).Save(stream, ImageFormat.Png);
                 }
@@ -666,25 +666,25 @@ namespace FFXIVLooseTextureCompiler {
         }
 
         private void ExportTypeMergeNormal(string inputFile, string outputFile, string layeringImage,
-            string diffuseNormal, string modifierMap, string normalCorrection, Stream stream, bool modifier) {
+            string baseTextureNormal, string modifierMap, string normalCorrection, Stream stream, bool modifier) {
             Bitmap output = null;
-            if (!string.IsNullOrEmpty(diffuseNormal)) {
+            if (!string.IsNullOrEmpty(baseTextureNormal)) {
                 lock (_normalCache) {
-                    if (!_normalCache.ContainsKey(diffuseNormal)) {
-                        using (Bitmap diffuse = TexIO.ResolveBitmap(diffuseNormal)) {
-                            if (diffuse != null) {
-                                using (Bitmap canvasImage = new Bitmap(diffuse.Size.Width,
-                                    diffuse.Size.Height, PixelFormat.Format32bppArgb)) {
+                    if (!_normalCache.ContainsKey(baseTextureNormal)) {
+                        using (Bitmap baseTexture = TexIO.ResolveBitmap(baseTextureNormal)) {
+                            if (baseTexture != null) {
+                                using (Bitmap canvasImage = new Bitmap(baseTexture.Size.Width,
+                                    baseTexture.Size.Height, PixelFormat.Format32bppArgb)) {
                                     output = null;
                                     if (File.Exists(modifierMap)) {
                                         using (Bitmap normalMaskBitmap = TexIO.ResolveBitmap(modifierMap)) {
                                             if (outputFile.Contains("fac_b_n")) {
-                                                Bitmap resize = new Bitmap(diffuse, new Size(1024, 1024));
+                                                Bitmap resize = new Bitmap(baseTexture, new Size(1024, 1024));
                                                 output = ImageManipulation.MergeNormals(TexIO.ResolveBitmap(inputFile), resize,
-                                                    canvasImage, normalMaskBitmap, diffuseNormal, modifier);
+                                                    canvasImage, normalMaskBitmap, baseTextureNormal, modifier);
                                             } else {
-                                                output = ImageManipulation.MergeNormals(TexIO.ResolveBitmap(inputFile), diffuse,
-                                                    canvasImage, normalMaskBitmap, diffuseNormal, modifier);
+                                                output = ImageManipulation.MergeNormals(TexIO.ResolveBitmap(inputFile), baseTexture,
+                                                    canvasImage, normalMaskBitmap, baseTextureNormal, modifier);
                                             }
                                         }
                                     } else {
@@ -698,9 +698,9 @@ namespace FFXIVLooseTextureCompiler {
                                                     g.Clear(Color.Transparent);
                                                     g.DrawImage(layer, 0, 0, bitmap.Width, bitmap.Height);
                                                     g.DrawImage(GetMergedBitmap(inputFile), 0, 0, bitmap.Width, bitmap.Height);
-                                                    output = ImageManipulation.MergeNormals(image, diffuse, canvasImage, null, diffuseNormal, modifier);
+                                                    output = ImageManipulation.MergeNormals(image, baseTexture, canvasImage, null, baseTextureNormal, modifier);
                                                 } else {
-                                                    output = ImageManipulation.MergeNormals(TexIO.ResolveBitmap(inputFile), diffuse, canvasImage, null, diffuseNormal, modifier);
+                                                    output = ImageManipulation.MergeNormals(TexIO.ResolveBitmap(inputFile), baseTexture, canvasImage, null, baseTextureNormal, modifier);
                                                 }
                                             }
                                         }
@@ -709,12 +709,12 @@ namespace FFXIVLooseTextureCompiler {
                                         output = ImageManipulation.ResizeAndMerge(output, TexIO.ResolveBitmap(normalCorrection));
                                     }
                                     output.Save(stream, ImageFormat.Png);
-                                    _normalCache.Add(diffuseNormal, output);
+                                    _normalCache.Add(baseTextureNormal, output);
                                 }
                             }
                         }
                     } else {
-                        _normalCache[diffuseNormal].Save(stream, ImageFormat.Png);
+                        _normalCache[baseTextureNormal].Save(stream, ImageFormat.Png);
                     }
                 }
             }
@@ -742,7 +742,7 @@ namespace FFXIVLooseTextureCompiler {
                             } else {
                                 image = bitmap;
                             }
-                            Bitmap generatedMulti = ImageManipulation.ConvertDiffuseToDawntrailSkinMulti(image);
+                            Bitmap generatedMulti = ImageManipulation.ConvertBaseToDawntrailSkinMulti(image);
                             Bitmap multi = !string.IsNullOrEmpty(modifierMap)
                                 ? MapWriting.CalculateMulti(generatedMulti, TexIO.ResolveBitmap(modifierMap))
                                 : generatedMulti;
@@ -849,12 +849,12 @@ namespace FFXIVLooseTextureCompiler {
                                 //g.SmoothingMode = SmoothingMode.HighQuality;
                                 g.DrawImage(layer, 0, 0, bitmap.Width, bitmap.Height);
                                 g.DrawImage(GetMergedBitmap(inputFile), 0, 0, bitmap.Width, bitmap.Height);
-                                Bitmap glowBitmap = MapWriting.CalculateDiffuse(image,
+                                Bitmap glowBitmap = MapWriting.CalculateBase(image,
                                     ImageManipulation.Resize(GetMergedBitmap(glowMap), bitmap.Width, bitmap.Height));
                                 glowBitmap.Save(stream, ImageFormat.Png);
                                 _glowCache.Add(descriminator, glowBitmap);
                             } else {
-                                Bitmap glowBitmap = MapWriting.CalculateDiffuse(bitmap, TexIO.ResolveBitmap(glowMap));
+                                Bitmap glowBitmap = MapWriting.CalculateBase(bitmap, TexIO.ResolveBitmap(glowMap));
                                 glowBitmap.Save(stream, ImageFormat.Png);
                                 _glowCache.Add(descriminator, glowBitmap);
                             }

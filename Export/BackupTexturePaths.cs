@@ -9,29 +9,29 @@ namespace FFXIVLooseTextureCompiler.Export {
         public BackupTexturePaths(string path, bool isFace = false, int gender = 0, int subRace = 0, int face = 0) {
             _path = path;
             if (!isFace) {
-                _diffuse = "diffuse.ltct";
-                _diffuseSecondary = "diffuseRaen.ltct";
+                _baseTexture = "baseTexture.ltct";
+                _baseTextureSecondary = "baseTextureRaen.ltct";
                 _normal = "normal.ltct";
             } else {
                 string fileName = (((subRace == 5 && gender == 1) || subRace == 11 ? 101 : 1) + face) + ".png";
-                _diffuse = "\\" + fileName;
+                _baseTexture = "\\" + fileName;
                 _normal = "\\" + (face + 1) + "n.png";
             }
             _isFace = isFace;
         }
         [JsonProperty]
-        string _diffuse = "";
+        string _baseTexture = "";
         [JsonProperty]
-        string _diffuseSecondary = "";
+        string _baseTextureSecondary = "";
         [JsonProperty]
         string _normal = "";
         [JsonProperty]
         string _path;
 
         [JsonIgnore]
-        public string Diffuse { get => _path + _diffuse; }
+        public string Base { get => _path + _baseTexture; }
         [JsonIgnore]
-        public string DiffuseSecondary { get => _path + _diffuseSecondary; }
+        public string BaseSecondary { get => _path + _baseTextureSecondary; }
         [JsonIgnore]
         public string Normal { get => _path + _normal; }
         [JsonIgnore]
@@ -104,11 +104,11 @@ namespace FFXIVLooseTextureCompiler.Export {
         public static void AddBodyBackupPaths(int gender, int race, TextureSet textureSet) {
             if (gender != 0) {
                 if (textureSet.SkinType > -1) {
-                    if (textureSet.InternalDiffusePath.Contains("bibo")) {
+                    if (textureSet.InternalBasePath.Contains("bibo")) {
                         textureSet.BackupTexturePaths = BiboSkinTypes[textureSet.SkinType].BackupTextures[0];
-                    } else if (textureSet.InternalDiffusePath.Contains("gen3") || textureSet.InternalDiffusePath.Contains("eve")) {
+                    } else if (textureSet.InternalBasePath.Contains("gen3") || textureSet.InternalBasePath.Contains("eve")) {
                         textureSet.BackupTexturePaths = Gen3SkinTypes[textureSet.SkinType].BackupTextures[1];
-                    } else if (textureSet.InternalDiffusePath.Contains("v01_c1101b0001_g")) {
+                    } else if (textureSet.InternalBasePath.Contains("v01_c1101b0001_g")) {
                         textureSet.BackupTexturePaths = OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
                     } else {
                         textureSet.BackupTexturePaths = race == 5 ?
@@ -120,33 +120,33 @@ namespace FFXIVLooseTextureCompiler.Export {
                     textureSet.BackupTexturePaths = OtopopSkinTypes[textureSet.SkinType].BackupTextures[2];
                 } else {
                     // Midlander, Elezen, Miqo'te
-                    if (textureSet.InternalDiffusePath.Contains("--c0101b0001_b_d")) {
+                    if (textureSet.InternalBasePath.Contains("--c0101b0001_b_d")) {
                         textureSet.BackupTexturePaths = TbseSkinTypes[textureSet.SkinType].BackupTextures[0];
                     } else
                     // Highlander
-                    if (textureSet.InternalDiffusePath.Contains("--c0301b0001_b_d")) {
+                    if (textureSet.InternalBasePath.Contains("--c0301b0001_b_d")) {
                         textureSet.BackupTexturePaths = TbseSkinTypes[textureSet.SkinType].BackupTextures[1];
                     } else
                     // Viera
-                    if (textureSet.InternalDiffusePath.Contains("--c1701b0001_b_d")) {
+                    if (textureSet.InternalBasePath.Contains("--c1701b0001_b_d")) {
                         textureSet.BackupTexturePaths = TbseSkinTypes[textureSet.SkinType].BackupTextures[2];
-                    } else if (textureSet.InternalDiffusePath.Contains("1_b_d")) {
+                    } else if (textureSet.InternalBasePath.Contains("1_b_d")) {
                         textureSet.BackupTexturePaths = TbseSkinTypes[textureSet.SkinType].BackupTextures[0];
                     }
                 }
             }
         }
         public static BackupTexturePaths AsymLalaPath(int skinType) {
-            if (!File.Exists(_otopopSkinTypes[skinType].BackupTextures[1].Diffuse)) {
+            if (!File.Exists(_otopopSkinTypes[skinType].BackupTextures[1].Base)) {
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory,
-                _otopopSkinTypes[skinType].BackupTextures[1].Diffuse)));
+                _otopopSkinTypes[skinType].BackupTextures[1].Base)));
 
                 TexIO.WriteImageToXOR(ImageManipulation.MirrorAndDuplicate(
                 TexIO.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                    _otopopSkinTypes[skinType].BackupTextures[2].Diffuse))),
+                    _otopopSkinTypes[skinType].BackupTextures[2].Base))),
                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-                    _otopopSkinTypes[skinType].BackupTextures[1].Diffuse));
+                    _otopopSkinTypes[skinType].BackupTextures[1].Base));
 
                 TexIO.WriteImageToXOR(ImageManipulation.MirrorAndDuplicate(
                     TexIO.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
