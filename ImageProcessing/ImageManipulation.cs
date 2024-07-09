@@ -8,7 +8,53 @@ using Rectangle = System.Drawing.Rectangle;
 
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
     public class ImageManipulation {
-
+        public enum UVMapType {
+            Diffuse,
+            Normal,
+            Multi
+        }
+        public static UVMapType UVMapTypeClassifier(string texture) {
+            Bitmap image = new Bitmap(TexIO.ResolveBitmap(texture));
+            LockBitmap source = new LockBitmap(image);
+            source.LockBits();
+            Color uvMapTest = source.GetPixel(0, 0);
+            Color uvMapTest2 = source.GetPixel(image.Width, image.Height);
+            source.UnlockBits();
+            if (uvMapTest.B == 255 && uvMapTest2.B == 255) {
+                return UVMapType.Normal;
+            } else if (uvMapTest.B == 152 && uvMapTest2.B == 152) {
+                return UVMapType.Multi;
+            } else {
+                return UVMapType.Diffuse;
+            }
+        }
+        public enum BodyUVType {
+            None,
+            Gen2,
+            Bibo,
+            Gen3,
+        }
+        public static BodyUVType FemaleBodyUVClassifier(string texture) {
+            Bitmap image = new Bitmap(TexIO.ResolveBitmap(texture));
+            if (image.Width == image.Height / 2) {
+                return BodyUVType.Gen2;
+            } else {
+                LockBitmap source = new LockBitmap(image);
+                source.LockBits();
+                float yPos = 0.244140625f * image.Height;
+                int center = image.Width / 2;
+                Color firstPixel = source.GetPixel(center, (int)yPos);
+                Color secondPixel = source.GetPixel(center, (int)yPos + 1);
+                source.UnlockBits();
+                if (firstPixel.A == 0) {
+                    return BodyUVType.None;
+                } else if (firstPixel.ToArgb() == secondPixel.ToArgb()) {
+                    return BodyUVType.Bibo;
+                } else {
+                    return BodyUVType.Gen3;
+                }
+            }
+        }
         public static Bitmap BoostAboveThreshold(Bitmap file, int threshhold) {
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
@@ -436,7 +482,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 ImageManipulation.InvertImage(ExtractAlpha(new Bitmap(bitmapTemplate, enforcedSize, enforcedSize))), new Bitmap(white));
         }
 
-        public static Bitmap BitmapToEyeDiffuseDawntrail(Bitmap image, string baseDirectory = null) {
+        public static Bitmap BitmapToEyeBaseDawntrail(Bitmap image, string baseDirectory = null) {
             int enforcedSize = 2048;
             string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
                 : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\diffuse.png");
