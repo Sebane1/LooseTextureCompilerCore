@@ -328,13 +328,13 @@ namespace FFXIVLooseTextureCompiler.Racial {
                 return value.Contains("f010") ? "chara/common/texture/eye/eye03_base.tex" : "chara/common/texture/eye/eye02_base.tex";
             }
             if (value.Contains("c1001") || value.Contains("c1401") || value.Contains("c1301")) {
-                return "chara/common/texture/eye/eye10_d.tex";
+                return "chara/common/texture/eye/eye10_base.tex";
             }
             if (value.Contains("c1201") || value.Contains("c1101")) {
                 return value.Contains("f010") ? "chara/common/texture/eye/eye05_base.tex" : "chara/common/texture/eye/eye04_base.tex";
             }
             if (value.Contains("c0101") || value.Contains("c0301") || value.Contains("c1701")) {
-                return "chara/common/texture/eye/eye11_d.tex";
+                return "chara/common/texture/eye/eye11_base.tex";
             }
             if (value.Contains("c1501") || value.Contains("c1601")) {
                 return value.Contains("f010") ? "chara/common/texture/eye/eye07_base.tex" : "chara/common/texture/eye/eye06_base.tex";
