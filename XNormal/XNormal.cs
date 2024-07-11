@@ -127,7 +127,7 @@ namespace FFXIVLooseTextureCompiler {
                 if (internalPath.Contains("bibo")) {
                     if (outputPath.Contains("gen2")) {
                         biboToGen2Batch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, biboLegacy, gen2,
-                            count++ + ".xml", isNormalMap));
+                            count++ + ".xml", isNormalMap,2048));
                     } else if (outputPath.Contains("gen3")) {
                         biboToGen3Batch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, isNormalMap ? biboLegacy : bibo,
                             isNormalMap ? gen3Legacy : gen3, count++ + ".xml", isNormalMap));
@@ -135,7 +135,7 @@ namespace FFXIVLooseTextureCompiler {
                 } else if (internalPath.Contains("eve") || internalPath.Contains("gen3")) {
                     if (outputPath.Contains("gen2")) {
                         gen3ToGen2Batch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, gen3Legacy, gen2,
-                            count++ + ".xml", isNormalMap));
+                            count++ + ".xml", isNormalMap, 2048));
                     } else if (outputPath.Contains("bibo")) {
                         gen3ToBiboBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, isNormalMap ? gen3Legacy : gen3,
                             isNormalMap ? biboLegacy : bibo, count++ + ".xml", isNormalMap));
@@ -158,7 +158,7 @@ namespace FFXIVLooseTextureCompiler {
                     } else if (internalPath.Contains("v01_c1101b0001_g")) {
                         if (outputPath.Contains("vanilla_lala")) {
                             otopopToVanillaLalaBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, otopop,
-                                vanillaLala, count++ + ".xml", isNormalMap));
+                                vanillaLala, count++ + ".xml", isNormalMap, 2048));
                         } else if (outputPath.Contains("asym_lala")) {
                             otopopToAsymLalaBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, otopop, asymLala,
                                 count++ + ".xml", isNormalMap));
@@ -166,7 +166,7 @@ namespace FFXIVLooseTextureCompiler {
                     } else if (internalPath.Contains("v01_c1101b0001_b")) {
                         if (outputPath.Contains("vanilla_lala")) {
                             asymLalaToVanillaLalaBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, asymLala,
-                                vanillaLala, count++ + ".xml", isNormalMap));
+                                vanillaLala, count++ + ".xml", isNormalMap, 2048));
                         } else if (outputPath.Contains("otopop")) {
                             asymLalaToOtopopBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, asymLala, otopop,
                                 count++ + ".xml", isNormalMap));
@@ -312,7 +312,7 @@ namespace FFXIVLooseTextureCompiler {
                             CleanXmlEscapeSequences(Path.Combine(!string.IsNullOrEmpty(basePathOverride)
                             ? basePathOverride : AppDomain.CurrentDomain.BaseDirectory, xNormalExportJob.OutputModel)),
                             CleanXmlEscapeSequences(xNormalExportJob.OutputTexturePath.Replace("_baseTexBaked", null)),
-                            xNormalExportJob.IsNormalMap.ToString().ToLower(), 4096.ToString(), 4096.ToString(),
+                            xNormalExportJob.IsNormalMap.ToString().ToLower(), xNormalExportJob.Width.ToString(), xNormalExportJob.Height.ToString(),
                             xNormalExportJob.OutputModel.Contains("gen2").ToString().ToLower()));
                         }
                         generationCache.Add(xNormalExportJob.OutputTexturePath, xNormalExportJob.OutputTexturePath);

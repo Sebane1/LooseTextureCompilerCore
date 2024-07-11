@@ -57,6 +57,11 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         /// This only exists for backwards compatibility
         /// </summary>
         public string InternalMultiPath { set => InternalMaskPath = value; }
+        [Obsolete("This property is only here for backwards compatibility, please use InternalMaskPath instead.")]
+        /// <summary>
+        /// This only exists for backwards compatibility
+        /// </summary>
+        public string InternalDiffusePath { set => InternalBasePath = value; }
 
         [Obsolete("This property is only here for backwards compatibility, please use IgnoreMaskGeneration instead.")]
         /// <summary>

@@ -9,8 +9,8 @@ namespace FFXIVLooseTextureCompiler.Export {
         public BackupTexturePaths(string path, bool isFace = false, int gender = 0, int subRace = 0, int face = 0) {
             _path = path;
             if (!isFace) {
-                _baseTexture = "baseTexture.ltct";
-                _baseTextureSecondary = "baseTextureRaen.ltct";
+                _baseTexture = "diffuse.ltct";
+                _baseTextureSecondary = "diffuseRaen.ltct";
                 _normal = "normal.ltct";
             } else {
                 string fileName = (((subRace == 5 && gender == 1) || subRace == 11 ? 101 : 1) + face) + ".png";

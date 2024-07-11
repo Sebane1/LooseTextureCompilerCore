@@ -49,16 +49,16 @@ namespace FFXIVLooseTextureCompiler.Racial {
         }
         public static string PathCorrector(string path) {
             if (path.Contains("obj/face") || path.Contains("obj/body") || path.Contains("texture/eye") || path.Contains("obj/hair")) {
-                return path.Replace("--", null).Replace("_d.tex", "_base.tex").Replace("_n.tex", "_norm.tex").Replace("_s.tex", "_mask.tex");
+                path = path.Replace("--", null).Replace("_d.tex", "_base.tex").Replace("_n.tex", "_norm.tex").Replace("_s.tex", "_mask.tex");
             }
             if (path.Contains("bibo")) {
-                if (path.Contains("_d")) {
+                if (path.Contains("_d") || path.Contains("_dif") || path.Contains("_base")) {
                     return BiboPathUpgraderBase(path);
                 }
-                if (path.Contains("_n")) {
+                if (path.Contains("_n") || path.Contains("_norm")) {
                     return BiboPathUpgraderNormal(path);
                 }
-                if (path.Contains("_s") || path.Contains("_m")) {
+                if (path.Contains("_s") || path.Contains("_m") || path.Contains("_mask")) {
                     return BiboPathUpgraderMask(path);
                 }
             }
@@ -154,7 +154,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                             }
                             result = @"chara/human/c" + (genderValue == 0 ? RaceInfo.RaceCodeBody.Masculine[race]
                                 : RaceInfo.RaceCodeBody.Feminine[race]) + @"/obj/body/b" + unique
-                                + @"/texture/--c" + RaceInfo.RaceCodeBody.Masculine[race] + "b" + unique + "_b" + GetTextureType(texture, baseBody) + ".tex";
+                                + @"/texture/c" + RaceInfo.RaceCodeBody.Masculine[race] + "b" + unique + "_b" + GetTextureType(texture, baseBody) + ".tex";
                         } else {
                             result = "TBSE and HRBODY are only compatible with masculine characters";
                         }
