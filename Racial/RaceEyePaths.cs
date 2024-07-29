@@ -12,168 +12,168 @@ namespace LooseTextureCompilerCore.Racial {
         private static readonly string[][] racialStrings = new string[][] {
         //Hyur Midlander Male
         new string[] {
-            "chara/common/texture/eye/eye11_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye11_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Hyur Midlander Female
         new string[] {
-            "chara/common/texture/eye/eye01_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye01_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Hyur Highlander Male
         new string[] {
-            "chara/common/texture/eye/eye11_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye11_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Hyur Midlander Female
         new string[] {
-            "chara/common/texture/eye/eye01_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye01_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Elezen Male 
         new string[] {
-            "chara/common/texture/eye/eye09_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye09_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Elezen Female 
         new string[] {
-            "chara/common/texture/eye/eye09_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye09_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Elezen Male 0101
         new string[] {
-            "chara/common/texture/eye/eye09_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye09_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Elezen Female 0101
         new string[] {
-            "chara/common/texture/eye/eye09_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye09_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Miqo'te Male
         new string[] {
-            "chara/common/texture/eye/eye02_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye02_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Miqo'te Female
         new string[] {
-            "chara/common/texture/eye/eye02_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye02_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Miqo'te Male 0101
         new string[] {
-            "chara/common/texture/eye/eye03_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye03_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Miqo'te Female 0101
         new string[] {
-            "chara/common/texture/eye/eye03_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye03_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Roegadyn Male
         new string[] {
-            "chara/common/texture/eye/eye09_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye09_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Roegadyn Female
         new string[] {
-            "chara/common/texture/eye/eye10_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye10_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Roegadyn Male 0101
         new string[] {
-            "chara/common/texture/eye/eye09_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye09_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Roegadyn Female 0101
         new string[] {
-            "chara/common/texture/eye/eye10_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye10_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Lalafell Male
         new string[] {
-            "chara/common/texture/eye/eye04_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye04_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Lalafell Female
         new string[] {
-            "chara/common/texture/eye/eye04_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye04_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Lalafell Male 0101
         new string[] {
-            "chara/common/texture/eye/eye05_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye05_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Lalafell Female 0101
         new string[] {
-            "chara/common/texture/eye/eye05_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye05_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //AuRa Male
         new string[] {
-            "chara/common/texture/eye/eye10_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex" },
+            "chara/common/texture/eye/eye10_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex" },
         //AuRa Female
         new string[] {
-            "chara/common/texture/eye/eye10_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye10_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //AuRa Male 0101
         new string[] {
-            "chara/common/texture/eye/eye10_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex" },
+            "chara/common/texture/eye/eye10_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex" },
         //AuRa Female 0101
         new string[] {
-            "chara/common/texture/eye/eye10_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye10_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Hrothgar Male
         new string[] {
-            "chara/common/texture/eye/eye06_d.tex",
-            "chara/common/texture/eye/eye06_n.tex",
-            "chara/common/texture/eye/eye06_s.tex"
+            "chara/common/texture/eye/eye06_base.tex",
+            "chara/common/texture/eye/eye06_norm.tex",
+            "chara/common/texture/eye/eye06_mask.tex"
         },
         //Hrothgar Female
         new string[] {
-            "chara/common/texture/eye/eye06_d.tex",
-            "chara/common/texture/eye/eye06_n.tex",
-            "chara/common/texture/eye/eye06_s.tex"
+            "chara/common/texture/eye/eye06_base.tex",
+            "chara/common/texture/eye/eye06_norm.tex",
+            "chara/common/texture/eye/eye06_mask.tex"
         },
         //Hrothgar Male 0101
         new string[] {
-            "chara/common/texture/eye/eye07_d.tex",
-            "chara/common/texture/eye/eye06_n.tex",
-            "chara/common/texture/eye/eye06_s.tex"
+            "chara/common/texture/eye/eye07_base.tex",
+            "chara/common/texture/eye/eye06_norm.tex",
+            "chara/common/texture/eye/eye06_mask.tex"
         },
         //Hrothgar Female 0101
         new string[] {
-            "chara/common/texture/eye/eye07_d.tex",
-            "chara/common/texture/eye/eye06_n.tex",
-            "chara/common/texture/eye/eye06_s.tex"
+            "chara/common/texture/eye/eye07_base.tex",
+            "chara/common/texture/eye/eye06_norm.tex",
+            "chara/common/texture/eye/eye06_mask.tex"
         },
         //Viera Male
         new string[] {
-            "chara/common/texture/eye/eye11_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye11_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Viera Female
         new string[] {
-            "chara/common/texture/eye/eye01_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye01_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Viera Male 0101
         new string[] {
-            "chara/common/texture/eye/eye11_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye11_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         //Viera Female 0101
         new string[] {
-            "chara/common/texture/eye/eye12_d.tex",
-            "chara/common/texture/eye/eye01_n.tex",
-            "chara/common/texture/eye/eye01_s.tex"},
+            "chara/common/texture/eye/eye12_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
         };
 
         public static void GetEyeTextureSet(int subRace, bool gender, TextureSet textureSet) {

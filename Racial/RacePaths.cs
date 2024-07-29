@@ -97,15 +97,14 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     if (race != 5) {
                         if (genderValue == 1) {
                             if (texture != 2) {
-                                result = @"chara/human/c" + RaceInfo.RaceCodeBody.Feminine[race] + @"/obj/body/b" + "0001" + @"/texture/eve2" +
-                                    RaceInfo.BodyIdentifiers[baseBody].RaceIdentifiers[race] + GetTextureType(texture, baseBody) + ".tex";
+                                result = @"chara/nyaughty/eve/gen3_" +  RaceInfo.BodyIdentifiers[baseBody].RaceIdentifiers[race] + GetTextureType(texture, baseBody) + ".tex";
                             } else {
                                 if (race == 6) {
-                                    result = "chara/human/c1401/obj/body/b0001/texture/eve2lizard_m.tex";
+                                    result = "chara/nyaughty/eve/gen3_aura_mask.tex";
                                 } else if (race == 7) {
-                                    result = "chara/human/c1401/obj/body/b0001/texture/eve2lizard2_m.tex";
+                                    result = "chara/nyaughty/eve/gen3_aura_mask.tex";
                                 } else {
-                                    result = "chara/common/texture/skin_gen3.tex";
+                                    result = "chara/nyaughty/eve/gen3_skin_mask.tex";
                                 }
                             }
                         } else {

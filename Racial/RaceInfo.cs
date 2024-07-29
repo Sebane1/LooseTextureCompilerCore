@@ -27,7 +27,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
             new RacialBodyIdentifiers("BIBO+",
                 new List<string>() { "mid", "high", "mid", "mid", "high", "Invalid", "raen", "xaela", "hroth", "hroth", "viera" }),
             new RacialBodyIdentifiers("EVE",
-                new List<string>() { "middie", "buffie", "middie", "middie", "buffie", "Invalid", "lizard", "lizard2", "furry1", "furry2", "bunny" }),
+                new List<string>() { "midlander", "midlander", "midlander", "midlander", "midlander", "Invalid", "aura", "aura", "hrothgar", "hrothgar", "midlander" }),
             new RacialBodyIdentifiers("GEN3",
                 new List<string>() { "mid", "high", "mid", "mid", "high", "Invalid", "raen", "xaela", "hroth", "hroth", "viera" }),
             new RacialBodyIdentifiers("SCALE+",

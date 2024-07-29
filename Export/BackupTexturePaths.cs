@@ -19,6 +19,7 @@ namespace FFXIVLooseTextureCompiler.Export {
             }
             _isFace = isFace;
         }
+
         [JsonProperty]
         string _baseTexture = "";
         [JsonProperty]
