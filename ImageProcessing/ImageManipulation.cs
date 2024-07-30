@@ -18,7 +18,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
             Color uvMapTest = source.GetPixel(0, 0);
-            Color uvMapTest2 = source.GetPixel(image.Width, image.Height);
+            Color uvMapTest2 = source.GetPixel(image.Width - 1, image.Height - 1);
             source.UnlockBits();
             if (uvMapTest.B == 255 && uvMapTest2.B == 255) {
                 return UVMapType.Normal;
