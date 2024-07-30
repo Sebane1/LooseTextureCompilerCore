@@ -93,28 +93,6 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     }
                     break;
                 case 2:
-                    // Eve
-                    if (race != 5) {
-                        if (genderValue == 1) {
-                            if (texture != 2) {
-                                result = @"chara/nyaughty/eve/gen3_" +  RaceInfo.BodyIdentifiers[baseBody].RaceIdentifiers[race] + GetTextureType(texture, baseBody) + ".tex";
-                            } else {
-                                if (race == 6) {
-                                    result = "chara/nyaughty/eve/gen3_aura_mask.tex";
-                                } else if (race == 7) {
-                                    result = "chara/nyaughty/eve/gen3_aura_mask.tex";
-                                } else {
-                                    result = "chara/nyaughty/eve/gen3_skin_mask.tex";
-                                }
-                            }
-                        } else {
-                            result = "Eve is only compatible with feminine characters";
-                        }
-                    } else {
-                        result = "Eve is not compatible with lalafells";
-                    }
-                    break;
-                case 3:
                     // Gen3 and T&F3
                     if (race != 5) {
                         if (genderValue == 1) {
@@ -127,24 +105,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                         result = "Gen3 and T&F3 are not compatible with lalafells";
                     }
                     break;
-                case 4:
-                    // Scales+
-                    if (race != 5) {
-                        if (race == 6 || race == 7) {
-                            if (genderValue == 1) {
-                                result = @"chara/bibo_" + RaceInfo.BodyIdentifiers[baseBody].RaceIdentifiers[race]
-                                    + GetTextureType(texture, baseBody, false, true) + ".tex";
-                            } else {
-                                result = "Scales+ is only compatible with feminine Au Ra characters";
-                            }
-                        } else {
-                            result = "Scales+ is only compatible with feminine Au Ra characters";
-                        }
-                    } else {
-                        result = "Scales+ is not compatible with lalafells";
-                    }
-                    break;
-                case 5:
+                case 3:
                     if (race != 5) {
                         if (genderValue == 0) {
                             // TBSE and HRBODY
@@ -161,7 +122,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                         result = "TBSE and HRBODY are not compatible with lalafells";
                     }
                     break;
-                case 6:
+                case 4:
                     // Tails
                     string xaelaCheck = (race == 7 ? "010" : "000") + (tail + 1);
                     string gender = (genderValue == 0 ? RaceInfo.RaceCodeBody.Masculine[race]
@@ -169,7 +130,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     result = @"chara/human/c" + gender + @"/obj/tail/t" + xaelaCheck + @"/texture/--c" + gender + "t" +
                         xaelaCheck + "_etc" + GetTextureType(texture, baseBody) + ".tex";
                     break;
-                case 7:
+                case 5:
                     // Otopop
                     if (race == 5) {
                         if (texture == 0) {
@@ -186,7 +147,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                         result = "Otopop is only compatible with lalafells";
                     }
                     break;
-                case 8:
+                case 6:
                     // Asymmetrical Vanilla Lalafell
                     if (race == 5) {
                         result = @"chara/human/c1101/obj/body/b0001/texture/v01_c1101b0001_b" + GetTextureType(texture, baseBody) + ".tex";

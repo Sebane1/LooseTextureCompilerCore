@@ -26,12 +26,8 @@ namespace FFXIVLooseTextureCompiler.Racial {
                 new List<string>() { "201", "401", "201", "201", "401", "1101", "1401", "1401", "1601", "1601", "1801" }),
             new RacialBodyIdentifiers("BIBO+",
                 new List<string>() { "mid", "high", "mid", "mid", "high", "Invalid", "raen", "xaela", "hroth", "hroth", "viera" }),
-            new RacialBodyIdentifiers("EVE",
-                new List<string>() { "midlander", "midlander", "midlander", "midlander", "midlander", "Invalid", "aura", "aura", "hrothgar", "hrothgar", "midlander" }),
             new RacialBodyIdentifiers("GEN3",
                 new List<string>() { "mid", "high", "mid", "mid", "high", "Invalid", "raen", "xaela", "hroth", "hroth", "viera" }),
-            new RacialBodyIdentifiers("SCALE+",
-                new List<string>() { "Invalid", "Invalid", "Invalid", "Invalid", "Invalid", "Invalid", "raen", "xaela", "Invalid", "Invalid", "Invalid" }),
             new RacialBodyIdentifiers("TBSE/HRBODY",
                 new List<string>() { "0101", "0301", "0101", "0101", "0901", "Invalid", "1301", "1301", "1501", "1501", "1701" }),
             new RacialBodyIdentifiers("TAIL",
@@ -64,7 +60,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     string bibo = bodyIdentifiers[1].RaceIdentifiers[i];
                     string eve = bodyIdentifiers[2].RaceIdentifiers[i];
                     string tnf = bodyIdentifiers[3].RaceIdentifiers[i];
-                    string tbse = "c" + bodyIdentifiers[5].RaceIdentifiers[i];
+                    string tbse = "c" + bodyIdentifiers[4].RaceIdentifiers[i];
                     if (path.Contains(bibo) || path.Contains(eve) || path.Contains(tnf) || path.Contains(tbse)) {
                         return i;
                     }
