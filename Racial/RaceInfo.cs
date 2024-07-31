@@ -2,34 +2,34 @@
 
 namespace FFXIVLooseTextureCompiler.Racial {
     public static class RaceInfo {
-        private static List<string> subRaces = new List<string>() { "Midlander" , "Highlander","Wildwood","Duskwight","Seeker",
-            "Keeper", "Sea Wolf", "Hellsguard", "Plainsfolk", "Dunesfolk", "Raen", "Xaela", "Helion", "The Lost", "Rava", "Veena" };
-        private static List<string> races = new List<string>() { "Midlander","Highlander","Elezen","Miqo'te","Roegadyn",
-            "Lalafell","Raen","Xaela","Helion","The Lost","Viera",};
-        private static List<string> modelRaces = new List<string>() { "Midlander","Highlander","Elezen","Miqote","Roegadyn",
-            "Lalafell","Aura","Hrothgar","Viera",};
+        private static List<string> subRaces = new List<string>() { "Midlander" , "Highlander","Wildwood","Duskwight","Plainsfolk", "Dunesfolk","Seeker",
+            "Keeper", "Sea Wolf", "Hellsguard",  "Raen", "Xaela", "Helion", "The Lost", "Rava", "Veena" };
+        private static List<string> races = new List<string>() { "Midlander","Highlander","Elezen", "Lalafell", "Miqo'te","Roegadyn",
+           "Raen","Xaela","Helion","The Lost","Viera",};
+        private static List<string> modelRaces = new List<string>() { "Midlander","Highlander","Elezen","Lalafell","Miqote","Roegadyn",
+            "Aura","Hrothgar","Viera",};
 
         private static RaceCode raceCodeBody = new RaceCode(new string[] {
             "0101","0301","0101","0101","0901","1101","1301","1301","1501","1501","1701"}, new string[] {
             "0201","0401","0201","0201","0401","1101","1401","1401","1601","1601","1801"});
 
         private static RaceCode raceCodeFace = new RaceCode(new string[] {
-                "0101", "0301", "0501", "0501", "0701",
-                "0701", "0901", "0901", "1101", "1101",
+                "0101", "0301", "0501", "0501","1101", "1101", "0701",
+                "0701", "0901", "0901",
                 "1301", "1301", "1501", "1501", "1701", "1701" }, new string[] {
-                "0201", "0401", "0601", "0601", "0801",
-                "0801", "1001", "1001", "1201", "1201",
+                "0201", "0401", "0601", "0601","1201", "1201", "0801",
+                "0801", "1001", "1001",
                 "1401", "1401", "1601", "1601", "1801", "1801" });
 
         private static List<RacialBodyIdentifiers> bodyIdentifiers = new List<RacialBodyIdentifiers>(){
             new RacialBodyIdentifiers("VANILLA",
-                new List<string>() { "201", "401", "201", "201", "401", "1101", "1401", "1401", "1601", "1601", "1801" }),
+                new List<string>() { "201", "401", "201", "Invalid", "201", "401", "1101", "1401", "1401", "1601", "1601", "1801" }),
             new RacialBodyIdentifiers("BIBO+",
-                new List<string>() { "mid", "high", "mid", "mid", "high", "Invalid", "raen", "xaela", "hroth", "hroth", "viera" }),
+                new List<string>() { "mid", "high", "mid", "Invalid", "mid", "high",  "raen", "xaela", "hroth", "hroth", "viera" }),
             new RacialBodyIdentifiers("GEN3",
-                new List<string>() { "mid", "high", "mid", "mid", "high", "Invalid", "raen", "xaela", "hroth", "hroth", "viera" }),
+                new List<string>() { "mid", "high", "mid", "Invalid", "mid", "high", "raen", "xaela", "hroth", "hroth", "viera" }),
             new RacialBodyIdentifiers("TBSE/HRBODY",
-                new List<string>() { "0101", "0301", "0101", "0101", "0901", "Invalid", "1301", "1301", "1501", "1501", "1701" }),
+                new List<string>() { "0101", "0301", "0101", "Invalid", "0101", "0901", "1301", "1301", "1501", "1501", "1701" }),
             new RacialBodyIdentifiers("TAIL",
                 new List<string>() { "1", "2", "3", "4", "5", "6", "7", "8", "", "" }) };
 

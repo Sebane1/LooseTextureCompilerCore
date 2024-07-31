@@ -122,7 +122,7 @@ namespace LooseTextureCompilerCore.Racial {
             "chara/common/texture/eye/eye01_mask.tex"},
         //AuRa Male 0101
         new string[] {
-            "chara/common/texture/eye/eye10_base.tex",
+            "chara/common/texture/eye/eye14_base.tex",
             "chara/common/texture/eye/eye01_norm.tex",
             "chara/common/texture/eye/eye01_mask.tex" },
         //AuRa Female 0101
