@@ -81,7 +81,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     break;
                 case 1:
                     // Bibo+
-                    if (race != 5) {
+                    if (race != 3) {
                         if (genderValue == 1) {
                             result = @"chara/bibo_" + RaceInfo.BodyIdentifiers[baseBody].RaceIdentifiers[race]
                                 + GetTextureType(texture, baseBody, false, true) + ".tex";
@@ -94,7 +94,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     break;
                 case 2:
                     // Gen3 and T&F3
-                    if (race != 5) {
+                    if (race != 3) {
                         if (genderValue == 1) {
                             result = @"chara/human/c" + RaceInfo.RaceCodeBody.Feminine[race] + @"/obj/body/b" + unique + @"/texture/tfgen3" +
                                 RaceInfo.BodyIdentifiers[baseBody].RaceIdentifiers[race] + "f" + GetTextureType(texture, baseBody) + ".tex";
@@ -106,7 +106,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     }
                     break;
                 case 3:
-                    if (race != 5) {
+                    if (race != 3) {
                         if (genderValue == 0) {
                             // TBSE and HRBODY
                             if (texture == 1 || texture == 2) {
@@ -132,7 +132,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     break;
                 case 5:
                     // Otopop
-                    if (race == 5) {
+                    if (race == 3) {
                         if (texture == 0) {
                             if (!otopopNotice) {
                                 if (otopopNoticeTriggered != null) {
@@ -149,7 +149,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     break;
                 case 6:
                     // Asymmetrical Vanilla Lalafell
-                    if (race == 5) {
+                    if (race == 3) {
                         result = @"chara/human/c1101/obj/body/b0001/texture/v01_c1101b0001_b" + GetTextureType(texture, baseBody) + ".tex";
                     } else {
                         result = "Asymmetrical Vanilla Lalafell is only compatible with lalafells";
