@@ -9,6 +9,7 @@ using FFXIVLooseTextureCompiler.Racial;
 using FFXIVVoicePackCreator.Json;
 using Newtonsoft.Json;
 using Penumbra.LTCImport.Dds;
+using SixLabors.ImageSharp.PixelFormats;
 using static FFXIVLooseTextureCompiler.TextureProcessor;
 using Color = System.Drawing.Color;
 using Size = System.Drawing.Size;
@@ -696,8 +697,8 @@ namespace FFXIVLooseTextureCompiler {
                                                         layeringImage));
                                                     Graphics g = Graphics.FromImage(image);
                                                     g.Clear(Color.Transparent);
-                                                    g.DrawImage(layer, 0, 0, bitmap.Width, bitmap.Height);
-                                                    g.DrawImage(GetMergedBitmap(inputFile), 0, 0, bitmap.Width, bitmap.Height);
+                                                    image = ImageManipulation.DrawImage(image, layer, 0, 0, (int)(bitmap.Width), bitmap.Height);
+                                                    image = ImageManipulation.DrawImage(image, GetMergedBitmap(inputFile), 0, 0, (int)(bitmap.Width), bitmap.Height);
                                                     output = ImageManipulation.MergeNormals(image, baseTexture, canvasImage, null, baseTextureNormal, modifier);
                                                 } else {
                                                     output = ImageManipulation.MergeNormals(TexIO.ResolveBitmap(inputFile), baseTexture, canvasImage, null, baseTextureNormal, modifier);
@@ -872,10 +873,10 @@ namespace FFXIVLooseTextureCompiler {
                         Bitmap image = new Bitmap(layer.Width, layer.Height, PixelFormat.Format32bppArgb);
                         Graphics g = Graphics.FromImage(image);
                         g.Clear(Color.Transparent);
-                        g.DrawImage(layer, 0, 0, layer.Width, layer.Height);
+                        image = ImageManipulation.DrawImage(image, layer, 0, 0, layer.Width, layer.Height);
                         Bitmap mergedBitmap = GetMergedBitmap(inputFile);
                         float widthRatio = (float)mergedBitmap.Width / (float)mergedBitmap.Height;
-                        g.DrawImage(mergedBitmap, 0, 0, layer.Height * widthRatio, layer.Height);
+                        image = ImageManipulation.DrawImage(image, mergedBitmap, 0, 0, (int)(layer.Height * widthRatio), layer.Height);
                         image.Save(stream, ImageFormat.Png);
                     } else {
                         bitmap.Save(stream, ImageFormat.Png);
@@ -883,6 +884,8 @@ namespace FFXIVLooseTextureCompiler {
                 }
             }
         }
+
+
 
         public string AppendIdentifier(string value) {
             return ImageManipulation.AddSuffix(value, "_generated");

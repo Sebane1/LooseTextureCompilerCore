@@ -51,7 +51,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             float x_vector;
             float y_vector;
             image.RotateFlip(RotateFlipType.RotateNoneFlipX);
-            Bitmap normal = new Bitmap(image.Width, image.Height);
+            Bitmap normal = new Bitmap(image.Width, image.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             LockBitmap source = new LockBitmap(image);
             LockBitmap destination = new LockBitmap(normal);
             LockBitmap maskReference = null;

@@ -10,8 +10,8 @@ namespace FFXIVLooseTextureCompiler.Racial {
             "Aura","Hrothgar","Viera",};
 
         private static RaceCode raceCodeBody = new RaceCode(new string[] {
-            "0101","0301","0101","0101","0901","1101","1301","1301","1501","1501","1701"}, new string[] {
-            "0201","0401","0201","0201","0401","1101","1401","1401","1601","1601","1801"});
+            "0101","0301","0101","1101","0101","0901","1301","1301","1501","1501","1701"}, new string[] {
+            "0201","0401","0201","1101","0201","0401","1401","1401","1601","1601","1801"});
 
         private static RaceCode raceCodeFace = new RaceCode(new string[] {
                 "0101", "0301", "0501", "0501","1101", "1101", "0701",
