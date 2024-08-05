@@ -435,7 +435,7 @@ namespace FFXIVLooseTextureCompiler {
         private bool NormalLogic(TextureSet textureSet, string normalDiskPath, bool skipTexExport) {
             bool outputGenerated = false;
             if (!string.IsNullOrEmpty(textureSet.Normal) && !string.IsNullOrEmpty(textureSet.InternalNormalPath)) {
-                if (_generateNormals) {
+                if (_generateNormals && !textureSet.IgnoreNormalGeneration) {
                     if (!skipTexExport) {
                         Task.Run(() => ExportTex(textureSet.Normal, normalDiskPath, ExportType.MergeNormal,
                         textureSet.Base, textureSet.NormalMask,

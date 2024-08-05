@@ -25,7 +25,7 @@ namespace LooseTextureCompilerCore.Racial {
             "chara/common/texture/eye/eye11_base.tex",
             "chara/common/texture/eye/eye01_norm.tex",
             "chara/common/texture/eye/eye01_mask.tex"},
-        //Hyur Midlander Female
+        //Hyur Highlander Female
         new string[] {
             "chara/common/texture/eye/eye01_base.tex",
             "chara/common/texture/eye/eye01_norm.tex",
@@ -48,6 +48,26 @@ namespace LooseTextureCompilerCore.Racial {
         //Elezen Female 0101
         new string[] {
             "chara/common/texture/eye/eye09_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
+        //Lalafell Male
+        new string[] {
+            "chara/common/texture/eye/eye04_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
+        //Lalafell Female
+        new string[] {
+            "chara/common/texture/eye/eye04_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
+        //Lalafell Male 0101
+        new string[] {
+            "chara/common/texture/eye/eye05_base.tex",
+            "chara/common/texture/eye/eye01_norm.tex",
+            "chara/common/texture/eye/eye01_mask.tex"},
+        //Lalafell Female 0101
+        new string[] {
+            "chara/common/texture/eye/eye05_base.tex",
             "chara/common/texture/eye/eye01_norm.tex",
             "chara/common/texture/eye/eye01_mask.tex"},
         //Miqo'te Male
@@ -88,26 +108,6 @@ namespace LooseTextureCompilerCore.Racial {
         //Roegadyn Female 0101
         new string[] {
             "chara/common/texture/eye/eye10_base.tex",
-            "chara/common/texture/eye/eye01_norm.tex",
-            "chara/common/texture/eye/eye01_mask.tex"},
-        //Lalafell Male
-        new string[] {
-            "chara/common/texture/eye/eye04_base.tex",
-            "chara/common/texture/eye/eye01_norm.tex",
-            "chara/common/texture/eye/eye01_mask.tex"},
-        //Lalafell Female
-        new string[] {
-            "chara/common/texture/eye/eye04_base.tex",
-            "chara/common/texture/eye/eye01_norm.tex",
-            "chara/common/texture/eye/eye01_mask.tex"},
-        //Lalafell Male 0101
-        new string[] {
-            "chara/common/texture/eye/eye05_base.tex",
-            "chara/common/texture/eye/eye01_norm.tex",
-            "chara/common/texture/eye/eye01_mask.tex"},
-        //Lalafell Female 0101
-        new string[] {
-            "chara/common/texture/eye/eye05_base.tex",
             "chara/common/texture/eye/eye01_norm.tex",
             "chara/common/texture/eye/eye01_mask.tex"},
         //AuRa Male

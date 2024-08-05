@@ -130,7 +130,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public static Bitmap ResolveBitmap(string inputFile, bool noAlpha = false) {
             if (string.IsNullOrEmpty(inputFile) || !File.Exists(inputFile)) {
-                return new Bitmap(4096, 4096);
+                var item = new Bitmap(4096, 4096);
+                Graphics.FromImage(item).Clear(Color.Transparent);
+                return item;
             }
 
             while (IsFileLocked(inputFile)) {
@@ -156,7 +158,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     inputFile.EndsWith(".ltct") ? OpenImageFromXOR(inputFile, noAlpha) :
                     SafeLoad(inputFile, noAlpha);
                     return bitmap;
-                } catch (Exception e){
+                } catch (Exception e) {
                     return new Bitmap(4096, 4096);
                 }
             }

@@ -97,7 +97,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     if (race != 3) {
                         if (genderValue == 1) {
                             result = @"chara/human/c" + RaceInfo.RaceCodeBody.Feminine[race] + @"/obj/body/b" + unique + @"/texture/tfgen3" +
-                                RaceInfo.BodyIdentifiers[baseBody].RaceIdentifiers[race] + "f" + GetTextureType(texture, baseBody) + ".tex";
+                                RaceInfo.BodyIdentifiers[baseBody].RaceIdentifiers[race] + "f" + GetTextureType(texture, baseBody, true) + ".tex";
                         } else {
                             result = "Gen3 and T&F3 are only compatible with feminine characters";
                         }
