@@ -11,7 +11,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
         public static event EventHandler otopopNoticeTriggered;
         public static string VersionText { get; set; }
 
-        public static string GetFaceTexturePath(int material, int gender, int subRaceValue, int facePart, int faceType, int auraFaceScales, bool asym) {
+        public static string GetFacePath(int material, int gender, int subRaceValue, int facePart, int faceType, int auraFaceScales, bool asym, bool isMaterial = false) {
             string selectedText = RaceInfo.SubRaces[subRaceValue];
             string faceIdCheck = "00";
             if (facePart == 2 && asym) {
@@ -26,23 +26,31 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     .Replace(@"'", null) + "_"
                     + RaceInfo.SubRaces[subRaceValue].Replace(" ", null).ToLower()
                     + "_" + (gender == 0 ? "male" : "female") + "/f" + faceIdCheck + (faceType + 1)
-                    + GetTextureType(material, 0, false, true) + ".tex";
+                    + GetTextureType(material, 0, false, true) + (isMaterial ? ".mtrl" : ".tex");
             }
             if (material != 3) {
                 faceIdCheck = "000";
-                if (selectedText.ToLower() == "the lost" || selectedText.ToLower() == "hellsguard" || selectedText.ToLower() == "highlander"
+                bool useSecondarySubracePrefix = selectedText.ToLower() == "the lost" || selectedText.ToLower() == "hellsguard" || selectedText.ToLower() == "highlander"
                     || selectedText.ToLower() == "duskwight" || selectedText.ToLower() == "keeper" || selectedText.ToLower() == "dunesfolk"
                     || (selectedText.ToLower() == "xaela" && facePart != 2 && (material == 0 || auraFaceScales == 2))
                     || (selectedText.ToLower() == "veena" && facePart == 1 && material != 2)
-                    || (selectedText.ToLower() == "veena" && facePart == 2 && material == 2)) {
+                    || (selectedText.ToLower() == "veena" && facePart == 2 && material == 2);
+                if (isMaterial) {
+                    useSecondarySubracePrefix = selectedText.ToLower() == "the lost" || selectedText.ToLower() == "hellsguard" || selectedText.ToLower() == "highlander"
+                    || selectedText.ToLower() == "duskwight" || selectedText.ToLower() == "keeper" || selectedText.ToLower() == "dunesfolk" || (selectedText.ToLower() == "xaela")
+                    || (selectedText.ToLower() == "veena");
+                }
+                if (useSecondarySubracePrefix) {
                     faceIdCheck = "010";
                 }
                 string subRace = (gender == 0 ? RaceInfo.RaceCodeFace.Masculine[subRaceValue]
                     : RaceInfo.RaceCodeFace.Feminine[subRaceValue]);
                 int faceOffset = (faceType + (subRaceValue == 12 || subRaceValue == 13 ? 4 : 0)) + 1;
-                return "chara/human/c" + subRace + "/obj/face/f" + faceIdCheck + faceOffset + "/texture/c"
+                return "chara/human/c" + subRace + "/obj/face/f" + faceIdCheck + faceOffset + @"/" +
+                    (isMaterial ? "material" : "texture") + (isMaterial ? "/mt_c" : "/c")
                     + subRace + "f" + faceIdCheck + faceOffset
-                    + GetFacePart(facePart, asym) + GetTextureType(material, 0, true, true) + ".tex";
+                    + GetFacePart(facePart, asym) +
+                    (isMaterial ? "" : GetTextureType(material, 0, true, true)) + (isMaterial ? ".mtrl" : ".tex");
             } else {
                 return "";
             }
@@ -192,7 +200,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                 case 3:
                     return "_etc";
                 case 2:
-                    return "_iri";
+                    return "_iri_a";
                 case 6:
                     return "_fac_b";
                 case 7:

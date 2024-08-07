@@ -30,6 +30,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
 
         List<TextureSet> _childSets = new List<TextureSet>();
         private string _normalCorrection = "";
+        private string _material;
+        private string _internalMaterialPath;
 
         public string TextureSetName { get => _textureSetName; set => _textureSetName = value; }
 
@@ -82,6 +84,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public string Normal { get { if (_normal == null) { _normal = ""; } return _normal; } set => _normal = value; }
         public string Mask { get { if (_mask == null) { _mask = ""; } return _mask; } set => _mask = value; }
         public string NormalMask { get { if (_normalMask == null) { _normalMask = ""; } return _normalMask; } set => _normalMask = value; }
+        public string Material { get { if (_material == null) { _material = ""; } return _material; } set => _material = value; }
+
 
         public string Glow {
             get {
@@ -115,7 +119,12 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             }
             set => _internalMaskPath = value;
         }
-
+        public string InternalMaterialPath {
+            get {
+                return _internalMaterialPath == null ? _internalMaterialPath = "" : _internalMaterialPath;
+            }
+            set => _internalMaterialPath = value;
+        }
 
         public string GroupName {
             get {

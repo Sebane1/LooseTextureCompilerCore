@@ -175,14 +175,22 @@ namespace LooseTextureCompilerCore.Racial {
             "chara/common/texture/eye/eye01_norm.tex",
             "chara/common/texture/eye/eye01_mask.tex"},
         };
-
-        public static void GetEyeTextureSet(int subRace, bool gender, TextureSet textureSet) {
+        public static void GetEyeTextureSet(int subRace, int face, bool gender, TextureSet textureSet) {
             int index = ((1 + subRace) * 2) - (gender ? 0 : 1);
             string[] paths = racialStrings[index - 1];
             if (paths != null && paths.Length > 0) {
                 textureSet.InternalBasePath = paths[0];
                 textureSet.InternalNormalPath = paths[1];
                 textureSet.InternalMaskPath = paths[2];
+            }
+            switch (subRace) {
+                case 1:
+                    if (face == 3) {
+                        textureSet.InternalBasePath = "chara/common/texture/eye/eye13_norm.tex";
+                        textureSet.InternalNormalPath = "chara/common/texture/eye/eye01_norm.tex";
+                        textureSet.InternalMaskPath = "chara/common/texture/eye/eye01_norm.tex";
+                    }
+                    break;
             }
         }
     }

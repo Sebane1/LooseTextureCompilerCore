@@ -218,6 +218,15 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             };
             newImage.SaveAsPng(path, encoder);
         }
+
+        public static void SaveBitmap(Bitmap bitmap, Stream stream) {
+            var newImage = BitmapToImageSharp(bitmap);
+            var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder() {
+                TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
+                ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
+            };
+            newImage.SaveAsPng(stream, encoder);
+        }
         public static Bitmap NewBitmap(Bitmap bitmap, bool noAlpha = false) {
             Bitmap destinationBitmap = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb);
             LockBitmap startingData = new LockBitmap(bitmap);
