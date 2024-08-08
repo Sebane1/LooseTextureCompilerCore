@@ -487,7 +487,7 @@ namespace FFXIVLooseTextureCompiler {
                 } else {
                     if (!string.IsNullOrEmpty(textureSet.Glow)) {
                         if (!skipTexExport) {
-                            Task.Run(() => ExportTex(textureSet.Normal, normalDiskPath, ExportType.GlowEyeMulti, "", textureSet.Glow));
+                            Task.Run(() => ExportTex(textureSet.Normal, normalDiskPath, ExportType.GlowEyeMask, "", textureSet.Glow));
                         }
                         outputGenerated = true;
                     } else {
@@ -583,6 +583,7 @@ namespace FFXIVLooseTextureCompiler {
                 CleanGeneratedAssets(directory);
             }
         }
+
         private void ExportGroup(string path, Group group) {
             group.Description += " -generated";
             bool isSingle = group.Type == "Single";
@@ -610,13 +611,14 @@ namespace FFXIVLooseTextureCompiler {
                 }
             }
         }
+
         public enum ExportType {
             None,
             Normal,
             Mask,
             MergeNormal,
             Glow,
-            GlowEyeMulti,
+            GlowEyeMask,
             XNormalImport,
             DontManipulate,
             DTMask,
@@ -643,7 +645,7 @@ namespace FFXIVLooseTextureCompiler {
                         case ExportType.Glow:
                             ExportTypeGlow(inputFile, modifierMap, layeringImage, stream);
                             break;
-                        case ExportType.GlowEyeMulti:
+                        case ExportType.GlowEyeMask:
                             ExportTypeGlowEyeMask(inputFile, modifierMap, stream);
                             break;
                         case ExportType.DTMask:
