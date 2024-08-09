@@ -390,7 +390,9 @@ namespace FFXIVLooseTextureCompiler {
                 textureSet.Normal.GetHashCode().ToString() +
                 textureSet.Mask.GetHashCode().ToString() +
                 textureSet.Glow.GetHashCode().ToString() +
-                textureSet.NormalMask.GetHashCode().ToString() + backupHash;
+                textureSet.NormalMask.GetHashCode().ToString() +
+                textureSet.Material.GetHashCode().ToString() + backupHash;
+
         }
 
         public string RedirectToDisk(string path) {
