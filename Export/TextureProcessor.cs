@@ -541,9 +541,6 @@ namespace FFXIVLooseTextureCompiler {
                          textureSet.BackupTexturePaths.BaseSecondary : textureSet.BackupTexturePaths.Base);
                 } else {
                     underlay = textureSet.BackupTexturePaths.Base;
-                    if (File.Exists(textureSet.BackupTexturePaths.BaseSecondary)) {
-                        File.Delete(textureSet.BackupTexturePaths.BaseSecondary);
-                    }
                 }
             }
             if (string.IsNullOrEmpty(textureSet.Glow)) {
