@@ -47,6 +47,7 @@ namespace FFXIVLooseTextureCompiler {
         public event EventHandler OnProgressChange;
         public event EventHandler OnStartedProcessing;
         public event EventHandler OnLaunchedXnormal;
+        public event EventHandler<string> OnError;
 
         private Bitmap GetMergedBitmap(string file) {
             if (file.Contains("baseTexBaked") && (file.Contains("_d_") || file.Contains("_g_") || file.Contains("_n_"))) {
@@ -163,209 +164,213 @@ namespace FFXIVLooseTextureCompiler {
             string modPath, int generationType, bool generateNormals,
             bool generateMulti, bool useXNormal, string xNormalPathOverride = "") {
             Dictionary<string, List<TextureSet>> groups = new Dictionary<string, List<TextureSet>>();
-            int i = 0;
-            _fileCount = 0;
-            _finalizeResults = useXNormal;
-            _normalCache?.Clear();
-            _maskCache?.Clear();
-            _glowCache?.Clear();
-            _xnormalCache?.Clear();
-            _redirectionCache?.Clear();
-            _normalCache = new Dictionary<string, Bitmap>();
-            _maskCache = new Dictionary<string, Bitmap>();
-            _glowCache = new Dictionary<string, Bitmap>();
-            _xnormalCache = new Dictionary<string, string>();
-            _redirectionCache = new Dictionary<string, TextureSet>();
-            _xnormal = new XNormal();
-            _xnormal.XNormalPathOverride = xNormalPathOverride;
-            _xnormal.BasePathOverride = _basePath;
-            _generateNormals = generateNormals;
-            _generateMulti = generateMulti;
-            _exportCompletion = 0;
-            _exportMax = 0;
-            _exportMax = textureSetList.Count * 4;
-            foreach (TextureSet textureSet in textureSetList) {
-                if (!groups.ContainsKey(textureSet.GroupName)) {
-                    groups.Add(textureSet.GroupName, new List<TextureSet>() { textureSet });
-                    foreach (TextureSet childSet in textureSet.ChildSets) {
-                        childSet.GroupName = textureSet.GroupName;
-                        groups[textureSet.GroupName].Add(childSet);
-                        BatchTextureSet(textureSet, childSet);
-                        _exportMax += 4;
-                    }
-                } else {
-                    groups[textureSet.GroupName].Add(textureSet);
-                    foreach (TextureSet childSet in textureSet.ChildSets) {
-                        childSet.GroupName = textureSet.GroupName;
-                        groups[textureSet.GroupName].Add(childSet);
-                        BatchTextureSet(textureSet, childSet);
-                        _exportMax += 4;
-                    }
-                }
-            }
-            if (_finalizeResults) {
-                if (OnLaunchedXnormal != null) {
-                    OnLaunchedXnormal.Invoke(this, EventArgs.Empty);
-                }
-                _xnormal.ProcessBatches();
-            }
-            if (OnStartedProcessing != null) {
-                OnStartedProcessing.Invoke(this, EventArgs.Empty);
-            }
-            foreach (List<TextureSet> textureSets in groups.Values) {
-                int choiceOption = groupOptionTypes.ContainsKey(textureSets[0].GroupName)
-                ? (groupOptionTypes[textureSets[0].GroupName] == 0
-                ? generationType : groupOptionTypes[textureSets[0].GroupName] - 1)
-                : generationType;
-                Group group = new Group(textureSets[0].GroupName.Replace(@"/", "-").Replace(@"\", "-"), "", 0,
-                    (choiceOption == 2 && textureSets.Count > 1) ? "Single" : "Multi", 0);
-                Option option = null;
-                Option baseTextureOption = null;
-                Option normalOption = null;
-                Option maskOption = null;
-                Option materialOption = null;
-                bool alreadySetOption = false;
-                foreach (TextureSet textureSet in textureSets) {
-                    string textureSetHash = GetHashFromTextureSet(textureSet);
-                    string baseTextureDiskPath = "";
-                    string normalDiskPath = "";
-                    string maskDiskPath = "";
-                    string materialDiskPath = "";
-                    bool skipTexExport = false;
-                    if (_redirectionCache.ContainsKey(textureSetHash)) {
-                        baseTextureDiskPath = GetDiskPath(_redirectionCache[textureSetHash].InternalBasePath, modPath, textureSetHash);
-                        normalDiskPath = GetDiskPath(_redirectionCache[textureSetHash].InternalNormalPath, modPath, textureSetHash);
-                        maskDiskPath = GetDiskPath(_redirectionCache[textureSetHash].InternalMaskPath, modPath, textureSetHash);
-                        materialDiskPath = GetDiskPath(_redirectionCache[textureSetHash].InternalMaterialPath, modPath, textureSetHash);
-                        skipTexExport = true;
+            try {
+                int i = 0;
+                _fileCount = 0;
+                _finalizeResults = useXNormal;
+                _normalCache?.Clear();
+                _maskCache?.Clear();
+                _glowCache?.Clear();
+                _xnormalCache?.Clear();
+                _redirectionCache?.Clear();
+                _normalCache = new Dictionary<string, Bitmap>();
+                _maskCache = new Dictionary<string, Bitmap>();
+                _glowCache = new Dictionary<string, Bitmap>();
+                _xnormalCache = new Dictionary<string, string>();
+                _redirectionCache = new Dictionary<string, TextureSet>();
+                _xnormal = new XNormal();
+                _xnormal.XNormalPathOverride = xNormalPathOverride;
+                _xnormal.BasePathOverride = _basePath;
+                _generateNormals = generateNormals;
+                _generateMulti = generateMulti;
+                _exportCompletion = 0;
+                _exportMax = 0;
+                _exportMax = textureSetList.Count * 4;
+                foreach (TextureSet textureSet in textureSetList) {
+                    if (!groups.ContainsKey(textureSet.GroupName)) {
+                        groups.Add(textureSet.GroupName, new List<TextureSet>() { textureSet });
+                        foreach (TextureSet childSet in textureSet.ChildSets) {
+                            childSet.GroupName = textureSet.GroupName;
+                            groups[textureSet.GroupName].Add(childSet);
+                            BatchTextureSet(textureSet, childSet);
+                            _exportMax += 4;
+                        }
                     } else {
-                        baseTextureDiskPath = GetDiskPath(textureSet.InternalBasePath, modPath, textureSetHash);
-                        normalDiskPath = GetDiskPath(textureSet.InternalNormalPath, modPath, textureSetHash);
-                        maskDiskPath = GetDiskPath(textureSet.InternalMaskPath, modPath, textureSetHash);
-                        materialDiskPath = GetDiskPath(textureSet.InternalMaterialPath, modPath, textureSetHash);
-                        _redirectionCache.Add(textureSetHash, textureSet);
-                    }
-                    switch (choiceOption) {
-                        case 0:
-                            if (!string.IsNullOrEmpty(textureSet.Base) && !string.IsNullOrEmpty(textureSet.InternalBasePath)) {
-                                if (BaseLogic(textureSet, baseTextureDiskPath, skipTexExport)) {
-                                    AddDetailedGroupOption(textureSet.InternalBasePath,
-                                        baseTextureDiskPath.Replace(modPath + "\\", null), "Base", "Normal", textureSet,
-                                        textureSets, group, baseTextureOption, out baseTextureOption);
-                                } else {
-                                    OnProgressChange.Invoke(this, EventArgs.Empty);
-                                }
-                            } else {
-                                OnProgressChange.Invoke(this, EventArgs.Empty);
-                            }
-                            if (!string.IsNullOrEmpty(textureSet.InternalNormalPath)) {
-                                if (NormalLogic(textureSet, normalDiskPath, skipTexExport)) {
-                                    AddDetailedGroupOption(textureSet.InternalNormalPath,
-                                        normalDiskPath.Replace(modPath + "\\", null), "Normal", "", textureSet,
-                                        textureSets, group, normalOption, out normalOption);
-                                } else {
-                                    OnProgressChange.Invoke(this, EventArgs.Empty);
-                                }
-                            } else {
-                                OnProgressChange.Invoke(this, EventArgs.Empty);
-                            }
-                            if (!string.IsNullOrEmpty(textureSet.InternalMaskPath)) {
-                                if (MaskLogic(textureSet, maskDiskPath, skipTexExport)) {
-                                    AddDetailedGroupOption(textureSet.InternalMaskPath,
-                                        maskDiskPath.Replace(modPath + "\\", null), "Mask", "", textureSet,
-                                        textureSets, group, maskOption, out maskOption);
-                                } else {
-                                    OnProgressChange.Invoke(this, EventArgs.Empty);
-                                }
-                            } else {
-                                OnProgressChange.Invoke(this, EventArgs.Empty);
-                            }
-                            if (!string.IsNullOrEmpty(textureSet.InternalMaterialPath)) {
-                                if (MaterialLogic(textureSet, materialDiskPath, skipTexExport)) {
-                                    AddDetailedGroupOption(textureSet.InternalMaterialPath,
-                                        materialDiskPath.Replace(modPath + "\\", null), "Material", "", textureSet,
-                                        textureSets, group, materialOption, out materialOption);
-                                } else {
-                                    OnProgressChange.Invoke(this, EventArgs.Empty);
-                                }
-                            } else {
-                                OnProgressChange.Invoke(this, EventArgs.Empty);
-                            }
-                            break;
-                        case 1:
-                        case 2:
-                        case 3:
-                            if ((!textureSet.IsChildSet && choiceOption != 3) || (choiceOption == 3 && !alreadySetOption)) {
-                                if (!string.IsNullOrEmpty(textureSet.Base) ||
-                                    !string.IsNullOrEmpty(textureSet.Normal) ||
-                                    !string.IsNullOrEmpty(textureSet.Mask) ||
-                                    !string.IsNullOrEmpty(textureSet.Material)) {
-                                    option = new Option(textureSet.TextureSetName == textureSet.GroupName || choiceOption == 3 ? "Enable"
-                                    : textureSet.TextureSetName + (textureSet.ChildSets.Count > 0 ? " (Universal)" : ""), 0);
-                                    group.Options.Add(option);
-                                    alreadySetOption = true;
-                                }
-                            }
-                            if (!string.IsNullOrEmpty(textureSet.Base) && !string.IsNullOrEmpty(textureSet.InternalBasePath)) {
-                                if (BaseLogic(textureSet, baseTextureDiskPath, skipTexExport)) {
-                                    option.Files[textureSet.InternalBasePath] =
-                                       baseTextureDiskPath.Replace(modPath + "\\", null);
-                                } else {
-                                    OnProgressChange.Invoke(this, EventArgs.Empty);
-                                }
-                            } else {
-                                OnProgressChange.Invoke(this, EventArgs.Empty);
-                            }
-                            if (!string.IsNullOrEmpty(textureSet.InternalNormalPath)) {
-                                if (NormalLogic(textureSet, normalDiskPath, skipTexExport)) {
-                                    option.Files[textureSet.InternalNormalPath] =
-                                        normalDiskPath.Replace(modPath + "\\", null);
-                                } else {
-                                    OnProgressChange.Invoke(this, EventArgs.Empty);
-                                }
-                            } else {
-                                OnProgressChange.Invoke(this, EventArgs.Empty);
-                            }
-                            if (!string.IsNullOrEmpty(textureSet.InternalMaskPath)) {
-                                if (MaskLogic(textureSet, maskDiskPath, skipTexExport)) {
-                                    option.Files[textureSet.InternalMaskPath] =
-                                       maskDiskPath.Replace(modPath + "\\", null);
-                                } else {
-                                    OnProgressChange.Invoke(this, EventArgs.Empty);
-                                }
-                            } else {
-                                OnProgressChange.Invoke(this, EventArgs.Empty);
-                            }
-                            if (!string.IsNullOrEmpty(textureSet.InternalMaterialPath)) {
-                                if (MaterialLogic(textureSet, materialDiskPath, skipTexExport)) {
-                                    option.Files[textureSet.InternalMaterialPath] =
-                                       materialDiskPath.Replace(modPath + "\\", null);
-                                } else {
-                                    OnProgressChange.Invoke(this, EventArgs.Empty);
-                                }
-                            } else {
-                                OnProgressChange.Invoke(this, EventArgs.Empty);
-                            }
-                            break;
+                        groups[textureSet.GroupName].Add(textureSet);
+                        foreach (TextureSet childSet in textureSet.ChildSets) {
+                            childSet.GroupName = textureSet.GroupName;
+                            groups[textureSet.GroupName].Add(childSet);
+                            BatchTextureSet(textureSet, childSet);
+                            _exportMax += 4;
+                        }
                     }
                 }
-                if (group.Options.Count > 0) {
-                    string groupPath = Path.Combine(modPath, $"group_" + (1 + i++).ToString()
-                    .PadLeft(3, '0') + $"_{group.Name.ToLower().Replace(" ", "_")}.json");
-                    ExportGroup(groupPath, group);
+                if (_finalizeResults) {
+                    if (OnLaunchedXnormal != null) {
+                        OnLaunchedXnormal.Invoke(this, EventArgs.Empty);
+                    }
+                    _xnormal.ProcessBatches();
                 }
-            }
-            while (_exportCompletion < _exportMax) {
-                Thread.Sleep(500);
-            }
-            foreach (Bitmap value in _normalCache.Values) {
-                value.Dispose();
-            }
-            foreach (Bitmap value in _maskCache.Values) {
-                value.Dispose();
-            }
-            foreach (Bitmap value in _glowCache.Values) {
-                value.Dispose();
+                if (OnStartedProcessing != null) {
+                    OnStartedProcessing.Invoke(this, EventArgs.Empty);
+                }
+                foreach (List<TextureSet> textureSets in groups.Values) {
+                    int choiceOption = groupOptionTypes.ContainsKey(textureSets[0].GroupName)
+                    ? (groupOptionTypes[textureSets[0].GroupName] == 0
+                    ? generationType : groupOptionTypes[textureSets[0].GroupName] - 1)
+                    : generationType;
+                    Group group = new Group(textureSets[0].GroupName.Replace(@"/", "-").Replace(@"\", "-"), "", 0,
+                        (choiceOption == 2 && textureSets.Count > 1) ? "Single" : "Multi", 0);
+                    Option option = null;
+                    Option baseTextureOption = null;
+                    Option normalOption = null;
+                    Option maskOption = null;
+                    Option materialOption = null;
+                    bool alreadySetOption = false;
+                    foreach (TextureSet textureSet in textureSets) {
+                        string textureSetHash = GetHashFromTextureSet(textureSet);
+                        string baseTextureDiskPath = "";
+                        string normalDiskPath = "";
+                        string maskDiskPath = "";
+                        string materialDiskPath = "";
+                        bool skipTexExport = false;
+                        if (_redirectionCache.ContainsKey(textureSetHash)) {
+                            baseTextureDiskPath = GetDiskPath(_redirectionCache[textureSetHash].InternalBasePath, modPath, textureSetHash);
+                            normalDiskPath = GetDiskPath(_redirectionCache[textureSetHash].InternalNormalPath, modPath, textureSetHash);
+                            maskDiskPath = GetDiskPath(_redirectionCache[textureSetHash].InternalMaskPath, modPath, textureSetHash);
+                            materialDiskPath = GetDiskPath(_redirectionCache[textureSetHash].InternalMaterialPath, modPath, textureSetHash);
+                            skipTexExport = true;
+                        } else {
+                            baseTextureDiskPath = GetDiskPath(textureSet.InternalBasePath, modPath, textureSetHash);
+                            normalDiskPath = GetDiskPath(textureSet.InternalNormalPath, modPath, textureSetHash);
+                            maskDiskPath = GetDiskPath(textureSet.InternalMaskPath, modPath, textureSetHash);
+                            materialDiskPath = GetDiskPath(textureSet.InternalMaterialPath, modPath, textureSetHash);
+                            _redirectionCache.Add(textureSetHash, textureSet);
+                        }
+                        switch (choiceOption) {
+                            case 0:
+                                if (!string.IsNullOrEmpty(textureSet.Base) && !string.IsNullOrEmpty(textureSet.InternalBasePath)) {
+                                    if (BaseLogic(textureSet, baseTextureDiskPath, skipTexExport)) {
+                                        AddDetailedGroupOption(textureSet.InternalBasePath,
+                                            baseTextureDiskPath.Replace(modPath + "\\", null), "Base", "Normal", textureSet,
+                                            textureSets, group, baseTextureOption, out baseTextureOption);
+                                    } else {
+                                        OnProgressChange.Invoke(this, EventArgs.Empty);
+                                    }
+                                } else {
+                                    OnProgressChange.Invoke(this, EventArgs.Empty);
+                                }
+                                if (!string.IsNullOrEmpty(textureSet.InternalNormalPath)) {
+                                    if (NormalLogic(textureSet, normalDiskPath, skipTexExport)) {
+                                        AddDetailedGroupOption(textureSet.InternalNormalPath,
+                                            normalDiskPath.Replace(modPath + "\\", null), "Normal", "", textureSet,
+                                            textureSets, group, normalOption, out normalOption);
+                                    } else {
+                                        OnProgressChange.Invoke(this, EventArgs.Empty);
+                                    }
+                                } else {
+                                    OnProgressChange.Invoke(this, EventArgs.Empty);
+                                }
+                                if (!string.IsNullOrEmpty(textureSet.InternalMaskPath)) {
+                                    if (MaskLogic(textureSet, maskDiskPath, skipTexExport)) {
+                                        AddDetailedGroupOption(textureSet.InternalMaskPath,
+                                            maskDiskPath.Replace(modPath + "\\", null), "Mask", "", textureSet,
+                                            textureSets, group, maskOption, out maskOption);
+                                    } else {
+                                        OnProgressChange.Invoke(this, EventArgs.Empty);
+                                    }
+                                } else {
+                                    OnProgressChange.Invoke(this, EventArgs.Empty);
+                                }
+                                if (!string.IsNullOrEmpty(textureSet.InternalMaterialPath)) {
+                                    if (MaterialLogic(textureSet, materialDiskPath, skipTexExport)) {
+                                        AddDetailedGroupOption(textureSet.InternalMaterialPath,
+                                            materialDiskPath.Replace(modPath + "\\", null), "Material", "", textureSet,
+                                            textureSets, group, materialOption, out materialOption);
+                                    } else {
+                                        OnProgressChange.Invoke(this, EventArgs.Empty);
+                                    }
+                                } else {
+                                    OnProgressChange.Invoke(this, EventArgs.Empty);
+                                }
+                                break;
+                            case 1:
+                            case 2:
+                            case 3:
+                                if ((!textureSet.IsChildSet && choiceOption != 3) || (choiceOption == 3 && !alreadySetOption)) {
+                                    if (!string.IsNullOrEmpty(textureSet.Base) ||
+                                        !string.IsNullOrEmpty(textureSet.Normal) ||
+                                        !string.IsNullOrEmpty(textureSet.Mask) ||
+                                        !string.IsNullOrEmpty(textureSet.Material)) {
+                                        option = new Option(textureSet.TextureSetName == textureSet.GroupName || choiceOption == 3 ? "Enable"
+                                        : textureSet.TextureSetName + (textureSet.ChildSets.Count > 0 ? " (Universal)" : ""), 0);
+                                        group.Options.Add(option);
+                                        alreadySetOption = true;
+                                    }
+                                }
+                                if (!string.IsNullOrEmpty(textureSet.Base) && !string.IsNullOrEmpty(textureSet.InternalBasePath)) {
+                                    if (BaseLogic(textureSet, baseTextureDiskPath, skipTexExport)) {
+                                        option.Files[textureSet.InternalBasePath] =
+                                           baseTextureDiskPath.Replace(modPath + "\\", null);
+                                    } else {
+                                        OnProgressChange.Invoke(this, EventArgs.Empty);
+                                    }
+                                } else {
+                                    OnProgressChange.Invoke(this, EventArgs.Empty);
+                                }
+                                if (!string.IsNullOrEmpty(textureSet.InternalNormalPath)) {
+                                    if (NormalLogic(textureSet, normalDiskPath, skipTexExport)) {
+                                        option.Files[textureSet.InternalNormalPath] =
+                                            normalDiskPath.Replace(modPath + "\\", null);
+                                    } else {
+                                        OnProgressChange.Invoke(this, EventArgs.Empty);
+                                    }
+                                } else {
+                                    OnProgressChange.Invoke(this, EventArgs.Empty);
+                                }
+                                if (!string.IsNullOrEmpty(textureSet.InternalMaskPath)) {
+                                    if (MaskLogic(textureSet, maskDiskPath, skipTexExport)) {
+                                        option.Files[textureSet.InternalMaskPath] =
+                                           maskDiskPath.Replace(modPath + "\\", null);
+                                    } else {
+                                        OnProgressChange.Invoke(this, EventArgs.Empty);
+                                    }
+                                } else {
+                                    OnProgressChange.Invoke(this, EventArgs.Empty);
+                                }
+                                if (!string.IsNullOrEmpty(textureSet.Material) && !string.IsNullOrEmpty(textureSet.InternalMaterialPath)) {
+                                    if (MaterialLogic(textureSet, materialDiskPath, skipTexExport)) {
+                                        option.Files[textureSet.InternalMaterialPath] =
+                                           materialDiskPath.Replace(modPath + "\\", null);
+                                    } else {
+                                        OnProgressChange.Invoke(this, EventArgs.Empty);
+                                    }
+                                } else {
+                                    OnProgressChange.Invoke(this, EventArgs.Empty);
+                                }
+                                break;
+                        }
+                    }
+                    if (group.Options.Count > 0) {
+                        string groupPath = Path.Combine(modPath, $"group_" + (1 + i++).ToString()
+                        .PadLeft(3, '0') + $"_{group.Name.ToLower().Replace(" ", "_")}.json");
+                        ExportGroup(groupPath, group);
+                    }
+                }
+                while (_exportCompletion < _exportMax) {
+                    Thread.Sleep(500);
+                }
+                foreach (Bitmap value in _normalCache.Values) {
+                    value.Dispose();
+                }
+                foreach (Bitmap value in _maskCache.Values) {
+                    value.Dispose();
+                }
+                foreach (Bitmap value in _glowCache.Values) {
+                    value.Dispose();
+                }
+            } catch (Exception e) {
+                OnError?.Invoke(this, e.Message);
             }
             return true;
         }
