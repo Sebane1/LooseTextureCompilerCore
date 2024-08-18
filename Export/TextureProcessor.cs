@@ -54,7 +54,7 @@ namespace FFXIVLooseTextureCompiler {
                 Bitmap alpha = TexIO.ResolveBitmap(file.Replace("baseTexBaked", "alpha_baseTexBaked"));
                 Bitmap rgb = TexIO.ResolveBitmap(file.Replace("baseTexBaked", "rgb_baseTexBaked"));
                 Bitmap merged = ImageManipulation.MergeAlphaToRGB(alpha, rgb);
-                merged.Save(file, ImageFormat.Png);
+                TexIO.SaveBitmap(merged, file);
                 return merged;
             } else {
                 return TexIO.ResolveBitmap(file);
@@ -360,15 +360,16 @@ namespace FFXIVLooseTextureCompiler {
                 while (_exportCompletion < _exportMax) {
                     Thread.Sleep(500);
                 }
-                foreach (Bitmap value in _normalCache.Values) {
-                    value.Dispose();
-                }
-                foreach (Bitmap value in _maskCache.Values) {
-                    value.Dispose();
-                }
-                foreach (Bitmap value in _glowCache.Values) {
-                    value.Dispose();
-                }
+                //Thread.Sleep(500);
+                //foreach (Bitmap value in _normalCache.Values) {
+                //    value.Dispose();
+                //}
+                //foreach (Bitmap value in _maskCache.Values) {
+                //    value.Dispose();
+                //}
+                //foreach (Bitmap value in _glowCache.Values) {
+                //    value.Dispose();
+                //}
             } catch (Exception e) {
                 OnError?.Invoke(this, e.Message);
             }
@@ -470,10 +471,11 @@ namespace FFXIVLooseTextureCompiler {
                 if (!skipMaterialExport) {
                     Task.Run(() => {
                         Directory.CreateDirectory(Path.GetDirectoryName(materialDiskPath));
-                        File.Copy(textureSet.Material, materialDiskPath);
+                        File.Copy(textureSet.Material, materialDiskPath, true);
+                        OnProgressChange?.Invoke(this, EventArgs.Empty);
                     });
+                    outputGenerated = true;
                 }
-                outputGenerated = true;
             }
             if (!skipMaterialExport) {
                 OnProgressChange?.Invoke(this, EventArgs.Empty);
@@ -687,13 +689,11 @@ namespace FFXIVLooseTextureCompiler {
                     }
                     File.WriteAllBytesAsync(outputFile, data);
                 }
-                if (OnProgressChange != null) {
-                    OnProgressChange.Invoke(this, EventArgs.Empty);
-                }
-            } catch {
-                if (OnProgressChange != null) {
-                    OnProgressChange.Invoke(this, EventArgs.Empty);
-                }
+            } catch (Exception e) {
+                OnError?.Invoke(this, e.Message);
+            }
+            if (OnProgressChange != null) {
+                OnProgressChange.Invoke(this, EventArgs.Empty);
             }
             return true;
         }
@@ -728,27 +728,16 @@ namespace FFXIVLooseTextureCompiler {
                                     output = null;
                                     if (File.Exists(modifierMap)) {
                                         using (Bitmap normalMaskBitmap = TexIO.ResolveBitmap(modifierMap)) {
-                                            if (outputFile.Contains("fac_b_n")) {
-                                                Bitmap resize = new Bitmap(baseTexture, new Size(1024, 1024));
-                                                output = ImageManipulation.MergeNormals(TexIO.ResolveBitmap(inputFile), resize,
-                                                    canvasImage, normalMaskBitmap, baseTextureNormal, modifier);
-                                            } else {
-                                                output = ImageManipulation.MergeNormals(TexIO.ResolveBitmap(inputFile), baseTexture,
-                                                    canvasImage, normalMaskBitmap, baseTextureNormal, modifier);
-                                            }
+                                            output = ImageManipulation.MergeNormals(TexIO.ResolveBitmap(inputFile), baseTexture,
+                                                canvasImage, normalMaskBitmap, baseTextureNormal, modifier);
                                         }
                                     } else {
                                         using (Bitmap bitmap = TexIO.ResolveBitmap(inputFile)) {
                                             if (bitmap != null) {
                                                 if (!string.IsNullOrEmpty(layeringImage)) {
-                                                    Bitmap image = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb);
-                                                    Bitmap layer = TexIO.ResolveBitmap(Path.Combine(_basePath,
-                                                        layeringImage));
-                                                    Graphics g = Graphics.FromImage(image);
-                                                    g.Clear(Color.Transparent);
-                                                    image = ImageManipulation.DrawImage(image, layer, 0, 0, (int)(bitmap.Width), bitmap.Height);
-                                                    image = ImageManipulation.DrawImage(image, GetMergedBitmap(inputFile), 0, 0, (int)(bitmap.Width), bitmap.Height);
-                                                    output = ImageManipulation.MergeNormals(image, baseTexture, canvasImage, null, baseTextureNormal, modifier);
+                                                    Bitmap bottomLayer = TexIO.ResolveBitmap(Path.Combine(_basePath, layeringImage));
+                                                    Bitmap topLayer = GetMergedBitmap(inputFile);
+                                                    output = ImageManipulation.MergeNormals(ImageManipulation.LayerImages(bottomLayer, topLayer), baseTexture, canvasImage, null, baseTextureNormal, modifier);
                                                 } else {
                                                     output = ImageManipulation.MergeNormals(TexIO.ResolveBitmap(inputFile), baseTexture, canvasImage, null, baseTextureNormal, modifier);
                                                 }
@@ -773,7 +762,7 @@ namespace FFXIVLooseTextureCompiler {
         private void ExportTypeMask(string inputFile, string layeringImage, ExportType exportType, string modifierMap, Stream stream) {
             lock (_maskCache) {
                 if (_maskCache.ContainsKey(inputFile)) {
-                    _maskCache[inputFile].Save(stream, ImageFormat.Png);
+                    TexIO.SaveBitmap(_maskCache[inputFile], stream);
                 } else {
                     using (Bitmap bitmap = TexIO.ResolveBitmap(inputFile)) {
                         if (bitmap != null) {
@@ -915,19 +904,13 @@ namespace FFXIVLooseTextureCompiler {
         }
 
         private void ExportTypeNone(string inputFile, string layeringImage, Stream stream) {
-            using (Bitmap bitmap = TexIO.ResolveBitmap(inputFile)) {
-                if (bitmap != null) {
-                    if (!string.IsNullOrEmpty(layeringImage)) {
-                        Bitmap layer = TexIO.ResolveBitmap(Path.Combine(_basePath, layeringImage));
-                        Bitmap image = new Bitmap(layer.Width, layer.Height, PixelFormat.Format32bppArgb);
-                        Graphics g = Graphics.FromImage(image);
-                        g.Clear(Color.Transparent);
-                        image = ImageManipulation.DrawImage(image, layer, 0, 0, layer.Width, layer.Height);
-                        Bitmap mergedBitmap = GetMergedBitmap(inputFile);
-                        float widthRatio = (float)mergedBitmap.Width / (float)mergedBitmap.Height;
-                        image = ImageManipulation.DrawImage(image, mergedBitmap, 0, 0, (int)(layer.Height * widthRatio), layer.Height);
-                        TexIO.SaveBitmap(image, stream);
-                    } else {
+            if (!string.IsNullOrEmpty(layeringImage)) {
+                Bitmap bottomLayer = TexIO.ResolveBitmap(Path.Combine(_basePath, layeringImage));
+                Bitmap topLayer = GetMergedBitmap(inputFile);
+                TexIO.SaveBitmap(ImageManipulation.LayerImages(bottomLayer, topLayer), stream);
+            } else {
+                using (Bitmap bitmap = TexIO.ResolveBitmap(inputFile)) {
+                    if (bitmap != null) {
                         TexIO.SaveBitmap(bitmap, stream);
                     }
                 }

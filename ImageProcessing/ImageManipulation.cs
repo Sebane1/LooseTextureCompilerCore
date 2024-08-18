@@ -3,6 +3,7 @@ using SixLabors.ImageSharp.Processing;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using static Lumina.Data.Parsing.Layer.LayerCommon;
 using Color = System.Drawing.Color;
 using Point = System.Drawing.Point;
 using Rectangle = System.Drawing.Rectangle;
@@ -655,18 +656,28 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 }
             }
         }
+        public static Bitmap LayerImages(Bitmap bottomLayer, Bitmap topLayer) {
+            Bitmap rgb = ImageManipulation.ExtractRGB(bottomLayer);
+            Bitmap alpha = ImageManipulation.ExtractAlpha(bottomLayer);
+            Bitmap image = new Bitmap(bottomLayer.Width, bottomLayer.Height, PixelFormat.Format32bppArgb);
+            Graphics g = Graphics.FromImage(image);
+            g.Clear(Color.Transparent);
+            image = ImageManipulation.DrawImage(rgb, bottomLayer, 0, 0, bottomLayer.Width, bottomLayer.Height);
+            float widthRatio = (float)topLayer.Width / (float)topLayer.Height;
+            image = ImageManipulation.DrawImage(image, topLayer, 0, 0, (int)(bottomLayer.Height * widthRatio), bottomLayer.Height);
+            Bitmap final = ImageManipulation.MergeAlphaToRGB(alpha, image);
+            return final;
+        }
         public static Bitmap MergeNormals(Bitmap inputFile, Bitmap baseTexture, Bitmap canvasImage, Bitmap normalMask, string baseTextureNormal, bool modifier) {
             Graphics g = Graphics.FromImage(canvasImage);
             g.Clear(Color.Transparent);
             canvasImage = ImageManipulation.DrawImage(canvasImage, baseTexture, 0, 0, baseTexture.Width, baseTexture.Height);
             Bitmap normal = Normal.Calculate(modifier ? ImageManipulation.InvertImage(canvasImage) : canvasImage, normalMask);
-            using (Bitmap originalNormal = inputFile) {
-                try {
-                    Bitmap resize = DrawImage(originalNormal, normal, 0, 0, originalNormal.Width, originalNormal.Height);
-                    return ImageManipulation.MergeAlphaToRGB(ImageManipulation.ExtractAlpha(originalNormal), resize);
-                } catch {
-                    return normal;
-                }
+            try {
+                Bitmap resize = ImageManipulation.LayerImages(inputFile, normal);
+                return ImageManipulation.MergeAlphaToRGB(ImageManipulation.ExtractAlpha(inputFile), resize);
+            } catch {
+                return normal;
             }
         }
 

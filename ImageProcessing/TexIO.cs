@@ -184,17 +184,23 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Image<Rgba32> BitmapToImageSharp(Bitmap bitmap) {
-            var newImage = new SixLabors.ImageSharp.Image<Rgba32>(bitmap.Width, bitmap.Height);
-            LockBitmap startingData = new LockBitmap(bitmap);
-            startingData.LockBits();
-            for (int y = 0; y < bitmap.Height; y++) {
-                for (int x = 0; x < bitmap.Width; x++) {
-                    var rgbPixel = startingData.GetPixel(x, y);
-                    newImage[x, y] = new Rgba32(rgbPixel.R, rgbPixel.G, rgbPixel.B, rgbPixel.A);
+            lock (bitmap) {
+                if (bitmap != null) {
+                    var newImage = new SixLabors.ImageSharp.Image<Rgba32>(bitmap.Width, bitmap.Height);
+                    LockBitmap startingData = new LockBitmap(bitmap);
+                    startingData.LockBits();
+                    for (int y = 0; y < bitmap.Height; y++) {
+                        for (int x = 0; x < bitmap.Width; x++) {
+                            var rgbPixel = startingData.GetPixel(x, y);
+                            newImage[x, y] = new Rgba32(rgbPixel.R, rgbPixel.G, rgbPixel.B, rgbPixel.A);
+                        }
+                    };
+                    startingData.UnlockBits();
+                    return newImage;
+                } else {
+                    return BitmapToImageSharp(new Bitmap(1, 1));
                 }
-            };
-            startingData.UnlockBits();
-            return newImage;
+            }
         }
         public static Bitmap ImageSharpToBitmap(Image<Rgba32> newImage, bool noAlpha = false) {
             Bitmap canvas = new Bitmap(newImage.Width, newImage.Height, PixelFormat.Format32bppArgb);
@@ -216,6 +222,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
                 ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
             };
+            while (TexIO.IsFileLocked(path)) {
+                Thread.Sleep(100);
+            }
             newImage.SaveAsPng(path, encoder);
         }
 
@@ -357,8 +366,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public static bool IsFileLocked(string file) {
             try {
-                using (FileStream stream = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.None)) {
-                    stream.Close();
+                if (File.Exists(file)) {
+                    using (FileStream stream = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.None)) {
+                        stream.Close();
+                    }
                 }
             } catch (IOException) {
                 //the file is unavailable because it is:

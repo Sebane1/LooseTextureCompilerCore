@@ -58,6 +58,14 @@ namespace FFXIVLooseTextureCompiler.Export {
                          new BackupTexturePaths(@"res\textures\pythia\bibo\"),
                          new BackupTexturePaths(@"res\textures\pythia\gen3\"),
                          new BackupTexturePaths(@"res\textures\pythia\gen2\")),
+            new SkinType("Freyja",
+                         new BackupTexturePaths(@"res\textures\freyja\bibo\"),
+                         new BackupTexturePaths(@"res\textures\freyja\gen3\"),
+                         new BackupTexturePaths(@"res\textures\freyja\gen2\")),
+            new SkinType("Eve",
+                         new BackupTexturePaths(@"res\textures\eve\bibo\"),
+                         new BackupTexturePaths(@"res\textures\eve\gen3\"),
+                         new BackupTexturePaths(@"res\textures\eve\gen2\")),
         };
 
         private static List<SkinType> _gen3SkinTypes = new List<SkinType>() {
@@ -77,6 +85,14 @@ namespace FFXIVLooseTextureCompiler.Export {
                          new BackupTexturePaths(@"res\textures\pythia\bibo\"),
                          new BackupTexturePaths(@"res\textures\pythia\gen3\"),
                          new BackupTexturePaths(@"res\textures\pythia\gen2\")),
+            new SkinType("Freyja",
+                         new BackupTexturePaths(@"res\textures\freyja\bibo\"),
+                         new BackupTexturePaths(@"res\textures\freyja\gen3\"),
+                         new BackupTexturePaths(@"res\textures\freyja\gen2\")),
+            new SkinType("Eve",
+                         new BackupTexturePaths(@"res\textures\eve\bibo\"),
+                         new BackupTexturePaths(@"res\textures\eve\gen3\"),
+                         new BackupTexturePaths(@"res\textures\eve\gen2\")),
         };
 
         private static List<SkinType> _tbseSkinTypes = new List<SkinType>() {
