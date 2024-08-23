@@ -11,22 +11,22 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         // as the red, green, and blue values of the pixel. The code then unlocks the bits of the new bitmap and returns it.
         //Optimized
 
-        public static Bitmap AdjustContrast(Bitmap Image, float Value) {
+        public static Bitmap AdjustContrast(Bitmap image, float Value) {
             Value = (100.0f + Value) / 100.0f;
             Value *= Value;
-            Bitmap NewBitmap = (Bitmap)Image.Clone();
-            BitmapData data = NewBitmap.LockBits(
-                new Rectangle(0, 0, NewBitmap.Width, NewBitmap.Height),
+            Bitmap newBitmap = TexIO.NewBitmap(image);
+            BitmapData data = newBitmap.LockBits(
+                new Rectangle(0, 0, newBitmap.Width, newBitmap.Height),
                 ImageLockMode.ReadWrite,
-                NewBitmap.PixelFormat);
-            int Height = NewBitmap.Height;
-            int Width = NewBitmap.Width;
+                newBitmap.PixelFormat);
+            int height = newBitmap.Height;
+            int width = newBitmap.Width;
 
             unsafe {
-                for (int y = 0; y < Height; ++y) {
+                for (int y = 0; y < height; ++y) {
                     byte* row = (byte*)data.Scan0 + (y * data.Stride);
                     int columnOffset = 0;
-                    for (int x = 0; x < Width; ++x) {
+                    for (int x = 0; x < width; ++x) {
                         byte B = row[columnOffset];
                         byte G = row[columnOffset + 1];
                         byte R = row[columnOffset + 2];
@@ -56,9 +56,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 }
             }
 
-            NewBitmap.UnlockBits(data);
+            newBitmap.UnlockBits(data);
 
-            return NewBitmap;
+            return newBitmap;
         }
     }
 }

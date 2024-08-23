@@ -1,16 +1,19 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using static Lumina.Data.Files.Pcb.PcbResourceFile;
 
 namespace FFXIVLooseTextureCompiler.Racial {
     public static class RacePaths {
         private static bool otopopNotice;
         public static event EventHandler otopopNoticeTriggered;
         public static string VersionText { get; set; }
-
         public static string GetFacePath(int material, int gender, int subRaceValue, int facePart, int faceType, int auraFaceScales, bool asym, bool isMaterial = false) {
             string selectedText = RaceInfo.SubRaces[subRaceValue];
             string faceIdCheck = "00";
@@ -30,31 +33,94 @@ namespace FFXIVLooseTextureCompiler.Racial {
             }
             if (material != 3) {
                 faceIdCheck = "000";
-                bool useSecondarySubracePrefix = selectedText.ToLower() == "the lost" || selectedText.ToLower() == "hellsguard" || selectedText.ToLower() == "highlander"
-                    || selectedText.ToLower() == "duskwight" || selectedText.ToLower() == "keeper" || selectedText.ToLower() == "dunesfolk"
-                    || (selectedText.ToLower() == "xaela" && facePart != 2 && (material == 0 || auraFaceScales == 2))
-                    || (selectedText.ToLower() == "veena" && facePart == 1 && material != 2)
-                    || (selectedText.ToLower() == "veena" && facePart == 2 && material == 2);
-                if (isMaterial) {
-                    useSecondarySubracePrefix = selectedText.ToLower() == "the lost" || selectedText.ToLower() == "hellsguard" || selectedText.ToLower() == "highlander"
-                    || selectedText.ToLower() == "duskwight" || selectedText.ToLower() == "keeper" || selectedText.ToLower() == "dunesfolk" || (selectedText.ToLower() == "xaela")
-                    || (selectedText.ToLower() == "veena");
+                if (facePart < 3 && !isMaterial) {
+                    return GetFacePathJson(material, gender, subRaceValue, facePart, faceType, auraFaceScales, asym);
+                } else {
+                    bool useSecondarySubracePrefix = selectedText.ToLower() == "the lost" || selectedText.ToLower() == "hellsguard" || selectedText.ToLower() == "highlander"
+                        || selectedText.ToLower() == "duskwight" || selectedText.ToLower() == "keeper" || selectedText.ToLower() == "dunesfolk"
+                        || (selectedText.ToLower() == "xaela" && facePart != 2 && (material == 0 || auraFaceScales == 2))
+                        || (selectedText.ToLower() == "veena" && facePart == 1 && material != 2)
+                        || (selectedText.ToLower() == "veena" && facePart == 2 && material == 2);
+                    if (isMaterial) {
+                        useSecondarySubracePrefix = selectedText.ToLower() == "the lost" || selectedText.ToLower() == "hellsguard" || selectedText.ToLower() == "highlander"
+                        || selectedText.ToLower() == "duskwight" || selectedText.ToLower() == "keeper" || selectedText.ToLower() == "dunesfolk" || (selectedText.ToLower() == "xaela")
+                        || (selectedText.ToLower() == "veena");
+                    }
+                    if (useSecondarySubracePrefix) {
+                        faceIdCheck = "010";
+                    }
+                    string subRace = (gender == 0 ? RaceInfo.RaceCodeFace.Masculine[subRaceValue]
+                        : RaceInfo.RaceCodeFace.Feminine[subRaceValue]);
+                    int faceOffset = (faceType + (subRaceValue == 12 || subRaceValue == 13 ? 4 : 0)) + 1;
+                    return "chara/human/c" + subRace + "/obj/face/f" + faceIdCheck + faceOffset + @"/" +
+                        (isMaterial ? "material" : "texture") + (isMaterial ? "/mt_c" : "/c")
+                        + subRace + "f" + faceIdCheck + faceOffset
+                        + GetFacePart(facePart, asym) +
+                        (isMaterial ? "" : GetTextureType(material, 0, true, true)) + (isMaterial ? ".mtrl" : ".tex");
                 }
-                if (useSecondarySubracePrefix) {
-                    faceIdCheck = "010";
-                }
-                string subRace = (gender == 0 ? RaceInfo.RaceCodeFace.Masculine[subRaceValue]
-                    : RaceInfo.RaceCodeFace.Feminine[subRaceValue]);
-                int faceOffset = (faceType + (subRaceValue == 12 || subRaceValue == 13 ? 4 : 0)) + 1;
-                return "chara/human/c" + subRace + "/obj/face/f" + faceIdCheck + faceOffset + @"/" +
-                    (isMaterial ? "material" : "texture") + (isMaterial ? "/mt_c" : "/c")
-                    + subRace + "f" + faceIdCheck + faceOffset
-                    + GetFacePart(facePart, asym) +
-                    (isMaterial ? "" : GetTextureType(material, 0, true, true)) + (isMaterial ? ".mtrl" : ".tex");
-            } else {
-                return "";
+            }
+            return "";
+        }
+
+        public static string GetFacePathJson(int material, int gender, int subRaceValue, int facePart,
+                                             int faceType, int auraFaceScales, bool asym, bool isMaterial = false) {
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceNames = assembly.GetManifestResourceNames();
+            string maleFaces = resourceNames.LastOrDefault(str => str.Contains("maleface.json"));
+            string femaleFaces = resourceNames.LastOrDefault(str => str.Contains("femaleface.json"));
+            string maleEtcFaces = resourceNames.LastOrDefault(str => str.Contains("maleetc.json"));
+            string femaleEtcFaces = resourceNames.LastOrDefault(str => str.Contains("femaleetc.json"));
+
+            string maleFacePaths = "";
+            string femaleFacePaths = "";
+            string maleEtcFacePaths = "";
+            string femaleEtcFacePaths = "";
+
+            using (StreamReader reader = new StreamReader(assembly.GetManifestResourceStream(maleFaces))) {
+                maleFacePaths = reader.ReadToEnd();
+            }
+            using (StreamReader reader = new StreamReader(assembly.GetManifestResourceStream(femaleFaces))) {
+                femaleFacePaths = reader.ReadToEnd();
+            }
+            using (StreamReader reader = new StreamReader(assembly.GetManifestResourceStream(maleEtcFaces))) {
+                maleEtcFacePaths = reader.ReadToEnd();
+            }
+            using (StreamReader reader = new StreamReader(assembly.GetManifestResourceStream(femaleEtcFaces))) {
+                femaleEtcFacePaths = reader.ReadToEnd();
+            }
+
+            Dictionary<string, Dictionary<string, Dictionary<string, string>>> values = null;
+            switch (facePart) {
+                case 0:
+                    switch (gender) {
+                        case 0:
+                            values = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(maleFacePaths);
+                            break;
+                        case 1:
+                            values = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(femaleFacePaths);
+                            break;
+                    }
+                    break;
+                case 1:
+                    switch (gender) {
+                        case 0:
+                            values = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(maleEtcFaces);
+                            break;
+                        case 1:
+                            values = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(femaleEtcFaces);
+                            break;
+                    }
+                    break;
+            }
+
+            try {
+                string value = values.ElementAt(material).Value.ElementAt(subRaceValue).Value.ElementAt(faceType).Value;
+                return value;
+            } catch {
+                return "Invalid selection";
             }
         }
+
         public static string PathCorrector(string path) {
             if (path.Contains("obj/face") || path.Contains("obj/body") || path.Contains("texture/eye") || path.Contains("obj/hair")) {
                 path = path.Replace("--", null).Replace("_d.tex", "_base.tex").Replace("_n.tex", "_norm.tex").Replace("_s.tex", "_mask.tex");
@@ -135,7 +201,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     string xaelaCheck = (race == 7 ? "010" : "000") + (tail + 1);
                     string gender = (genderValue == 0 ? RaceInfo.RaceCodeBody.Masculine[race]
                         : RaceInfo.RaceCodeBody.Feminine[race]);
-                    result = @"chara/human/c" + gender + @"/obj/tail/t" + xaelaCheck + @"/texture/--c" + gender + "t" +
+                    result = @"chara/human/c" + gender + @"/obj/tail/t" + xaelaCheck + @"/texture/c" + gender + "t" +
                         xaelaCheck + "_etc" + GetTextureType(texture, baseBody) + ".tex";
                     break;
                 case 5:
@@ -172,7 +238,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                 : RaceInfo.RaceCodeBody.Feminine[race]);
             string subRace = (gender == 0 ? RaceInfo.RaceCodeFace.Masculine[subRaceValue]
                 : RaceInfo.RaceCodeFace.Feminine[subRaceValue]);
-            return "chara/human/c" + genderCode + "/obj/hair/h" + hairValue + "/texture/--c"
+            return "chara/human/c" + genderCode + "/obj/hair/h" + hairValue + "/texture/c"
                 + genderCode + "h" + hairValue + "_hir" + GetTextureType(material, 0, true) + ".tex";
         }
         public static string GetTextureType(int material, int baseBodyIndex, bool isface = false, bool isVerbose = false) {

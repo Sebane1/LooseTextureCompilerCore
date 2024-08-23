@@ -66,6 +66,10 @@ namespace FFXIVLooseTextureCompiler.Export {
                          new BackupTexturePaths(@"res\textures\eve\bibo\"),
                          new BackupTexturePaths(@"res\textures\eve\gen3\"),
                          new BackupTexturePaths(@"res\textures\eve\gen2\")),
+            new SkinType("EXQB",
+                         new BackupTexturePaths(@"res\textures\exqb\bibo\"),
+                         new BackupTexturePaths(@"res\textures\exqb\gen3\"),
+                         new BackupTexturePaths(@"res\textures\exqb\gen2\")),
         };
 
         private static List<SkinType> _gen3SkinTypes = new List<SkinType>() {
@@ -93,6 +97,10 @@ namespace FFXIVLooseTextureCompiler.Export {
                          new BackupTexturePaths(@"res\textures\eve\bibo\"),
                          new BackupTexturePaths(@"res\textures\eve\gen3\"),
                          new BackupTexturePaths(@"res\textures\eve\gen2\")),
+            new SkinType("EXQB",
+                         new BackupTexturePaths(@"res\textures\exqb\bibo\"),
+                         new BackupTexturePaths(@"res\textures\exqb\gen3\"),
+                         new BackupTexturePaths(@"res\textures\exqb\gen2\")),
         };
 
         private static List<SkinType> _tbseSkinTypes = new List<SkinType>() {
@@ -113,8 +121,7 @@ namespace FFXIVLooseTextureCompiler.Export {
 
         public static void AddFaceBackupPaths(int gender, int subRace, int face, TextureSet textureSet) {
             string outputTexture = @"res\textures\face\" + (gender == 1 ? "feminine" : "masculine") + @"\" +
-            RaceInfo.ModelRaces[RaceInfo.SubRaceToModelRace(subRace)].ToLower();
-
+            RaceInfo.ModelRaces[RaceInfo.SubRaceToModelRace(subRace)].ToLower() + (textureSet.UsesScales ? "Alternate" : "");
             textureSet.BackupTexturePaths = new BackupTexturePaths(outputTexture, true, gender, subRace, face);
         }
 

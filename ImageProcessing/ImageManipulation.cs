@@ -1,4 +1,5 @@
-﻿using Lumina.Data.Files;
+﻿using KVImage;
+using Lumina.Data.Files;
 using SixLabors.ImageSharp.Processing;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -16,7 +17,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Multi
         }
         public static UVMapType UVMapTypeClassifier(string texture) {
-            Bitmap image = new Bitmap(TexIO.ResolveBitmap(texture));
+            return UVMapTypeClassifier(TexIO.ResolveBitmap(texture));
+        }
+        public static UVMapType UVMapTypeClassifier(Bitmap image) {
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
             Color uvMapTest = source.GetPixel(0, 0);
@@ -37,7 +40,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Gen3,
         }
         public static BodyUVType FemaleBodyUVClassifier(string texture) {
-            Bitmap image = new Bitmap(TexIO.ResolveBitmap(texture));
+            return FemaleBodyUVClassifier(TexIO.ResolveBitmap(texture));
+        }
+        public static BodyUVType FemaleBodyUVClassifier(Bitmap image) {
             if (image.Width == image.Height / 2) {
                 return BodyUVType.Gen2;
             } else {
@@ -77,7 +82,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public static void BulkDDSToPng(IEnumerable<string> paths) {
             foreach (string path in paths) {
-                TexIO.ResolveBitmap(path).Save(ImageManipulation.ReplaceExtension(path, ".png"), ImageFormat.Png);
+                if (path.EndsWith(".dds")) {
+                    TexIO.SaveBitmap(TexIO.ResolveBitmap(path), ImageManipulation.ReplaceExtension(path, ".png"));
+                }
             }
         }
 
@@ -642,6 +649,66 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             destination.UnlockBits();
             return image;
         }
+
+        public static Bitmap SeperateTattoo(Bitmap tattoo) {
+            Bitmap alphaMap = InvertImage(Brightness.BrightenImage(Grayscale.MakeGrayscale(tattoo), 1, 1.9f));
+            return MergeAlphaToRGB(alphaMap, tattoo);
+        }
+
+        public static Bitmap SeperateTattooByDifference(Bitmap tattoo, string baseDirectory = null) {
+            var value = FemaleBodyUVClassifier(tattoo);
+            var uvMapType = UVMapTypeClassifier(tattoo);
+            string underlayDifferentiator = "";
+            string mapName = "";
+            switch (uvMapType) {
+                case UVMapType.Diffuse:
+                    mapName = "diffuse.ltct";
+                    break;
+                case UVMapType.Normal:
+                    mapName = "normal.ltct";
+                    break;
+            }
+            switch (value) {
+                case BodyUVType.Bibo:
+                    underlayDifferentiator = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory :
+                    AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\bibo\\bibo\\" + mapName);
+                    break;
+                case BodyUVType.Gen3:
+                    underlayDifferentiator = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory :
+                    AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\gen3\\gen3\\" + mapName);
+                    break;
+                case BodyUVType.Gen2:
+                    underlayDifferentiator = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory :
+                    AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\gen3\\gen2\\" + mapName);
+                    break;
+            }
+            if (!string.IsNullOrEmpty(underlayDifferentiator)) {
+                return SeperateByDifference(tattoo, TexIO.ResolveBitmap(underlayDifferentiator));
+            }
+            return new Bitmap(tattoo.Width, tattoo.Height);
+        }
+        public static Bitmap SeperateByDifference(Bitmap tattoo, Bitmap underlay) {
+            ImageBlender imageBlender = new ImageBlender();
+            Bitmap canvas = Resize(underlay, tattoo.Width, tattoo.Height);
+            imageBlender.BlendImages(canvas, tattoo, ImageBlender.BlendOperation.Blend_Difference);
+            Bitmap alphaMap = Grayscale.MakeGrayscale(canvas);
+            BoostAlpha(alphaMap);
+            return MergeAlphaToRGB(alphaMap, tattoo);
+        }
+        public static void BoostAlpha(Bitmap bitmap) {
+            LockBitmap alphaBits = new LockBitmap(bitmap);
+            alphaBits.LockBits();
+            for (int y = 0; y < bitmap.Height; y++) {
+                for (int x = 0; x < bitmap.Width; x++) {
+                    Color alphaPixel = alphaBits.GetPixel(x, y);
+                    if (alphaPixel.R > 5) {
+                        Color col = Color.FromArgb(255, 255, 255, 255);
+                        alphaBits.SetPixel(x, y, col);
+                    }
+                }
+            };
+            alphaBits.UnlockBits();
+        }
         public static Bitmap MergeNormals(string inputFile, Bitmap baseTexture, Bitmap canvasImage, Bitmap normalMask, string baseTextureNormal) {
             Graphics g = Graphics.FromImage(canvasImage);
             g.Clear(Color.Transparent);
@@ -656,6 +723,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 }
             }
         }
+
         public static Bitmap LayerImages(Bitmap bottomLayer, Bitmap topLayer) {
             Bitmap rgb = ImageManipulation.ExtractRGB(bottomLayer);
             Bitmap alpha = ImageManipulation.ExtractAlpha(bottomLayer);
@@ -668,6 +736,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap final = ImageManipulation.MergeAlphaToRGB(alpha, image);
             return final;
         }
+
         public static Bitmap MergeNormals(Bitmap inputFile, Bitmap baseTexture, Bitmap canvasImage, Bitmap normalMask, string baseTextureNormal, bool modifier) {
             Graphics g = Graphics.FromImage(canvasImage);
             g.Clear(Color.Transparent);
@@ -690,6 +759,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             graphics.DrawImage(file, new Point(file.Width, 0));
             return canvas;
         }
+
         public static Bitmap SideBySide(Bitmap left, Bitmap right) {
             Bitmap canvas = new Bitmap(left.Width * 2, left.Height);
             Graphics graphics = Graphics.FromImage(canvas);
@@ -725,8 +795,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Graphics.FromImage(blueChannel).Clear(Color.FromArgb(152, 152, 152));
             return MergeGrayscalesToRGBA(ExtractRed(image), ImageManipulation.InvertImage(ExtractBlue(image)), blueChannel, alpha);
         }
-
-
 
         public static void ConvertImageToAsymEyeMaps(string filename1, string filename2, string output) {
             Bitmap image = TexIO.ResolveBitmap(filename1);

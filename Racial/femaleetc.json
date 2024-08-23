@@ -1,0 +1,200 @@
+{
+  "FemaleEtcNorm": {
+    "Midlander": {
+      "Face 1": "chara/human/c0201/obj/face/f0001/texture/c0201f0001_etc_norm.tex",
+      "Face 2": "chara/human/c0201/obj/face/f0002/texture/c0201f0002_etc_norm.tex",
+      "Face 3": "chara/human/c0201/obj/face/f0003/texture/c0201f0003_etc_norm.tex",
+      "Face 4": "chara/human/c0201/obj/face/f0004/texture/c0201f0004_etc_norm.tex",
+      "Face 5": "chara/human/c0201/obj/face/f0005/texture/c0201f0005_etc_norm.tex"
+    },
+    "Highlander": {
+      "Face 1": "chara/human/c0401/obj/face/f0101/texture/c0401f0101_etc_norm.tex",
+      "Face 2": "chara/human/c0401/obj/face/f0102/texture/c0401f0102_etc_norm.tex",
+      "Face 3": "chara/human/c0401/obj/face/f0103/texture/c0401f0103_etc_norm.tex",
+      "Face 4": "chara/human/c0401/obj/face/f0104/texture/c0401f0104_etc_norm.tex"
+    },
+    "Wildwood": {
+      "Face 1": "chara/human/c0601/obj/face/f0001/texture/c0601f0001_etc_norm.tex",
+      "Face 2": "chara/human/c0601/obj/face/f0002/texture/c0601f0002_etc_norm.tex",
+      "Face 3": "chara/human/c0601/obj/face/f0003/texture/c0601f0003_etc_norm.tex",
+      "Face 4": "chara/human/c0601/obj/face/f0004/texture/c0601f0004_etc_norm.tex"
+    },
+    "Duskwight": {
+      "Face 1": "chara/human/c0601/obj/face/f0001/texture/c0601f0001_etc_norm.tex",
+      "Face 2": "chara/human/c0601/obj/face/f0002/texture/c0601f0002_etc_norm.tex",
+      "Face 3": "chara/human/c0601/obj/face/f0003/texture/c0601f0003_etc_norm.tex",
+      "Face 4": "chara/human/c0601/obj/face/f0004/texture/c0601f0004_etc_norm.tex"
+    },
+    "Plainsfolk": {
+      "Face 1": "chara/human/c1201/obj/face/f0001/texture/c1201f0001_etc_norm.tex",
+      "Face 2": "chara/human/c1201/obj/face/f0002/texture/c1201f0002_etc_norm.tex",
+      "Face 3": "chara/human/c1201/obj/face/f0003/texture/c1201f0003_etc_norm.tex",
+      "Face 4": "chara/human/c1201/obj/face/f0004/texture/c1201f0004_etc_norm.tex"
+    },
+    "Dunesfolk": {
+      "Face 1": "chara/human/c1201/obj/face/f0001/texture/c1201f0001_etc_norm.tex",
+      "Face 2": "chara/human/c1201/obj/face/f0002/texture/c1201f0002_etc_norm.tex",
+      "Face 3": "chara/human/c1201/obj/face/f0003/texture/c1201f0003_etc_norm.tex",
+      "Face 4": "chara/human/c1201/obj/face/f0004/texture/c1201f0004_etc_norm.tex"
+    },
+    "Seeker": {
+      "Face 1": "chara/human/c0801/obj/face/f0001/texture/c0801f0001_etc_norm.tex",
+      "Face 2": "chara/human/c0801/obj/face/f0002/texture/c0801f0002_etc_norm.tex",
+      "Face 3": "chara/human/c0801/obj/face/f0003/texture/c0801f0003_etc_norm.tex",
+      "Face 4": "chara/human/c0801/obj/face/f0004/texture/c0801f0004_etc_norm.tex"
+    },
+    "Keeper": {
+      "Face 1": "chara/human/c0801/obj/face/f0001/texture/c0801f0001_etc_norm.tex",
+      "Face 2": "chara/human/c0801/obj/face/f0002/texture/c0801f0002_etc_norm.tex",
+      "Face 3": "chara/human/c0801/obj/face/f0003/texture/c0801f0003_etc_norm.tex",
+      "Face 4": "chara/human/c0801/obj/face/f0004/texture/c0801f0004_etc_norm.tex"
+    },
+    "Seawolf": {
+      "Face 1": "chara/human/c1001/obj/face/f0001/texture/c1001f0001_etc_norm.tex",
+      "Face 2": "chara/human/c1001/obj/face/f0002/texture/c1001f0002_etc_norm.tex",
+      "Face 3": "chara/human/c1001/obj/face/f0003/texture/c1001f0003_etc_norm.tex",
+      "Face 4": "chara/human/c1001/obj/face/f0004/texture/c1001f0004_etc_norm.tex"
+    },
+    "Hellsguard": {
+      "Face 1": "chara/human/c1001/obj/face/f0001/texture/c1001f0001_etc_norm.tex",
+      "Face 2": "chara/human/c1001/obj/face/f0002/texture/c1001f0002_etc_norm.tex",
+      "Face 3": "chara/human/c1001/obj/face/f0003/texture/c1001f0003_etc_norm.tex",
+      "Face 4": "chara/human/c1001/obj/face/f0004/texture/c1001f0004_etc_norm.tex"
+    },
+    "Raen": {
+      "Face 1": "chara/human/c1401/obj/face/f0001/texture/c1401f0001_etc_norm.tex",
+      "Face 2": "chara/human/c1401/obj/face/f0002/texture/c1401f0002_etc_norm.tex",
+      "Face 3": "chara/human/c1401/obj/face/f0003/texture/c1401f0003_etc_norm.tex",
+      "Face 4": "chara/human/c1401/obj/face/f0004/texture/c1401f0004_etc_norm.tex"
+    },
+    "Xaela": {
+      "Face 1": "chara/human/c1401/obj/face/f0001/texture/c1401f0001_etc_norm.tex",
+      "Face 2": "chara/human/c1401/obj/face/f0002/texture/c1401f0002_etc_norm.tex",
+      "Face 3": "chara/human/c1401/obj/face/f0003/texture/c1401f0003_etc_norm.tex",
+      "Face 4": "chara/human/c1401/obj/face/f0004/texture/c1401f0004_etc_norm.tex"
+    },
+    "Hellions": {
+      "Face 1": "chara/human/c1601/obj/face/f0005/texture/c1601f0005_etc_norm.tex",
+      "Face 2": "chara/human/c1601/obj/face/f0006/texture/c1601f0006_etc_norm.tex",
+      "Face 3": "chara/human/c1601/obj/face/f0007/texture/c1601f0007_etc_norm.tex",
+      "Face 4": "chara/human/c1601/obj/face/f0008/texture/c1601f0008_etc_norm.tex"
+    },
+    "Lost": {
+      "Face 1": "chara/human/c1601/obj/face/f0005/texture/c1601f0005_etc_norm.tex",
+      "Face 2": "chara/human/c1601/obj/face/f0006/texture/c1601f0006_etc_norm.tex",
+      "Face 3": "chara/human/c1601/obj/face/f0007/texture/c1601f0007_etc_norm.tex",
+      "Face 4": "chara/human/c1601/obj/face/f0008/texture/c1601f0008_etc_norm.tex"
+    },
+    "Rava": {
+      "Face 1": "chara/human/c1801/obj/face/f0001/texture/c1801f0001_etc_norm.tex",
+      "Face 2": "chara/human/c1801/obj/face/f0002/texture/c1801f0002_etc_norm.tex",
+      "Face 3": "chara/human/c1801/obj/face/f0003/texture/c1801f0003_etc_norm.tex",
+      "Face 4": "chara/human/c1801/obj/face/f0004/texture/c1801f0004_etc_norm.tex"
+    },
+    "Veena": {
+      "Face 1": "chara/human/c1801/obj/face/f0101/texture/c1801f0101_etc_norm.tex",
+      "Face 2": "chara/human/c1801/obj/face/f0102/texture/c1801f0102_etc_norm.tex",
+      "Face 3": "chara/human/c1801/obj/face/f0103/texture/c1801f0103_etc_norm.tex",
+      "Face 4": "chara/human/c1801/obj/face/f0104/texture/c1801f0104_etc_norm.tex"
+    }
+  },
+  "FemaleEtcMask": {
+    "Midlander": {
+      "Face 1": "chara/human/c0201/obj/face/f0001/texture/c0201f0001_etc_mask.tex",
+      "Face 2": "chara/human/c0201/obj/face/f0002/texture/c0201f0002_etc_mask.tex",
+      "Face 3": "chara/human/c0201/obj/face/f0003/texture/c0201f0003_etc_mask.tex",
+      "Face 4": "chara/human/c0201/obj/face/f0004/texture/c0201f0004_etc_mask.tex",
+      "Face 5": "chara/human/c0201/obj/face/f0005/texture/c0201f0005_etc_mask.tex"
+    },
+    "Highlander": {
+      "Face 1": "chara/human/c0401/obj/face/f0101/texture/c0401f0101_etc_mask.tex",
+      "Face 2": "chara/human/c0401/obj/face/f0102/texture/c0401f0102_etc_mask.tex",
+      "Face 3": "chara/human/c0401/obj/face/f0103/texture/c0401f0103_etc_mask.tex",
+      "Face 4": "chara/human/c0401/obj/face/f0104/texture/c0401f0104_etc_mask.tex"
+    },
+    "Wildwood": {
+      "Face 1": "chara/human/c0601/obj/face/f0001/texture/c0601f0001_etc_mask.tex",
+      "Face 2": "chara/human/c0601/obj/face/f0002/texture/c0601f0002_etc_mask.tex",
+      "Face 3": "chara/human/c0601/obj/face/f0003/texture/c0601f0003_etc_mask.tex",
+      "Face 4": "chara/human/c0601/obj/face/f0004/texture/c0601f0004_etc_mask.tex"
+    },
+    "Duskwight": {
+      "Face 1": "chara/human/c0601/obj/face/f0001/texture/c0601f0001_etc_mask.tex",
+      "Face 2": "chara/human/c0601/obj/face/f0002/texture/c0601f0002_etc_mask.tex",
+      "Face 3": "chara/human/c0601/obj/face/f0003/texture/c0601f0003_etc_mask.tex",
+      "Face 4": "chara/human/c0601/obj/face/f0004/texture/c0601f0004_etc_mask.tex"
+    },
+    "Plainsfolk": {
+      "Face 1": "chara/human/c1201/obj/face/f0001/texture/c1201f0001_etc_mask.tex",
+      "Face 2": "chara/human/c1201/obj/face/f0002/texture/c1201f0002_etc_mask.tex",
+      "Face 3": "chara/human/c1201/obj/face/f0003/texture/c1201f0003_etc_mask.tex",
+      "Face 4": "chara/human/c1201/obj/face/f0004/texture/c1201f0004_etc_mask.tex"
+    },
+    "Dunesfolk": {
+      "Face 1": "chara/human/c1201/obj/face/f0001/texture/c1201f0001_etc_mask.tex",
+      "Face 2": "chara/human/c1201/obj/face/f0002/texture/c1201f0002_etc_mask.tex",
+      "Face 3": "chara/human/c1201/obj/face/f0003/texture/c1201f0003_etc_mask.tex",
+      "Face 4": "chara/human/c1201/obj/face/f0004/texture/c1201f0004_etc_mask.tex"
+    },
+    "Seeker": {
+      "Face 1": "chara/human/c0801/obj/face/f0001/texture/c0801f0001_etc_mask.tex",
+      "Face 2": "chara/human/c0801/obj/face/f0002/texture/c0801f0002_etc_mask.tex",
+      "Face 3": "chara/human/c0801/obj/face/f0003/texture/c0801f0003_etc_mask.tex",
+      "Face 4": "chara/human/c0801/obj/face/f0004/texture/c0801f0004_etc_mask.tex"
+    },
+    "Keeper": {
+      "Face 1": "chara/human/c0801/obj/face/f0101/texture/c0801f0101_etc_mask.tex",
+      "Face 2": "chara/human/c0801/obj/face/f0102/texture/c0801f0102_etc_mask.tex",
+      "Face 3": "chara/human/c0801/obj/face/f0103/texture/c0801f0103_etc_mask.tex",
+      "Face 4": "chara/human/c0801/obj/face/f0104/texture/c0801f0104_etc_mask.tex"
+    },
+    "Seawolf": {
+      "Face 1": "chara/human/c1001/obj/face/f0001/texture/c1001f0001_etc_mask.tex",
+      "Face 2": "chara/human/c1001/obj/face/f0002/texture/c1001f0002_etc_mask.tex",
+      "Face 3": "chara/human/c1001/obj/face/f0003/texture/c1001f0003_etc_mask.tex",
+      "Face 4": "chara/human/c1001/obj/face/f0004/texture/c1001f0004_etc_mask.tex"
+    },
+    "Hellsguard": {
+      "Face 1": "chara/human/c1001/obj/face/f0001/texture/c1001f0001_etc_mask.tex",
+      "Face 2": "chara/human/c1001/obj/face/f0002/texture/c1001f0002_etc_mask.tex",
+      "Face 3": "chara/human/c1001/obj/face/f0003/texture/c1001f0003_etc_mask.tex",
+      "Face 4": "chara/human/c1001/obj/face/f0004/texture/c1001f0004_etc_mask.tex"
+    },
+    "Raen": {
+      "Face 1": "chara/human/c1401/obj/face/f0001/texture/c1401f0001_etc_mask.tex",
+      "Face 2": "chara/human/c1401/obj/face/f0002/texture/c1401f0002_etc_mask.tex",
+      "Face 3": "chara/human/c1401/obj/face/f0003/texture/c1401f0003_etc_mask.tex",
+      "Face 4": "chara/human/c1401/obj/face/f0004/texture/c1401f0004_etc_mask.tex"
+    },
+    "Xaela": {
+      "Face 1": "chara/human/c1401/obj/face/f0001/texture/c1401f0001_etc_mask.tex",
+      "Face 2": "chara/human/c1401/obj/face/f0002/texture/c1401f0002_etc_mask.tex",
+      "Face 3": "chara/human/c1401/obj/face/f0003/texture/c1401f0003_etc_norm.tex",
+      "Face 4": "chara/human/c1401/obj/face/f0004/texture/c1401f0004_etc_mask.tex"
+    },
+    "Hellions": {
+      "Face 1": "chara/human/c1601/obj/face/f0005/texture/c1601f0005_etc_mask.tex",
+      "Face 2": "chara/human/c1601/obj/face/f0006/texture/c1601f0006_etc_mask.tex",
+      "Face 3": "chara/human/c1601/obj/face/f0007/texture/c1601f0007_etc_mask.tex",
+      "Face 4": "chara/human/c1601/obj/face/f0008/texture/c1601f0008_etc_mask.tex"
+    },
+    "Lost": {
+      "Face 1": "chara/human/c1601/obj/face/f0005/texture/c1601f0005_etc_mask.tex",
+      "Face 2": "chara/human/c1601/obj/face/f0006/texture/c1601f0006_etc_mask.tex",
+      "Face 3": "chara/human/c1601/obj/face/f0007/texture/c1601f0007_etc_mask.tex",
+      "Face 4": "chara/human/c1601/obj/face/f0008/texture/c1601f0008_etc_mask.tex"
+    },
+    "Rava": {
+      "Face 1": "chara/human/c1801/obj/face/f0001/texture/c1801f0001_etc_mask.tex",
+      "Face 2": "chara/human/c1801/obj/face/f0002/texture/c1801f0002_etc_mask.tex",
+      "Face 3": "chara/human/c1801/obj/face/f0003/texture/c1801f0003_etc_mask.tex",
+      "Face 4": "chara/human/c1801/obj/face/f0004/texture/c1801f0004_etc_mask.tex"
+    },
+    "Veena": {
+      "Face 1": "chara/human/c1801/obj/face/f0001/texture/c1801f0001_etc_mask.tex",
+      "Face 2": "chara/human/c1801/obj/face/f0002/texture/c1801f0002_etc_mask.tex",
+      "Face 3": "chara/human/c1801/obj/face/f0003/texture/c1801f0003_etc_mask.tex",
+      "Face 4": "chara/human/c1801/obj/face/f0004/texture/c1801f0004_etc_mask.tex"
+    }
+  }
+}

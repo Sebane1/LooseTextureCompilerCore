@@ -1,0 +1,134 @@
+{
+  "Vanilla": {
+    "MaleBodyNorm": {
+      "Midlander": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_norm.tex",
+      "Highlander": "chara/human/c0301/obj/body/b0001/texture/c0301b0001_norm.tex",
+      "Wildwood": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_norm.tex",
+      "Duskwight": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_norm.tex",
+      "Seeker": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_norm.tex",
+      "Keeper": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_norm.tex",
+      "Seawolf": "chara/human/c0901/obj/body/b0001/texture/c0901b0001_norm.tex",
+      "Hellsguard": "chara/human/c0901/obj/body/b0001/texture/c0901b0001_norm.tex",
+      "Plainsfolk": "chara/human/c1101/obj/body/b0001/texture/c1101b0001_norm.tex",
+      "Dunesfolk": "chara/human/c1101/obj/body/b0001/texture/c1101b0001_norm.tex",
+      "Raen": "chara/human/c1301/obj/body/b0001/texture/c1301b0001_norm.tex",
+      "Xaela": "chara/human/c1301/obj/body/b0001/texture/c1301b0001_norm.tex",
+      "Hellions": "chara/human/c1501/obj/body/b0001/texture/c1501b0001_norm.tex",
+      "Lost": "chara/human/c1501/obj/body/b0001/texture/c1501b0001_norm.tex",
+      "Rava": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_norm.tex",
+      "Veena": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_norm.tex"
+    },
+    "MaleBodyBase": {
+      "Midlander": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_base.tex",
+      "Highlander": "chara/human/c0301/obj/body/b0001/texture/c0301b0001_base.tex",
+      "Wildwood": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_base.tex",
+      "Duskwight": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_base.tex",
+      "Seeker": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_base.tex",
+      "Keeper": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_base.tex",
+      "Seawolf": "chara/human/c0901/obj/body/b0001/texture/c0901b0001_base.tex",
+      "Hellsguard": "chara/human/c0901/obj/body/b0001/texture/c0901b0001_base.tex",
+      "Plainsfolk": "chara/human/c1101/obj/body/b0001/texture/c1101b0001_base.tex",
+      "Dunesfolk": "chara/human/c1101/obj/body/b0001/texture/c1101b0001_base.tex",
+      "Raen": "chara/human/c1301/obj/body/b0001/texture/c1301b0001_base.tex",
+      "Xaela": "chara/human/c1301/obj/body/b0101/texture/c1301b0101_base.tex",
+      "Hellions": "chara/human/c1501/obj/body/b0001/texture/c1501b0001_base.tex",
+      "Lost": "chara/human/c1501/obj/body/b0001/texture/c1501b0001_base.tex",
+      "Rava": "chara/human/c1701/obj/body/b0001/texture/c1701b0001_base.tex",
+      "Veena": "chara/human/c1701/obj/body/b0001/texture/c1701b0001_base.tex"
+    },
+    "MaleBodyMask": {
+      "Midlander": "chara/common/texture/skin_mask.tex",
+      "Highlander": "chara/common/texture/skin_mask.tex",
+      "Wildwood": "chara/common/texture/skin_mask.tex",
+      "Duskwight": "chara/common/texture/skin_mask.tex",
+      "Seeker": "chara/common/texture/skin_mask.tex",
+      "Keeper": "chara/common/texture/skin_mask.tex",
+      "Seawolf": "chara/common/texture/skin_mask.tex",
+      "Hellsguard": "chara/common/texture/skin_mask.tex",
+      "Plainsfolk": "chara/common/texture/skin_mask.tex",
+      "Dunesfolk": "chara/common/texture/skin_mask.tex",
+      "Raen": "chara/human/c1301/obj/body/b0001/texture/c1301b0001_mask.tex",
+      "Xaela": "chara/human/c1301/obj/body/b0001/texture/c1301b0001_mask.tex",
+      "Hellions": "chara/human/c1501/obj/body/b0001/texture/v01_c1501b0001_mask.tex",
+      "Lost": "chara/human/c1501/obj/body/b0001/texture/v01_c1501b0001_mask.tex",
+      "Rava": "chara/common/texture/skin_mask.tex",
+      "Veena": "chara/common/texture/skin_mask.tex"
+    }
+  },
+  "TBSE": {
+    "MaleBodyNorm": {
+      "Midlander": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_b_n.tex",
+      "Highlander": "chara/human/c0301/obj/body/b0001/texture/c0301b0001_b_n.tex",
+      "Wildwood": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_b_n.tex",
+      "Duskwight": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_b_n.tex",
+      "Seeker": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_b_n.tex",
+      "Keeper": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_b_n.tex",
+      "Raen": "chara/human/c1301/obj/body/b0001/texture/c1301b0001_b_n.tex",
+      "Xaela": "chara/human/c1301/obj/body/b0101/texture/c1301b0101_b_n.tex",
+      "Rava": "chara/human/c1701/obj/body/b0001/texture/c1701b0001_b_n.tex",
+      "Veena": "chara/human/c1701/obj/body/b0001/texture/c1701b0001_b_n.tex"
+    },
+    "MaleBodyBase": {
+      "Midlander": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_b_d.tex",
+      "Highlander": "chara/human/c0301/obj/body/b0001/texture/c0301b0001_b_d.tex",
+      "Wildwood": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_b_d.tex",
+      "Duskwight": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_b_d.tex",
+      "Seeker": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_b_d.tex",
+      "Keeper": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_b_d.tex",
+      "Raen": "chara/human/c1301/obj/body/b0001/texture/c1301b0001_b_d.tex",
+      "Xaela": "chara/human/c1301/obj/body/b0101/texture/c1301b0101_b_d.tex",
+      "Rava": "chara/human/c1701/obj/body/b0001/texture/c1701b0001_b_d.tex",
+      "Veena": "chara/human/c1701/obj/body/b0001/texture/c1701b0001_b_d.tex"
+    },
+    "MaleBodyMask": {
+      "Midlander": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_b_s.tex",
+      "Highlander": "chara/human/c0301/obj/body/b0001/texture/c0301b0001_b_s.tex",
+      "Wildwood": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_b_s.tex",
+      "Duskwight": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_b_s.tex",
+      "Seeker": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_b_s.tex",
+      "Keeper": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_b_s.tex",
+      "Raen": "chara/human/c1301/obj/body/b0001/texture/c1301b0001_b_s.tex",
+      "Xaela": "chara/human/c1301/obj/body/b0101/texture/c1301b0101_b_s.tex",
+      "Rava": "chara/human/c1701/obj/body/b0001/texture/c1701b0001_b_s.tex",
+      "Veena": "chara/human/c1701/obj/body/b0001/texture/c1701b0001_b_s.tex"
+    }
+  },
+  "VanillaTBSE": {
+    "MaleBodyNorm": {
+      "Midlander": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_n.tex",
+      "Highlander": "chara/human/c0301/obj/body/b0001/texture/c0301b0001_n.tex",
+      "Wildwood": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_n.tex",
+      "Duskwight": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_n.tex",
+      "Seeker": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_n.tex",
+      "Keeper": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_n.tex",
+      "Raen": "chara/human/c1301/obj/body/b0001/texture/c1301b0001_n.tex",
+      "Xaela": "chara/human/c1301/obj/body/b0101/texture/c1301b0101_n.tex",
+      "Rava": "chara/human/c1701/obj/body/b0001/texture/c1701b0001_n.tex",
+      "Veena": "chara/human/c1701/obj/body/b0001/texture/c1701b0001_n.tex"
+    },
+    "MaleBodyBase": {
+      "Midlander": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_d.tex",
+      "Highlander": "chara/human/c0301/obj/body/b0001/texture/c0301b0001_d.tex",
+      "Wildwood": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_d.tex",
+      "Duskwight": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_d.tex",
+      "Seeker": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_d.tex",
+      "Keeper": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_d.tex",
+      "Raen": "chara/human/c1301/obj/body/b0001/texture/c1301b0001_d.tex",
+      "Xaela": "chara/human/c1301/obj/body/b0101/texture/c1301b0101_d.tex",
+      "Rava": "chara/human/c1701/obj/body/b0001/texture/c1701b0001_d.tex",
+      "Veena": "chara/human/c1701/obj/body/b0001/texture/c1701b0001_d.tex"
+    },
+    "MaleBodyMask": {
+      "Midlander": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_s.tex",
+      "Highlander": "chara/human/c0301/obj/body/b0001/texture/c0301b0001_s.tex",
+      "Wildwood": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_s.tex",
+      "Duskwight": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_s.tex",
+      "Seeker": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_s.tex",
+      "Keeper": "chara/human/c0101/obj/body/b0001/texture/c0101b0001_s.tex",
+      "Raen": "chara/human/c1301/obj/body/b0001/texture/c1301b0001_s.tex",
+      "Xaela": "chara/human/c1301/obj/body/b0101/texture/c1301b0101_s.tex",
+      "Rava": "chara/human/c1701/obj/body/b0001/texture/c1701b0001_s.tex",
+      "Veena": "chara/human/c1701/obj/body/b0001/texture/c1701b0001_s.tex"
+    }
+  }
+}

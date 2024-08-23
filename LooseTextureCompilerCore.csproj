@@ -12,6 +12,28 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <None Remove="Racial\femalebody.json" />
+      <None Remove="Racial\femaleetc.json" />
+      <None Remove="Racial\femaleeye.json" />
+      <None Remove="Racial\femaleface.json" />
+      <None Remove="Racial\malebody.json" />
+      <None Remove="Racial\maleetc.json" />
+      <None Remove="Racial\maleeye.json" />
+      <None Remove="Racial\maleface.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="Racial\femalebody.json" />
+      <EmbeddedResource Include="Racial\femaleetc.json" />
+      <EmbeddedResource Include="Racial\femaleeye.json" />
+      <EmbeddedResource Include="Racial\femaleface.json" />
+      <EmbeddedResource Include="Racial\malebody.json" />
+      <EmbeddedResource Include="Racial\maleetc.json" />
+      <EmbeddedResource Include="Racial\maleeye.json" />
+      <EmbeddedResource Include="Racial\maleface.json" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Lumina" Version="3.16.0" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />

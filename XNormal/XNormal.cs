@@ -127,7 +127,7 @@ namespace FFXIVLooseTextureCompiler {
                 if (internalPath.Contains("bibo")) {
                     if (outputPath.Contains("gen2")) {
                         biboToGen2Batch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, biboLegacy, gen2,
-                            count++ + ".xml", isNormalMap,2048));
+                            count++ + ".xml", isNormalMap, 2048));
                     } else if (outputPath.Contains("gen3")) {
                         biboToGen3Batch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, isNormalMap ? biboLegacy : bibo,
                             isNormalMap ? gen3Legacy : gen3, count++ + ".xml", isNormalMap));
@@ -179,55 +179,67 @@ namespace FFXIVLooseTextureCompiler {
         }
         public static void BiboToGen2(string inputImage, string outputImage) {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, biboLegacy),
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen2), inputImage, outputImage.Replace("_baseTexBaked", null));
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen2), inputImage, outputImage.Replace("_baseTexBaked", null),
+            ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
         public static void BiboToGen3(string inputImage, string outputImage) {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, bibo),
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen3), inputImage, outputImage.Replace("_baseTexBaked", null));
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen3), inputImage, outputImage.Replace("_baseTexBaked", null),
+            ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
         public static void Gen3ToGen2(string inputImage, string outputImage) {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen3Legacy),
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen2), inputImage, outputImage.Replace("_baseTexBaked", null));
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen2), inputImage, outputImage.Replace("_baseTexBaked", null),
+            ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
         public static void Gen3ToBibo(string inputImage, string outputImage) {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen3),
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, bibo), inputImage, outputImage.Replace("_baseTexBaked", null));
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, bibo), inputImage, outputImage.Replace("_baseTexBaked", null),
+            ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
         public static void Gen2ToBibo(string inputImage, string outputImage) {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen2),
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, biboLegacy), inputImage, outputImage.Replace("_baseTexBaked", null));
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, biboLegacy), inputImage, outputImage.Replace("_baseTexBaked", null),
+            ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
         public static void Gen2ToGen3(string inputImage, string outputImage) {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen2),
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen3Legacy), inputImage, outputImage.Replace("_baseTexBaked", null));
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen3Legacy), inputImage, outputImage.Replace("_baseTexBaked", null),
+            ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
 
         public static void OtopopToVanillaLala(string inputImage, string outputImage) {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, otopop),
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, vanillaLala), inputImage, outputImage.Replace("_baseTexBaked", null));
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, vanillaLala), inputImage, outputImage.Replace("_baseTexBaked", null),
+            ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
 
         public static void VanillaLalaToOtopop(string inputImage, string outputImage) {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, vanillaLala),
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, otopop), inputImage, outputImage.Replace("_baseTexBaked", null));
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, otopop), inputImage, outputImage.Replace("_baseTexBaked", null),
+            ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
 
         public static void VanillaLalaToAsymLala(string inputImage, string outputImage) {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, vanillaLala),
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, asymLala), inputImage, outputImage.Replace("_baseTexBaked", null));
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, asymLala), inputImage, outputImage.Replace("_baseTexBaked", null),
+            ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
         public static void AsymLalaToVanillaLala(string inputImage, string outputImage) {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, asymLala),
-           Path.Combine(AppDomain.CurrentDomain.BaseDirectory, vanillaLala), inputImage, outputImage.Replace("_baseTexBaked", null));
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, vanillaLala), inputImage, outputImage.Replace("_baseTexBaked", null),
+            ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
 
         public static void AsymLalaToOtopop(string inputImage, string outputImage) {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, asymLala),
-          Path.Combine(AppDomain.CurrentDomain.BaseDirectory, otopop), inputImage, outputImage.Replace("_baseTexBaked", null));
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, otopop), inputImage, outputImage.Replace("_baseTexBaked", null),
+            ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
         public static void OtopopToAsymLala(string inputImage, string outputImage) {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, otopop),
-          Path.Combine(AppDomain.CurrentDomain.BaseDirectory, asymLala), inputImage, outputImage.Replace("_baseTexBaked", null));
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, asymLala), inputImage, outputImage.Replace("_baseTexBaked", null),
+            ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
 
         public static void OpenXNormal() {
@@ -235,7 +247,7 @@ namespace FFXIVLooseTextureCompiler {
             : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, xNormal);
             Process process = Process.Start(executable);
         }
-        public static void CallXNormal(string inputFBX, string outputFBX, string inputImage, string outputImage, int width = 4096, int height = 4096, bool isNormalMap = false) {
+        public static void CallXNormal(string inputFBX, string outputFBX, string inputImage, string outputImage, bool isNormalMap = false, int width = 4096, int height = 4096) {
             userDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\FFXIVLooseTextureCompiler\";
             string path = Path.Combine(userDataPath, xmlFileName);
             string executable = !string.IsNullOrEmpty(xNormalPathOverride) ? xNormalPathOverride
