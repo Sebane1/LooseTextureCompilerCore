@@ -1,4 +1,105 @@
 {
+  "FemaleEtcBase": {
+    "Midlander": {
+      "Face 1": "",
+      "Face 2": "",
+      "Face 3": "",
+      "Face 4": "",
+      "Face 5": "",
+      "Face 6": "",
+      "Face 7": ""
+    },
+    "Highlander": {
+      "Face 1": "",
+      "Face 2": "",
+      "Face 3": "",
+      "Face 4": ""
+    },
+    "Wildwood": {
+      "Face 1": "",
+      "Face 2": "",
+      "Face 3": "",
+      "Face 4": ""
+    },
+    "Duskwight": {
+      "Face 1": "",
+      "Face 2": "",
+      "Face 3": "",
+      "Face 4": ""
+    },
+    "Plainsfolk": {
+      "Face 1": "",
+      "Face 2": "",
+      "Face 3": "",
+      "Face 4": ""
+    },
+    "Dunesfolk": {
+      "Face 1": "",
+      "Face 2": "",
+      "Face 3": "",
+      "Face 4": ""
+    },
+    "Seeker": {
+      "Face 1": "",
+      "Face 2": "",
+      "Face 3": "",
+      "Face 4": ""
+    },
+    "Keeper": {
+      "Face 1": "",
+      "Face 2": "",
+      "Face 3": "",
+      "Face 4": ""
+    },
+    "Seawolf": {
+      "Face 1": "",
+      "Face 2": "",
+      "Face 3": "",
+      "Face 4": ""
+    },
+    "Hellsguard": {
+      "Face 1": "",
+      "Face 2": "",
+      "Face 3": "",
+      "Face 4": ""
+    },
+    "Raen": {
+      "Face 1": "",
+      "Face 2": "",
+      "Face 3": "",
+      "Face 4": ""
+    },
+    "Xaela": {
+      "Face 1": "",
+      "Face 2": "",
+      "Face 3": "",
+      "Face 4": ""
+    },
+    "Hellions": {
+      "Face 1": "",
+      "Face 2": "",
+      "Face 3": "",
+      "Face 4": ""
+    },
+    "Lost": {
+      "Face 1": "",
+      "Face 2": "",
+      "Face 3": "",
+      "Face 4": ""
+    },
+    "Rava": {
+      "Face 1": "",
+      "Face 2": "",
+      "Face 3": "",
+      "Face 4": ""
+    },
+    "Veena": {
+      "Face 1": "",
+      "Face 2": "",
+      "Face 3": "",
+      "Face 4": ""
+    }
+  },
   "FemaleEtcNorm": {
     "Midlander": {
       "Face 1": "chara/human/c0201/obj/face/f0001/texture/c0201f0001_etc_norm.tex",

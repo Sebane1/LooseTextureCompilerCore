@@ -724,7 +724,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
         }
 
-        public static Bitmap LayerImages(Bitmap bottomLayer, Bitmap topLayer) {
+        public static Bitmap LayerImages(Bitmap bottomLayer, Bitmap topLayer, string alphaOverride = "") {
             Bitmap rgb = ImageManipulation.ExtractRGB(bottomLayer);
             Bitmap alpha = ImageManipulation.ExtractAlpha(bottomLayer);
             Bitmap image = new Bitmap(bottomLayer.Width, bottomLayer.Height, PixelFormat.Format32bppArgb);
@@ -733,6 +733,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             image = ImageManipulation.DrawImage(rgb, bottomLayer, 0, 0, bottomLayer.Width, bottomLayer.Height);
             float widthRatio = (float)topLayer.Width / (float)topLayer.Height;
             image = ImageManipulation.DrawImage(image, topLayer, 0, 0, (int)(bottomLayer.Height * widthRatio), bottomLayer.Height);
+            if (!string.IsNullOrEmpty(alphaOverride)) {
+                alpha = ImageManipulation.InvertImage(LayerImages(alpha, Grayscale.MakeGrayscale(TexIO.ResolveBitmap(alphaOverride))));
+            }
             Bitmap final = ImageManipulation.MergeAlphaToRGB(alpha, image);
             return final;
         }

@@ -40,9 +40,9 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         }
         public static List<string> GetSkinTypeNames(TextureSet textureSet) {
             int race = RaceInfo.ReverseRaceLookup(textureSet.InternalBasePath);
-            if (((textureSet.InternalBasePath.Contains("0001_d.tex") &&
+            if (((textureSet.InternalBasePath.Contains("0001_base.tex") &&
                 !textureSet.InternalBasePath.Contains("fac"))
-                || (textureSet.InternalBasePath.Contains("0101_d.tex")
+                || (textureSet.InternalBasePath.Contains("0101_base.tex")
                 && !textureSet.InternalBasePath.Contains("fac")))
                 && !textureSet.InternalBasePath.Contains("--c1101b0001_")) {
                 return GetSkinNames(BackupTexturePaths.Gen3SkinTypes);
@@ -52,17 +52,15 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 return null;
             } else if (textureSet.InternalBasePath.Contains("bibo")) {
                 return GetSkinNames(BackupTexturePaths.BiboSkinTypes);
-            } else if (textureSet.InternalBasePath.Contains("eve")) {
-                return GetSkinNames(BackupTexturePaths.Gen3SkinTypes);
             } else if (textureSet.InternalBasePath.Contains("gen3")) {
                 return GetSkinNames(BackupTexturePaths.Gen3SkinTypes);
-            } else if (textureSet.InternalBasePath.Contains("chara/human/c1101/obj/body/b0001/texture/v01_c1101b0001_g_d")) {
+            } else if (textureSet.InternalBasePath.Contains("chara/human/c1101/obj/body/b0001/texture/v01_c1101b0001_g")) {
                 return GetSkinNames(BackupTexturePaths.OtopopSkinTypes);
             } else if (textureSet.InternalBasePath.Contains("--c1101b0001_")) {
                 return GetSkinNames(BackupTexturePaths.OtopopSkinTypes);
             } else if (textureSet.InternalBasePath.Contains("v01_c1101b0001_b")) {
                 return GetSkinNames(BackupTexturePaths.OtopopSkinTypes);
-            } else if (textureSet.InternalBasePath.Contains("_b_d")
+            } else if (textureSet.InternalBasePath.Contains("_b_base")
                 && !textureSet.InternalBasePath.Contains("fac")) {
                 return GetSkinNames(BackupTexturePaths.TbseSkinTypes);
             }

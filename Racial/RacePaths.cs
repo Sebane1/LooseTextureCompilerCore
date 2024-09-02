@@ -104,10 +104,10 @@ namespace FFXIVLooseTextureCompiler.Racial {
                 case 1:
                     switch (gender) {
                         case 0:
-                            values = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(maleEtcFaces);
+                            values = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(maleEtcFacePaths);
                             break;
                         case 1:
-                            values = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(femaleEtcFaces);
+                            values = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(femaleEtcFacePaths);
                             break;
                     }
                     break;
@@ -202,7 +202,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     string gender = (genderValue == 0 ? RaceInfo.RaceCodeBody.Masculine[race]
                         : RaceInfo.RaceCodeBody.Feminine[race]);
                     result = @"chara/human/c" + gender + @"/obj/tail/t" + xaelaCheck + @"/texture/c" + gender + "t" +
-                        xaelaCheck + "_etc" + GetTextureType(texture, baseBody) + ".tex";
+                        xaelaCheck + "_etc" + GetTextureType(texture, baseBody, false, true) + ".tex";
                     break;
                 case 5:
                     // Otopop
