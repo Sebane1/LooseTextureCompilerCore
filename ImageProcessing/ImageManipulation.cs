@@ -62,6 +62,39 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 }
             }
         }
+        public static Color CalculateMajorityColour(Bitmap file) {
+            Dictionary<int, int> colours = new Dictionary<int, int>();
+            LockBitmap source = new LockBitmap(file);
+            source.LockBits();
+            for (int y = 0; y < file.Height; y++) {
+                for (int x = 0; x < file.Width; x++) {
+                    Color sourcePixel = source.GetPixel(x, y);
+                    if (sourcePixel.A > 5) {
+                        int value = sourcePixel.ToArgb();
+                        if (!colours.ContainsKey(value)) {
+                            colours[value] = 1;
+                        } else {
+                            colours[value]++;
+                        }
+                    }
+                }
+            };
+            source.UnlockBits();
+            int index = 0;
+            int lastCount = 0;
+            for (int i = 0; i < colours.Values.Count; i++) {
+                var element = colours.Values.ElementAt(i);
+                if (element > lastCount) {
+                    lastCount = element;
+                    index = i;
+                }
+            }
+            try {
+                return Color.FromArgb(colours.Keys.ElementAt(index));
+            } catch {
+                return Color.Black;
+            }
+        }
         public static Bitmap BoostAboveThreshold(Bitmap file, int threshhold) {
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);

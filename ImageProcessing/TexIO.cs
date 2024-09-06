@@ -134,22 +134,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 Graphics.FromImage(item).Clear(Color.Transparent);
                 return item;
             }
-
-            while (IsFileLocked(inputFile)) {
-                Thread.Sleep(100);
-            }
-
-            try {
-                Bitmap bitmap =
-                inputFile.EndsWith(".tex") ? TexToBitmap(inputFile, noAlpha) :
-                inputFile.EndsWith(".dds") ? DDSToBitmap(inputFile, noAlpha) :
-                inputFile.EndsWith(".ltct") ? OpenImageFromXOR(inputFile, noAlpha) :
-                SafeLoad(inputFile, noAlpha);
-                return bitmap;
-
-            } catch {
+            bool succeeded = false;
+            while (!succeeded) {
                 while (IsFileLocked(inputFile)) {
-                    Thread.Sleep(400);
+                    Thread.Sleep(1000);
                 }
                 try {
                     Bitmap bitmap =
@@ -157,13 +145,28 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     inputFile.EndsWith(".dds") ? DDSToBitmap(inputFile, noAlpha) :
                     inputFile.EndsWith(".ltct") ? OpenImageFromXOR(inputFile, noAlpha) :
                     SafeLoad(inputFile, noAlpha);
+                    succeeded = true;
                     return bitmap;
-                } catch (Exception e) {
-                    return new Bitmap(4096, 4096);
+                } catch {
+                    try {
+                        Bitmap bitmap =
+                        inputFile.EndsWith(".tex") ? TexToBitmap(inputFile, noAlpha) :
+                        inputFile.EndsWith(".dds") ? DDSToBitmap(inputFile, noAlpha) :
+                        inputFile.EndsWith(".ltct") ? OpenImageFromXOR(inputFile, noAlpha) :
+                        SafeLoad(inputFile, noAlpha);
+                        succeeded = true;
+                        return bitmap;
+                    } catch (Exception e) {
+                        Thread.Sleep(1000);
+                    }
                 }
             }
+            return new Bitmap(4096, 4096);
         }
         public static Bitmap SafeLoad(string path, bool noAlpha = false) {
+            while (IsFileLocked(path)) {
+                Thread.Sleep(1000);
+            }
             MemoryStream memoryStream = new MemoryStream();
             using (FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read)) {
                 fileStream.CopyTo(memoryStream);

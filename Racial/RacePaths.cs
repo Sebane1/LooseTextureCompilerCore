@@ -138,6 +138,16 @@ namespace FFXIVLooseTextureCompiler.Racial {
             }
             return path;
         }
+
+        public static string GetBodyMaterialPath(int genderValue, int baseBody, int race, int tail) {
+            string result = "";
+            string code = RaceInfo.Races[race].Contains("Xaela") ? "0101" : "0001";
+            string genderCode = (genderValue == 0 ? RaceInfo.RaceCodeBody.Masculine[race]
+                : RaceInfo.RaceCodeBody.Feminine[race]);
+            result = @"chara/human/c" + genderCode + @"/obj/body/b" + code
+                + @"/material/v0001/mt_c" + genderCode + "b" + code + GetBodyMaterialType(baseBody) + ".mtrl";
+            return result;
+        }
         public static string GetBodyTexturePath(int texture, int genderValue, int baseBody, int race, int tail, bool uniqueAuRa = false) {
             string result = "";
             string unique = RaceInfo.Races[race].Contains("Xaela") ? "0101" : "0001";
@@ -257,6 +267,19 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     return "_catchlight";
             }
             return null;
+        }
+        public static string GetBodyMaterialType(int material) {
+            switch (material) {
+                case 0:
+                    return "_a";
+                case 1:
+                    return "_bibo";
+                case 2:
+                case 3:
+                case 5:
+                    return "_b";
+            }
+            return "";
         }
         public static string GetFacePart(int material, bool asym) {
             switch (material) {

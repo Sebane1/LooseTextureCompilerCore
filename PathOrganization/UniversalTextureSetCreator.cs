@@ -135,6 +135,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                     destinationTextureSet.InternalBasePath = RacePaths.GetBodyTexturePath(0, gender, body, race, 0, uniqueAuRa);
                     destinationTextureSet.InternalNormalPath = RacePaths.GetBodyTexturePath(1, gender, body, race, 0, uniqueAuRa);
                     destinationTextureSet.InternalMaskPath = RacePaths.GetBodyTexturePath(2, gender, body, race, 0, uniqueAuRa);
+                    destinationTextureSet.InternalMaterialPath = RacePaths.GetBodyMaterialPath(gender, body, race, 0);
                     break;
                 case 1:
                     if (asymFace) {

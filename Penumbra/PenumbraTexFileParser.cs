@@ -78,7 +78,7 @@ public static class PenumbraTexFileParser {
         w.Write(header.Width);
         w.Write(header.Height);
         w.Write(header.Depth);
-        w.Write(header.MipLevels);
+        w.Write(header.MipCount);
         unsafe {
             w.Write(header.LodOffset[0]);
             w.Write(header.LodOffset[1]);
@@ -95,7 +95,7 @@ public static class PenumbraTexFileParser {
             Height = (ushort)meta.Height,
             Width = (ushort)meta.Width,
             Depth = (ushort)Math.Max(meta.Depth, 1),
-            MipLevels = (ushort)Math.Min(meta.MipLevels, 12),
+            MipCount = (ushort)Math.Min(meta.MipLevels, 12),
             Format = meta.Format.ToTexFormat(),
             Type = meta.Dimension switch {
                 _ when meta.IsCubeMap => TexFile.Attribute.TextureTypeCube,
@@ -134,7 +134,7 @@ public static class PenumbraTexFileParser {
             Height = header.Height,
             Width = header.Width,
             Depth = Math.Max(header.Depth, (ushort)1),
-            MipLevels = header.MipLevels,
+            MipLevels = header.MipCount,
             ArraySize = 1,
             Format = header.Format.ToDXGI(),
             Dimension = header.Type.ToDimension(),

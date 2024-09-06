@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+        <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -34,7 +34,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Lumina" Version="3.16.0" />
+        <PackageReference Include="Lumina" Version="4.0.0" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
         <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.4" />
@@ -42,9 +42,30 @@
     </ItemGroup>
 
     <ItemGroup>
+        <Reference Include="OtterGui">
+          <HintPath>OtterGui.dll</HintPath>
+        </Reference>
         <Reference Include="OtterTex">
             <HintPath>Penumbra\lib\OtterTex.dll</HintPath>
         </Reference>
+        <Reference Include="Penumbra.GameData">
+          <HintPath>Penumbra.GameData.dll</HintPath>
+        </Reference>
+        <Reference Include="Penumbra.String">
+          <HintPath>Penumbra.String.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="OtterGui.dll">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Penumbra.GameData.dll">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="Penumbra.String.dll">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>
