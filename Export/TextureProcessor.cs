@@ -347,7 +347,7 @@ namespace FFXIVLooseTextureCompiler {
                                 }
                                 if ((!string.IsNullOrEmpty(textureSet.Material) || !string.IsNullOrEmpty(textureSet.Glow))
                                     && !string.IsNullOrEmpty(textureSet.InternalMaterialPath)) {
-                                    if (MaterialLogic(textureSet, materialDiskPath, skipTexExport)) {
+                                    if (MaterialLogic(textureSet, materialDiskPath, false)) {
                                         option.Files[textureSet.InternalMaterialPath] =
                                            materialDiskPath.Replace(modPath + "\\", null);
                                     } else {
