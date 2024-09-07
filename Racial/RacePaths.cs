@@ -56,7 +56,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                         (isMaterial ? "material" : "texture") + (isMaterial ? "/mt_c" : "/c")
                         + subRace + "f" + faceIdCheck + faceOffset
                         + GetFacePart(facePart, asym) +
-                        (isMaterial ? "" : GetTextureType(material, 0, true, true)) + (isMaterial ? ".mtrl" : ".tex");
+                        (isMaterial ? "" : GetTextureType(material, 0, true, true)) + (isMaterial ? "_a.mtrl" : ".tex");
                 }
             }
             return "";
@@ -148,6 +148,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                 + @"/material/v0001/mt_c" + genderCode + "b" + code + GetBodyMaterialType(baseBody) + ".mtrl";
             return result;
         }
+
         public static string GetBodyTexturePath(int texture, int genderValue, int baseBody, int race, int tail, bool uniqueAuRa = false) {
             string result = "";
             string unique = RaceInfo.Races[race].Contains("Xaela") ? "0101" : "0001";

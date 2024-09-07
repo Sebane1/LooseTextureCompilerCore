@@ -42,9 +42,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Reference Include="OtterGui">
-          <HintPath>OtterGui.dll</HintPath>
-        </Reference>
         <Reference Include="OtterTex">
             <HintPath>Penumbra\lib\OtterTex.dll</HintPath>
         </Reference>
@@ -61,10 +58,10 @@
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
       <None Update="Penumbra.GameData.dll">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       </None>
       <None Update="Penumbra.String.dll">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       </None>
     </ItemGroup>
 

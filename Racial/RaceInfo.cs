@@ -54,13 +54,38 @@ namespace FFXIVLooseTextureCompiler.Racial {
             }
             return "";
         }
+        public static int ReverseFaceLookup(string path) {
+            if (path.Contains("0001") || path.Contains("0101")) {
+                return 1;
+            }
+            if (path.Contains("0002") || path.Contains("0102")) {
+                return 2;
+            }
+            if (path.Contains("0003") || path.Contains("0103")) {
+                return 3;
+            }
+            if (path.Contains("0004") || path.Contains("0104")) {
+                return 4;
+            }
+            if (path.Contains("0005") || path.Contains("0105")) {
+                return 5;
+            }
+            if (path.Contains("0006") || path.Contains("0106")) {
+                return 5;
+            }
+            if (path.Contains("0007") || path.Contains("0107")) {
+                return 5;
+            }
+            return 0;
+        }
+
         public static int ReverseRaceLookup(string path) {
             if (!string.IsNullOrEmpty(path)) {
                 for (int i = 0; i < 10; i++) {
                     string bibo = bodyIdentifiers[1].RaceIdentifiers[i];
-                    string tnf = bodyIdentifiers[2].RaceIdentifiers[i];
+                    string gen3 = bodyIdentifiers[2].RaceIdentifiers[i];
                     string tbse = "c" + bodyIdentifiers[3].RaceIdentifiers[i];
-                    if (path.Contains(bibo) || path.Contains(tnf) || path.Contains(tbse)) {
+                    if (path.Contains(bibo) || path.Contains(gen3) || path.Contains(tbse)) {
                         return i;
                     }
                 }
