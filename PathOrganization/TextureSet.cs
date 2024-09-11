@@ -97,9 +97,6 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 return _glow;
             }
             set {
-                if (!string.IsNullOrEmpty(value)) {
-                    IgnoreMaskGeneration = false;
-                }
                 _glow = value;
             }
         }

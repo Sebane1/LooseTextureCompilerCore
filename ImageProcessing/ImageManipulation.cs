@@ -661,7 +661,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             clothingMultiConversion.Save(ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(filename, "_mask"), ".png"), ImageFormat.Png);
         }
         public static Bitmap MergeAlphaToRGB(Bitmap alpha, Bitmap rgb) {
-            Bitmap image = new Bitmap(rgb.Width, rgb.Height, PixelFormat.Format32bppArgb);
+            Bitmap image = TexIO.NewBitmap(rgb.Width, rgb.Height);
             Graphics.FromImage(image).Clear(Color.Transparent);
             LockBitmap destination = new LockBitmap(image);
             LockBitmap alphaBits = new LockBitmap(alpha);
@@ -767,7 +767,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             float widthRatio = (float)topLayer.Width / (float)topLayer.Height;
             image = ImageManipulation.DrawImage(image, topLayer, 0, 0, (int)(bottomLayer.Height * widthRatio), bottomLayer.Height);
             if (!string.IsNullOrEmpty(alphaOverride)) {
-                alpha = ImageManipulation.InvertImage(LayerImages(invertAlpha ? ImageManipulation.InvertImage(alpha) : alpha, Grayscale.MakeGrayscale(TexIO.ResolveBitmap(alphaOverride))));
+                var value = Grayscale.MakeGrayscale(TexIO.ResolveBitmap(alphaOverride));
+                alpha = LayerImages(invertAlpha ? ImageManipulation.InvertImage(alpha) : alpha, ImageManipulation.InvertImage(value));
             }
             Bitmap final = ImageManipulation.MergeAlphaToRGB(alpha, image);
             return final;

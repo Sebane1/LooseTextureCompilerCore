@@ -506,7 +506,7 @@ namespace FFXIVLooseTextureCompiler {
         private bool NormalLogic(TextureSet textureSet, string normalDiskPath, bool skipTexExport) {
             bool outputGenerated = false;
             if (!string.IsNullOrEmpty(textureSet.Normal) && !string.IsNullOrEmpty(textureSet.InternalNormalPath)) {
-                if (_generateNormals && !textureSet.IgnoreNormalGeneration) {
+                if (_generateNormals && !textureSet.IgnoreNormalGeneration && !string.IsNullOrEmpty(textureSet.Base)) {
                     if (!skipTexExport) {
                         Task.Run(() => ExportTex(textureSet.Normal, normalDiskPath, ExportType.MergeNormal,
                         textureSet.Base, textureSet.NormalMask,
@@ -703,15 +703,13 @@ namespace FFXIVLooseTextureCompiler {
                     while (File.Exists(outputFile) && TexIO.IsFileLocked(outputFile)) {
                         Thread.Sleep(500);
                     }
-                    using (FileStream fileStream = new FileStream(outputFile, FileMode.Create, FileAccess.Write)) {
-                        new MemoryStream(data).CopyTo(fileStream);
-                    }
-                    if (OnProgressChange != null) {
-                        OnProgressChange.Invoke(this, EventArgs.Empty);
-                    }
+                    File.WriteAllBytes(outputFile, data);
                 }
             } catch (Exception e) {
                 OnError?.Invoke(this, e.Message);
+            }
+            if (OnProgressChange != null) {
+                OnProgressChange.Invoke(this, EventArgs.Empty);
             }
             return true;
         }
@@ -766,7 +764,14 @@ namespace FFXIVLooseTextureCompiler {
                                         output = ImageManipulation.ResizeAndMerge(output, TexIO.ResolveBitmap(normalCorrection));
                                     }
                                     if (!string.IsNullOrEmpty(alphaOverride)) {
-                                        output = ImageManipulation.LayerImages(output, output, alphaOverride, invertAlpha);
+                                        var bitmap = Grayscale.MakeGrayscale(TexIO.ResolveBitmap(alphaOverride));
+                                        var rgb = ImageManipulation.ExtractRGB(output);
+                                        if (output.Size.Height < bitmap.Size.Height) {
+                                            rgb = ImageManipulation.Resize(rgb, bitmap.Size.Width, bitmap.Size.Height);
+                                        } else {
+                                            bitmap = ImageManipulation.Resize(bitmap, output.Size.Width, output.Size.Height);
+                                        }
+                                        output = ImageManipulation.MergeAlphaToRGB(bitmap, rgb);
                                     }
                                     output.Save(stream, ImageFormat.Png);
                                     _normalCache.Add(baseTextureNormal, output);
