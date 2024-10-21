@@ -248,6 +248,18 @@ namespace FFXIVLooseTextureCompiler {
             Process process = Process.Start(executable);
         }
         public static void CallXNormal(string inputFBX, string outputFBX, string inputImage, string outputImage, bool isNormalMap = false, int width = 4096, int height = 4096) {
+            var paths = ImageManipulation.SplitRGBAndAlpha(inputImage);
+            string path1 = ImageManipulation.AddSuffix(outputImage, "_rgb");
+            string path2 = ImageManipulation.AddSuffix(outputImage, "_alpha");
+            CallXNormalFinal(inputFBX, outputFBX, paths[0], path1, isNormalMap, width, height);
+            CallXNormalFinal(inputFBX, outputFBX, paths[1], path2, isNormalMap, width, height);
+            TexIO.SaveBitmap(
+                 ImageManipulation.MergeAlphaToRGB(
+                 TexIO.ResolveBitmap(path2),
+                 TexIO.ResolveBitmap(path1)), 
+                 ImageManipulation.AddSuffix(outputImage, "_final"));
+        }
+        public static void CallXNormalFinal(string inputFBX, string outputFBX, string inputImage, string outputImage, bool isNormalMap = false, int width = 4096, int height = 4096) {
             userDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\FFXIVLooseTextureCompiler\";
             string path = Path.Combine(userDataPath, xmlFileName);
             string executable = !string.IsNullOrEmpty(xNormalPathOverride) ? xNormalPathOverride
@@ -257,9 +269,11 @@ namespace FFXIVLooseTextureCompiler {
                 Directory.CreateDirectory(userDataPath);
             }
             using (StreamWriter writer = new StreamWriter(path)) {
-                string inputString = CleanXmlEscapeSequences(Path.Combine(!string.IsNullOrEmpty(basePathOverride) ? basePathOverride : AppDomain.CurrentDomain.BaseDirectory, inputFBX));
+                string inputString = CleanXmlEscapeSequences(Path.Combine(!string.IsNullOrEmpty(basePathOverride) ?
+                    basePathOverride : AppDomain.CurrentDomain.BaseDirectory, inputFBX));
                 string inputImageString = CleanXmlEscapeSequences(inputImage);
-                string outputString = CleanXmlEscapeSequences(!string.IsNullOrEmpty(basePathOverride) ? basePathOverride : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, outputFBX));
+                string outputString = CleanXmlEscapeSequences(!string.IsNullOrEmpty(basePathOverride) ?
+                    basePathOverride : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, outputFBX));
                 string outputImageString = CleanXmlEscapeSequences(outputImage);
                 writer.Write(string.Format(xmlFile,
                     inputString,

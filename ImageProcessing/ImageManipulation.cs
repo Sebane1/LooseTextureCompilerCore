@@ -1,10 +1,9 @@
 ﻿using KVImage;
 using Lumina.Data.Files;
+using Penumbra.GameData.Files.Utility;
 using SixLabors.ImageSharp.Processing;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.IO;
-using static Lumina.Data.Parsing.Layer.LayerCommon;
 using Color = System.Drawing.Color;
 using Point = System.Drawing.Point;
 using Rectangle = System.Drawing.Rectangle;
@@ -25,7 +24,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Color uvMapTest = source.GetPixel(0, 0);
             Color uvMapTest2 = source.GetPixel(image.Width - 1, image.Height - 1);
             source.UnlockBits();
-            if (uvMapTest.B == 255 && uvMapTest2.B == 255) {
+            if (uvMapTest.B == 255 && uvMapTest2.B == 255 && uvMapTest.R != 255 && uvMapTest2.R != 255 && uvMapTest.G != 255 && uvMapTest2.G != 255) {
                 return UVMapType.Normal;
             } else if (uvMapTest.B == 152 && uvMapTest2.B == 152) {
                 return UVMapType.Multi;
@@ -964,6 +963,26 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public static void ConvertTextureToTex(string fileName) {
             TexIO.SaveBitmap(TexIO.ResolveBitmap(fileName), ImageManipulation.ReplaceExtension(fileName, ".tex"));
+        }
+
+        public static string[] SplitRGBAndAlpha(string item) {
+            Bitmap image = TexIO.ResolveBitmap(item);
+            string path1 = ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(item, "_RGB."), ".png");
+            string path2 = ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(item, "_Alpha."), ".png");
+            TexIO.SaveBitmap(ImageManipulation.ExtractRGB(image), path1);
+            TexIO.SaveBitmap(ImageManipulation.ExtractAlpha(image), path2);
+            return new string[] {
+                path1,
+                path2
+            };
+        }
+
+        public static void SplitImageToRGBA(string fileName) {
+            Bitmap image = TexIO.ResolveBitmap(fileName);
+            TexIO.SaveBitmap(ImageManipulation.ExtractRed(image), ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(fileName, "_R."), ".png"));
+            TexIO.SaveBitmap(ImageManipulation.ExtractGreen(image), ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(fileName, "_G."), ".png"));
+            TexIO.SaveBitmap(ImageManipulation.ExtractBlue(image), ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(fileName, "_B."), ".png"));
+            TexIO.SaveBitmap(ImageManipulation.ExtractAlpha(image), ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(fileName, "_A."), ".png"));
         }
     }
 }
