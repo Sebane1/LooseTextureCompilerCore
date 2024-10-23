@@ -256,8 +256,8 @@ namespace FFXIVLooseTextureCompiler {
             TexIO.SaveBitmap(
                  ImageManipulation.MergeAlphaToRGB(
                  TexIO.ResolveBitmap(path2),
-                 TexIO.ResolveBitmap(path1)), 
-                 ImageManipulation.AddSuffix(outputImage, "_final"));
+                 TexIO.ResolveBitmap(path1)),
+                 outputImage);
         }
         public static void CallXNormalFinal(string inputFBX, string outputFBX, string inputImage, string outputImage, bool isNormalMap = false, int width = 4096, int height = 4096) {
             userDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\FFXIVLooseTextureCompiler\";
