@@ -290,7 +290,7 @@ namespace FFXIVLooseTextureCompiler.Racial {
                 case 3:
                     return "_etc";
                 case 2:
-                    return "_iri_a";
+                    return "_iri";
                 case 6:
                     return "_fac_b";
                 case 7:

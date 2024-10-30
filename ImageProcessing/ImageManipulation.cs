@@ -499,7 +499,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
                 : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\multi.png");
             Bitmap canvas = new Bitmap(enforcedSize, enforcedSize, PixelFormat.Format32bppArgb);
-            Bitmap newEye = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 1.0f, 1.1f, 1);
+            Bitmap newEye = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 0.8f, 1.5f, 1);
 
             Graphics graphics = Graphics.FromImage(canvas);
             graphics.Clear(Color.Black);
@@ -543,7 +543,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                (enforcedSize / 2) - (size / 2), (enforcedSize / 2) - (size / 2),
                 size, size);
             graphics.DrawImage(new Bitmap(template), 0, 0, enforcedSize, enforcedSize);
-
+            newEye.Dispose();
+            white.Dispose();
             return canvas;
         }
 
@@ -881,9 +882,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 Bitmap eyeBase = BitmapToEyeBaseDawntrail(image, scaleTexture, baseDirectory);
                 Bitmap eyeMulti = BitmapToEyeMultiDawntrail(image, scaleTexture, baseDirectory);
                 Bitmap normal = ImageToEyeNormalDawntrail(image, scaleTexture, baseDirectory);
+                image.Dispose();
                 TexIO.SaveBitmap(eyeBase, strings[0]);
                 TexIO.SaveBitmap(normal, strings[1]);
                 TexIO.SaveBitmap(eyeMulti, strings[2]);
+                eyeBase.Dispose();
+                normal.Dispose();
+                eyeMulti.Dispose();
             }
             return strings;
         }
@@ -893,10 +898,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap eyeBase = BitmapToEyeBaseDawntrail(image, scaleTexture, baseDirectory);
             Bitmap eyeMulti = BitmapToEyeMultiDawntrail(image, scaleTexture, baseDirectory);
             Bitmap normal = ImageToEyeNormalDawntrail(image, scaleTexture, baseDirectory);
-
+            image.Dispose();
             TexIO.SaveBitmap(eyeBase, ReplaceExtension(AddSuffix(filename, "_eye_base"), ".png"));
             TexIO.SaveBitmap(normal, ReplaceExtension(AddSuffix(filename, "_eye_norm"), ".png"));
             TexIO.SaveBitmap(eyeMulti, ReplaceExtension(AddSuffix(filename, "_eye_mask"), ".png"));
+            eyeBase.Dispose();
+            normal.Dispose();
+            eyeMulti.Dispose();
         }
 
         private static Bitmap ImageToEyeNormalDawntrail(Bitmap image, bool scaleTexture, string baseDirectory) {

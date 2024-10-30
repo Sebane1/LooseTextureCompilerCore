@@ -183,14 +183,14 @@ namespace LooseTextureCompilerCore.Racial {
                 textureSet.InternalNormalPath = paths[1];
                 textureSet.InternalMaskPath = paths[2];
             }
-            switch (subRace) {
-                case 1:
-                    if (face == 3) {
-                        textureSet.InternalBasePath = "chara/common/texture/eye/eye13_norm.tex";
-                        textureSet.InternalNormalPath = "chara/common/texture/eye/eye01_norm.tex";
-                        textureSet.InternalMaskPath = "chara/common/texture/eye/eye01_norm.tex";
-                    }
-                    break;
+            if(subRace == 0 && face == 4 && gender) {
+                textureSet.InternalBasePath = paths[0] = "chara/common/texture/eye/eye12_base.tex";
+                textureSet.InternalNormalPath = paths[1] = "chara/common/texture/eye/eye01_norm.tex";
+                textureSet.InternalMaskPath = paths[2] = "chara/common/texture/eye/eye01_mask.tex";
+            } else if (subRace == 15 && face == 4 && !gender) {
+                textureSet.InternalBasePath = paths[0] = "chara/common/texture/eye/eye01_base.tex";
+                textureSet.InternalNormalPath = paths[1] = "chara/common/texture/eye/eye01_norm.tex";
+                textureSet.InternalMaskPath = paths[2] = "chara/common/texture/eye/eye01_mask.tex";
             }
         }
     }

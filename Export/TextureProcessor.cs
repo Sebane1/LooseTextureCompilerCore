@@ -20,6 +20,7 @@ using Size = System.Drawing.Size;
 namespace FFXIVLooseTextureCompiler {
     public class TextureProcessor {
         private Dictionary<string, TextureSet> _redirectionCache;
+        private Dictionary<string, TextureSet> _mtrlCache;
         private Dictionary<string, Bitmap> _normalCache;
         private Dictionary<string, Bitmap> _maskCache;
         private Dictionary<string, Bitmap> _glowCache;
@@ -242,14 +243,15 @@ namespace FFXIVLooseTextureCompiler {
                             normalDiskPath = GetDiskPath(_redirectionCache[textureSetHash].InternalNormalPath, modPath, textureSetHash);
                             maskDiskPath = GetDiskPath(_redirectionCache[textureSetHash].InternalMaskPath, modPath, textureSetHash);
                             materialDiskPath = GetDiskPath(_redirectionCache[textureSetHash].InternalMaterialPath,
-                                modPath, textureSetHash + textureSet.InternalBasePath.GetHashCode());
+                                modPath,
+                             (_redirectionCache[textureSetHash].InternalMaterialPath + textureSetHash + textureSet.InternalBasePath.GetHashCode().ToString() + textureSet.InternalNormalPath.GetHashCode().ToString() + textureSet.InternalMaskPath.GetHashCode().ToString()).GetHashCode().ToString());
                             skipTexExport = true;
                         } else {
                             baseTextureDiskPath = GetDiskPath(textureSet.InternalBasePath, modPath, textureSetHash);
                             normalDiskPath = GetDiskPath(textureSet.InternalNormalPath, modPath, textureSetHash);
                             maskDiskPath = GetDiskPath(textureSet.InternalMaskPath, modPath, textureSetHash);
                             materialDiskPath = GetDiskPath(textureSet.InternalMaterialPath,
-                                modPath, textureSetHash + textureSet.InternalBasePath.GetHashCode());
+                                modPath, (textureSet.InternalMaterialPath + textureSetHash + textureSet.InternalBasePath.GetHashCode().ToString() + textureSet.InternalNormalPath.GetHashCode().ToString() + textureSet.InternalMaskPath.GetHashCode().ToString()).GetHashCode().ToString());
                             _redirectionCache.Add(textureSetHash, textureSet);
                         }
                         switch (choiceOption) {
@@ -389,11 +391,12 @@ namespace FFXIVLooseTextureCompiler {
                     backupHash = (textureSet.BackupTexturePaths.Base + textureSet.BackupTexturePaths.BaseSecondary).GetHashCode().ToString();
                 }
             }
-            return textureSet.Base.GetHashCode().ToString() +
+            return (textureSet.Base.GetHashCode().ToString() +
+                textureSet.GroupName.GetHashCode().ToString() +
                 textureSet.Normal.GetHashCode().ToString() +
                 textureSet.Mask.GetHashCode().ToString() +
                 textureSet.Glow.GetHashCode().ToString() +
-                textureSet.Material.GetHashCode().ToString() + backupHash;
+                textureSet.Material.GetHashCode().ToString() + backupHash).GetHashCode().ToString();
         }
 
         public string RedirectToDisk(string path) {
