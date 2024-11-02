@@ -671,10 +671,24 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             destination.LockBits();
             for (int y = 0; y < image.Height; y++) {
                 for (int x = 0; x < image.Width; x++) {
-                    Color alphaPixel = alphaBits.GetPixel(x, y);
-                    Color rgbPixel = rgbBits.GetPixel(x, y);
-                    Color col = Color.FromArgb(alphaPixel.R, rgbPixel.R, rgbPixel.G, rgbPixel.B);
-                    destination.SetPixel(x, y, col);
+                    try {
+                        Color alphaPixel = new Color();
+                        try {
+                           alphaPixel = alphaBits.GetPixel(x, y);
+                        } catch {
+
+                        }
+                        Color rgbPixel = new Color();
+                        try {
+                            rgbPixel = rgbBits.GetPixel(x, y);
+                        } catch {
+
+                        }
+                        Color col = Color.FromArgb(alphaPixel.R, rgbPixel.R, rgbPixel.G, rgbPixel.B);
+                        destination.SetPixel(x, y, col);
+                    } catch {
+                        break;
+                    }
                 }
             };
             alphaBits.UnlockBits();

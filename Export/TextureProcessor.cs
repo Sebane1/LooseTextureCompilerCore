@@ -513,13 +513,13 @@ namespace FFXIVLooseTextureCompiler {
                     if (!skipTexExport) {
                         Task.Run(() => ExportTex(textureSet.Normal, normalDiskPath, ExportType.MergeNormal,
                         textureSet.Base, textureSet.NormalMask,
-                        textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Normal : "", textureSet.NormalCorrection, textureSet.Glow));
+                        textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Normal : "", textureSet.NormalCorrection, !textureSet.InternalBasePath.Contains("eye") ? textureSet.Glow : ""));
                     }
                     outputGenerated = true;
                 } else {
                     if (!skipTexExport) {
                         Task.Run(() => ExportTex(textureSet.Normal, normalDiskPath, ExportType.None, "", "",
-                    textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Normal : "", "", textureSet.Glow));
+                    textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Normal : "", "", !textureSet.InternalBasePath.Contains("eye") ? textureSet.Glow : ""));
                     }
                     outputGenerated = true;
                 }
@@ -531,7 +531,7 @@ namespace FFXIVLooseTextureCompiler {
                             Task.Run(() => ExportTex((Path.Combine(_basePath, textureSet.BackupTexturePaths.Normal)),
                             normalDiskPath, ExportType.MergeNormal, textureSet.Base, textureSet.NormalMask,
                             (textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Normal : ""),
-                            textureSet.NormalCorrection, textureSet.Glow, textureSet.InvertNormalGeneration));
+                            textureSet.NormalCorrection, !textureSet.InternalBasePath.Contains("eye") ? textureSet.Glow : "", textureSet.InvertNormalGeneration));
                         }
                         outputGenerated = true;
                     } else {
@@ -703,8 +703,11 @@ namespace FFXIVLooseTextureCompiler {
                 }
                 if (data.Length > 0) {
                     Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
-                    while (File.Exists(outputFile) && TexIO.IsFileLocked(outputFile)) {
+                    while (TexIO.IsFileLocked(outputFile)) {
                         Thread.Sleep(500);
+                    }
+                    if (File.Exists(outputFile)) {
+                        File.Delete(outputFile);
                     }
                     File.WriteAllBytes(outputFile, data);
                 }
