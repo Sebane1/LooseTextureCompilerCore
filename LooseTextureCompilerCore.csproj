@@ -63,11 +63,11 @@
       <None Update="Penumbra.String.dll">
         <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       </None>
-      <None Update="Penumbra\lib\DirectXTexC.dll">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <None Update="DirectXTexC.dll">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
-      <None Update="Penumbra\lib\OtterTex.dll">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <None Update="OtterTex.dll">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>
 
