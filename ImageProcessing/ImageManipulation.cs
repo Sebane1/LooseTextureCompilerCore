@@ -1,15 +1,34 @@
-﻿using KVImage;
+using KVImage;
 using Lumina.Data.Files;
 using Penumbra.GameData.Files.Utility;
 using SixLabors.ImageSharp.Processing;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Numerics;
 using Color = System.Drawing.Color;
 using Point = System.Drawing.Point;
 using Rectangle = System.Drawing.Rectangle;
 
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
     public class ImageManipulation {
+        public static Bitmap[] DivideImageVertically(Bitmap startingImage, int divisions)
+        {
+            List<Bitmap> bitmaps = new List<Bitmap>();
+            int dividedHeight = startingImage.Height / divisions;
+            for (int i = 0; i < divisions; i++)
+            {
+              var newImage =  TexIO.BitmapToImageSharp(startingImage).Clone(x => x.Crop(
+                new SixLabors.ImageSharp.Rectangle(new SixLabors.ImageSharp.Point(0,i * dividedHeight), new SixLabors.ImageSharp.Size(startingImage.Width, dividedHeight))));
+               bitmaps.Add(TexIO.ImageSharpToBitmap(newImage));
+            }
+            return bitmaps.ToArray();
+        }
+        public static Bitmap Crop(Bitmap startingImage, Vector2 vector2)
+        {
+            var newImage = TexIO.BitmapToImageSharp(startingImage).Clone(x => x.Crop(
+            new SixLabors.ImageSharp.Rectangle(new SixLabors.ImageSharp.Point(0, 0), new SixLabors.ImageSharp.Size((int)vector2.X, (int)vector2.Y))));
+            return TexIO.ImageSharpToBitmap(newImage);
+        }
         public enum UVMapType {
             Diffuse,
             Normal,
