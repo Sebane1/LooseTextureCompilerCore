@@ -23,10 +23,22 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
             return bitmaps.ToArray();
         }
-        public static Bitmap Crop(Bitmap startingImage, Vector2 vector2)
+        public static Bitmap[] DivideImageHorizontally(Bitmap startingImage, int divisions)
+        {
+            List<Bitmap> bitmaps = new List<Bitmap>();
+            int dividedWidth = startingImage.Width / divisions;
+            for (int i = 0; i < divisions; i++)
+            {
+                var newImage = TexIO.BitmapToImageSharp(startingImage).Clone(x => x.Crop(
+                  new SixLabors.ImageSharp.Rectangle(new SixLabors.ImageSharp.Point(i * dividedWidth, 0), new SixLabors.ImageSharp.Size(dividedWidth, startingImage.Height))));
+                bitmaps.Add(TexIO.ImageSharpToBitmap(newImage));
+            }
+            return bitmaps.ToArray();
+        }
+        public static Bitmap Crop(Bitmap startingImage, Vector2 size, Vector2 location = new Vector2())
         {
             var newImage = TexIO.BitmapToImageSharp(startingImage).Clone(x => x.Crop(
-            new SixLabors.ImageSharp.Rectangle(new SixLabors.ImageSharp.Point(0, 0), new SixLabors.ImageSharp.Size((int)vector2.X, (int)vector2.Y))));
+            new SixLabors.ImageSharp.Rectangle(new SixLabors.ImageSharp.Point((int)location.X, (int)location.Y), new SixLabors.ImageSharp.Size((int)size.X, (int)size.Y))));
             return TexIO.ImageSharpToBitmap(newImage);
         }
         public enum UVMapType {
@@ -993,6 +1005,27 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     }
                 } else {
                     break;
+                }
+            };
+            source.UnlockBits();
+        }
+        public static void EraseSection(Bitmap bitmap, Vector2 startPoint, Vector2 size)
+        {
+            LockBitmap source = new LockBitmap(bitmap);
+            source.LockBits();
+            for (int y = 0; y < bitmap.Height; y++)
+            {
+                if (y >= startPoint.Y &&  y < startPoint.Y + size.Y)
+                {
+                    for (int x = 0; x < bitmap.Width; x++)
+                    {
+                        Color sourcePixel = source.GetPixel(x, y);
+                        if (x >= startPoint.X && x < startPoint.X + size.X)
+                        {
+                            Color col = Color.FromArgb(0, 0, 0, 0);
+                            source.SetPixel(x, y, col);
+                        }
+                    }
                 }
             };
             source.UnlockBits();
