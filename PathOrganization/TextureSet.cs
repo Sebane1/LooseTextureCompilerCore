@@ -6,8 +6,11 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private string _groupName = "";
 
         private string _baseTexture = "";
+        private List<string> _baseOverlays = new List<string>();
         private string _normal = "";
+        private List<string> _normalOverlays = new List<string>();
         private string _mask = "";
+        private List<string> _maskOverlays = new List<string>();
 
         private string _internalBasePath = "";
         private string _internalNormalPath = "";
@@ -145,6 +148,9 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public int SkinType { get => _skinType; set => _skinType = value; }
         public bool UsesScales { get => _usesScales; set => _usesScales = value; }
         public bool InvertNormalAlpha { get => _invertNormalAlpha; set => _invertNormalAlpha = value; }
+        public List<string> BaseOverlays { get => _baseOverlays; set => _baseOverlays = value; }
+        public List<string> NormalOverlays { get => _normalOverlays; set => _normalOverlays = value; }
+        public List<string> MaskOverlays { get => _maskOverlays; set => _maskOverlays = value; }
 
         public override string ToString() {
             return _textureSetName + (GroupName != _textureSetName ? $" | Group({_groupName})" : "");
