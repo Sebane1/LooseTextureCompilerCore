@@ -944,7 +944,7 @@ namespace FFXIVLooseTextureCompiler {
                         if (string.IsNullOrEmpty(alphaOverride)) {
                             TexIO.SaveBitmap(bitmap, stream);
                         } else {
-                            TexIO.SaveBitmap(ImageManipulation.MergeAlphaToRGB(Grayscale.MakeGrayscale(TexIO.ResolveBitmap(alphaOverride)), bitmap), stream);
+                            TexIO.SaveBitmap(ImageManipulation.MergeAlphaToRGB(TexIO.Resize(Grayscale.MakeGrayscale(TexIO.ResolveBitmap(alphaOverride)), bitmap.Width, bitmap.Height), bitmap), stream);
                         }
                     }
                 }

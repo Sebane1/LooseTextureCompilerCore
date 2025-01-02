@@ -43,7 +43,7 @@
 
     <ItemGroup>
         <Reference Include="OtterTex">
-            <HintPath>Penumbra\lib\OtterTex.dll</HintPath>
+          <HintPath>OtterTex.dll</HintPath>
         </Reference>
         <Reference Include="Penumbra.GameData">
           <HintPath>Penumbra.GameData.dll</HintPath>

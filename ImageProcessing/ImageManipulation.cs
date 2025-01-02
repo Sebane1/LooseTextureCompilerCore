@@ -1058,5 +1058,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             TexIO.SaveBitmap(ImageManipulation.ExtractBlue(image), ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(fileName, "_B."), ".png"));
             TexIO.SaveBitmap(ImageManipulation.ExtractAlpha(image), ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(fileName, "_A."), ".png"));
         }
+
+        public static void CreateContact(string baseBath, string path) {
+            string input = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res\\model\\eyes\\eye_map_baking\\EyeInputLayout.fbx");
+            string output = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res\\model\\eyes\\eye_map_baking\\EyeOutputLayout.fbx");
+            XNormal.CallXNormal(input, output, path, ImageManipulation.AddSuffix(path, "_contactBase"), false, 2048, 2048, false);
+        }
     }
 }
