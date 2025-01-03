@@ -5,6 +5,10 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private string _textureSetName = "";
         private string _groupName = "";
 
+        private string _finalBase = "";
+        private string _finalNormal = "";
+        private string _finalMask = "";
+
         private string _baseTexture = "";
         private List<string> _baseOverlays = new List<string>();
         private string _normal = "";
@@ -151,6 +155,9 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public List<string> BaseOverlays { get => _baseOverlays; set => _baseOverlays = value; }
         public List<string> NormalOverlays { get => _normalOverlays; set => _normalOverlays = value; }
         public List<string> MaskOverlays { get => _maskOverlays; set => _maskOverlays = value; }
+        public string FinalBase { get => _finalBase; set => _finalBase = value; }
+        public string FinalNormal { get => _finalNormal; set => _finalNormal = value; }
+        public string FinalMask { get => _finalMask; set => _finalMask = value; }
 
         public override string ToString() {
             return _textureSetName + (GroupName != _textureSetName ? $" | Group({_groupName})" : "");

@@ -66,21 +66,21 @@ namespace FFXIVLooseTextureCompiler {
         }
 
         public void BatchTextureSet(TextureSet parent, TextureSet child) {
-            if (!string.IsNullOrEmpty(child.Base)) {
-                if (!_xnormalCache.ContainsKey(child.Base)) {
+            if (!string.IsNullOrEmpty(child.FinalBase)) {
+                if (!_xnormalCache.ContainsKey(child.FinalBase)) {
                     string baseTextureAlpha = ImageManipulation.ReplaceExtension(
-                    ImageManipulation.AddSuffix(parent.Base, "_alpha"), ".png");
+                    ImageManipulation.AddSuffix(parent.FinalBase, "_alpha"), ".png");
                     string baseTextureRGB = ImageManipulation.ReplaceExtension(
-                    ImageManipulation.AddSuffix(parent.Base, "_rgb"), ".png");
-                    if (_finalizeResults || !File.Exists(child.Base.Replace("baseTexBaked", "rgb_baseTexBaked"))
-                        || !File.Exists(child.Base.Replace("baseTexBaked", "alpha_baseTexBaked"))) {
-                        if (child.Base.Contains("baseTexBaked")) {
-                            _xnormalCache.Add(child.Base, child.Base);
-                            Bitmap baseTexture = TexIO.ResolveBitmap(parent.Base);
+                    ImageManipulation.AddSuffix(parent.FinalBase, "_rgb"), ".png");
+                    if (_finalizeResults || !File.Exists(child.FinalBase.Replace("baseTexBaked", "rgb_baseTexBaked"))
+                        || !File.Exists(child.FinalBase.Replace("baseTexBaked", "alpha_baseTexBaked"))) {
+                        if (child.FinalBase.Contains("baseTexBaked")) {
+                            _xnormalCache.Add(child.FinalBase, child.FinalBase);
+                            Bitmap baseTexture = TexIO.ResolveBitmap(parent.FinalBase);
                             if (Directory.Exists(Path.GetDirectoryName(baseTextureAlpha))
                                 && Directory.Exists(Path.GetDirectoryName(baseTextureRGB))) {
-                                string childAlpha = child.Base.Replace("baseTexBaked", "alpha");
-                                string childRGB = child.Base.Replace("baseTexBaked", "rgb");
+                                string childAlpha = child.FinalBase.Replace("baseTexBaked", "alpha");
+                                string childRGB = child.FinalBase.Replace("baseTexBaked", "rgb");
                                 ImageManipulation.ExtractTransparency(baseTexture).Save(baseTextureAlpha, ImageFormat.Png);
                                 ImageManipulation.ExtractRGB(baseTexture).Save(baseTextureRGB, ImageFormat.Png);
                                 if (_finalizeResults) {
@@ -101,29 +101,29 @@ namespace FFXIVLooseTextureCompiler {
                     }
                 }
             }
-            if (!string.IsNullOrEmpty(child.Normal)) {
-                if (!_xnormalCache.ContainsKey(child.Normal)) {
-                    string normalAlpha = ImageManipulation.AddSuffix(parent.Normal, "_alpha");
-                    string normalRGB = ImageManipulation.AddSuffix(parent.Normal, "_rgb");
-                    if (_finalizeResults || !File.Exists(child.Normal.Replace("baseTexBaked", "rgb_baseTexBaked"))
-                        || !File.Exists(child.Normal.Replace("baseTexBaked", "alpha_baseTexBaked"))) {
-                        if (child.Normal.Contains("baseTexBaked")) {
-                            _xnormalCache.Add(child.Normal, child.Normal);
-                            Bitmap normal = TexIO.ResolveBitmap(parent.Normal);
+            if (!string.IsNullOrEmpty(child.FinalNormal)) {
+                if (!_xnormalCache.ContainsKey(child.FinalNormal)) {
+                    string normalAlpha = ImageManipulation.AddSuffix(parent.FinalNormal, "_alpha");
+                    string normalRGB = ImageManipulation.AddSuffix(parent.FinalNormal, "_rgb");
+                    if (_finalizeResults || !File.Exists(child.FinalNormal.Replace("baseTexBaked", "rgb_baseTexBaked"))
+                        || !File.Exists(child.FinalNormal.Replace("baseTexBaked", "alpha_baseTexBaked"))) {
+                        if (child.FinalNormal.Contains("baseTexBaked")) {
+                            _xnormalCache.Add(child.FinalNormal, child.FinalNormal);
+                            Bitmap normal = TexIO.ResolveBitmap(parent.FinalNormal);
                             ImageManipulation.ExtractTransparency(normal).Save(normalAlpha, ImageFormat.Png);
                             ImageManipulation.ExtractRGB(normal, true).Save(normalRGB, ImageFormat.Png);
-                            _xnormal.AddToBatch(parent.InternalBasePath, normalAlpha, child.Normal.Replace("baseTexBaked", "alpha"), false);
-                            _xnormal.AddToBatch(parent.InternalBasePath, normalRGB, child.Normal.Replace("baseTexBaked", "rgb"), true);
+                            _xnormal.AddToBatch(parent.InternalBasePath, normalAlpha, child.FinalNormal.Replace("baseTexBaked", "alpha"), false);
+                            _xnormal.AddToBatch(parent.InternalBasePath, normalRGB, child.FinalNormal.Replace("baseTexBaked", "rgb"), true);
                         }
                     }
                 }
             }
-            if (!string.IsNullOrEmpty(child.Mask)) {
-                if (!_xnormalCache.ContainsKey(child.Mask)) {
-                    if (_finalizeResults || !File.Exists(child.Mask)) {
-                        if (child.Mask.Contains("baseTexBaked")) {
-                            _xnormalCache.Add(child.Mask, child.Mask);
-                            _xnormal.AddToBatch(parent.InternalMaskPath, parent.Mask, child.Mask, false);
+            if (!string.IsNullOrEmpty(child.FinalMask)) {
+                if (!_xnormalCache.ContainsKey(child.FinalMask)) {
+                    if (_finalizeResults || !File.Exists(child.FinalMask)) {
+                        if (child.FinalMask.Contains("baseTexBaked")) {
+                            _xnormalCache.Add(child.FinalMask, child.FinalMask);
+                            _xnormal.AddToBatch(parent.InternalMaskPath, parent.FinalMask, child.FinalMask, false);
                         }
                     }
                 }
@@ -141,23 +141,6 @@ namespace FFXIVLooseTextureCompiler {
                             ImageManipulation.ExtractRGB(glow).Save(glowRGB, ImageFormat.Png);
                             _xnormal.AddToBatch(parent.InternalBasePath, glowAlpha, child.Glow.Replace("baseTexBaked", "alpha"), false);
                             _xnormal.AddToBatch(parent.InternalBasePath, glowRGB, child.Glow.Replace("baseTexBaked", "rgb"), false);
-                        }
-                    }
-                }
-            }
-            if (!string.IsNullOrEmpty(child.NormalMask)) {
-                if (!_xnormalCache.ContainsKey(child.NormalMask)) {
-                    string normalMaskAlpha = ImageManipulation.AddSuffix(parent.NormalMask, "_alpha");
-                    string normalMaskRGB = ImageManipulation.AddSuffix(parent.NormalMask, "_rgb");
-                    if (_finalizeResults || !File.Exists(child.NormalMask.Replace("baseTexBaked", "rgb_baseTexBaked"))
-                        || !File.Exists(child.NormalMask.Replace("baseTexBaked", "alpha_baseTexBaked"))) {
-                        if (child.NormalMask.Contains("baseTexBaked")) {
-                            _xnormalCache.Add(child.NormalMask, child.NormalMask);
-                            Bitmap normalMask = TexIO.ResolveBitmap(parent.NormalMask);
-                            ImageManipulation.ExtractTransparency(normalMask).Save(normalMaskAlpha, ImageFormat.Png);
-                            ImageManipulation.ExtractRGB(normalMask).Save(normalMaskRGB, ImageFormat.Png);
-                            _xnormal.AddToBatch(parent.InternalBasePath, normalMaskAlpha, child.NormalMask.Replace("baseTexBaked", "alpha"), false);
-                            _xnormal.AddToBatch(parent.InternalBasePath, normalMaskRGB, child.NormalMask.Replace("baseTexBaked", "rgb"), false);
                         }
                     }
                 }
@@ -191,11 +174,42 @@ namespace FFXIVLooseTextureCompiler {
                 _exportMax = 0;
                 _exportMax = textureSetList.Count * 4;
                 foreach (TextureSet textureSet in textureSetList) {
+                    if (textureSet.BaseOverlays.Count > 0) {
+                        List<string> images = new List<string>();
+                        images.Add(textureSet.Base);
+                        images.AddRange(textureSet.BaseOverlays);
+                        textureSet.FinalBase = ImageManipulation.AddSuffix(textureSet.Base, "_finalMerge");
+                        ImageManipulation.MergeImageLayers(images, textureSet.FinalBase);
+                    } else {
+                        textureSet.FinalBase = textureSet.Base;
+                    }
+
+                    if (textureSet.NormalOverlays.Count > 0) {
+                        List<string> images = new List<string>();
+                        images.Add(textureSet.Normal);
+                        images.AddRange(textureSet.NormalOverlays);
+                        textureSet.FinalNormal = ImageManipulation.AddSuffix(textureSet.FinalNormal, "_finalMerge");
+                        ImageManipulation.MergeImageLayers(images, textureSet.FinalNormal);
+                    } else {
+                        textureSet.FinalNormal = textureSet.Normal;
+                    }
+
+                    if (textureSet.MaskOverlays.Count > 0) {
+                        List<string> images = new List<string>();
+                        images.Add(textureSet.Mask);
+                        images.AddRange(textureSet.MaskOverlays);
+                        textureSet.FinalMask = ImageManipulation.AddSuffix(textureSet.FinalMask, "_finalMerge");
+                        ImageManipulation.MergeImageLayers(images, textureSet.FinalMask);
+                    } else {
+                        textureSet.FinalMask = textureSet.Mask;
+                    }
+
                     if (!groups.ContainsKey(textureSet.GroupName)) {
                         groups.Add(textureSet.GroupName, new List<TextureSet>() { textureSet });
                         foreach (TextureSet childSet in textureSet.ChildSets) {
                             childSet.GroupName = textureSet.GroupName;
                             groups[textureSet.GroupName].Add(childSet);
+                            childSet.FinalBase = childSet.Base;
                             BatchTextureSet(textureSet, childSet);
                             _exportMax += 4;
                         }

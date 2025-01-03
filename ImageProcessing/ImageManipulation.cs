@@ -1,6 +1,8 @@
 using KVImage;
 using Lumina.Data.Files;
 using Penumbra.GameData.Files.Utility;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -11,32 +13,27 @@ using Rectangle = System.Drawing.Rectangle;
 
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
     public class ImageManipulation {
-        public static Bitmap[] DivideImageVertically(Bitmap startingImage, int divisions)
-        {
+        public static Bitmap[] DivideImageVertically(Bitmap startingImage, int divisions) {
             List<Bitmap> bitmaps = new List<Bitmap>();
             int dividedHeight = startingImage.Height / divisions;
-            for (int i = 0; i < divisions; i++)
-            {
-              var newImage =  TexIO.BitmapToImageSharp(startingImage).Clone(x => x.Crop(
-                new SixLabors.ImageSharp.Rectangle(new SixLabors.ImageSharp.Point(0,i * dividedHeight), new SixLabors.ImageSharp.Size(startingImage.Width, dividedHeight))));
-               bitmaps.Add(TexIO.ImageSharpToBitmap(newImage));
+            for (int i = 0; i < divisions; i++) {
+                var newImage = TexIO.BitmapToImageSharp(startingImage).Clone(x => x.Crop(
+                  new SixLabors.ImageSharp.Rectangle(new SixLabors.ImageSharp.Point(0, i * dividedHeight), new SixLabors.ImageSharp.Size(startingImage.Width, dividedHeight))));
+                bitmaps.Add(TexIO.ImageSharpToBitmap(newImage));
             }
             return bitmaps.ToArray();
         }
-        public static Bitmap[] DivideImageHorizontally(Bitmap startingImage, int divisions)
-        {
+        public static Bitmap[] DivideImageHorizontally(Bitmap startingImage, int divisions) {
             List<Bitmap> bitmaps = new List<Bitmap>();
             int dividedWidth = startingImage.Width / divisions;
-            for (int i = 0; i < divisions; i++)
-            {
+            for (int i = 0; i < divisions; i++) {
                 var newImage = TexIO.BitmapToImageSharp(startingImage).Clone(x => x.Crop(
                   new SixLabors.ImageSharp.Rectangle(new SixLabors.ImageSharp.Point(i * dividedWidth, 0), new SixLabors.ImageSharp.Size(dividedWidth, startingImage.Height))));
                 bitmaps.Add(TexIO.ImageSharpToBitmap(newImage));
             }
             return bitmaps.ToArray();
         }
-        public static Bitmap Crop(Bitmap startingImage, Vector2 size, Vector2 location = new Vector2())
-        {
+        public static Bitmap Crop(Bitmap startingImage, Vector2 size, Vector2 location = new Vector2()) {
             var newImage = TexIO.BitmapToImageSharp(startingImage).Clone(x => x.Crop(
             new SixLabors.ImageSharp.Rectangle(new SixLabors.ImageSharp.Point((int)location.X, (int)location.Y), new SixLabors.ImageSharp.Size((int)size.X, (int)size.Y))));
             return TexIO.ImageSharpToBitmap(newImage);
@@ -705,7 +702,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     try {
                         Color alphaPixel = new Color();
                         try {
-                           alphaPixel = alphaBits.GetPixel(x, y);
+                            alphaPixel = alphaBits.GetPixel(x, y);
                         } catch {
 
                         }
@@ -1009,19 +1006,14 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             };
             source.UnlockBits();
         }
-        public static void EraseSection(Bitmap bitmap, Vector2 startPoint, Vector2 size)
-        {
+        public static void EraseSection(Bitmap bitmap, Vector2 startPoint, Vector2 size) {
             LockBitmap source = new LockBitmap(bitmap);
             source.LockBits();
-            for (int y = 0; y < bitmap.Height; y++)
-            {
-                if (y >= startPoint.Y &&  y < startPoint.Y + size.Y)
-                {
-                    for (int x = 0; x < bitmap.Width; x++)
-                    {
+            for (int y = 0; y < bitmap.Height; y++) {
+                if (y >= startPoint.Y && y < startPoint.Y + size.Y) {
+                    for (int x = 0; x < bitmap.Width; x++) {
                         Color sourcePixel = source.GetPixel(x, y);
-                        if (x >= startPoint.X && x < startPoint.X + size.X)
-                        {
+                        if (x >= startPoint.X && x < startPoint.X + size.X) {
                             Color col = Color.FromArgb(0, 0, 0, 0);
                             source.SetPixel(x, y, col);
                         }
@@ -1063,6 +1055,31 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             string input = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res\\model\\eyes\\eye_map_baking\\EyeInputLayout.fbx");
             string output = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res\\model\\eyes\\eye_map_baking\\EyeOutputLayout.fbx");
             XNormal.CallXNormal(input, output, path, ImageManipulation.AddSuffix(path, "_contactBase"), false, 2048, 2048, false);
+        }
+
+        internal static void MergeImageLayers(List<string> images, string ouputPath) {
+            List<Image<Rgba32>> validImages = new List<Image<Rgba32>>();
+            int maxX = 0;
+            int maxY = 0;
+            foreach (var image in images) {
+                if (File.Exists(image)) {
+                    var imageData = Image<Rgba32>.Load(image);
+                    if (imageData.Width > maxX) {
+                        maxX = imageData.Bounds.Width;
+                    }
+                    if (imageData.Height > maxY) {
+                        maxY = imageData.Bounds.Height;
+                    }
+                    validImages.Add(imageData as Image<Rgba32>);
+                }
+            }
+
+            var outputImage = new Image<Rgba32>(maxX, maxY);
+            foreach (var image in validImages) {
+                image.Mutate(o => o.Resize(new SixLabors.ImageSharp.Size(maxX, maxY)));
+                outputImage.Mutate(o => o.DrawImage(image, new SixLabors.ImageSharp.Point(0, 0), 1f));
+            }
+            outputImage.SaveAsPng(ouputPath);
         }
     }
 }
