@@ -1,13 +1,10 @@
 ﻿using FFXIVLooseTextureCompiler.Export;
+using LooseTextureCompilerCore;
 
 namespace FFXIVLooseTextureCompiler.PathOrganization {
     public class TextureSet {
         private string _textureSetName = "";
         private string _groupName = "";
-
-        private string _finalBase = "";
-        private string _finalNormal = "";
-        private string _finalMask = "";
 
         private string _baseTexture = "";
         private List<string> _baseOverlays = new List<string>();
@@ -155,12 +152,43 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public List<string> BaseOverlays { get => _baseOverlays; set => _baseOverlays = value; }
         public List<string> NormalOverlays { get => _normalOverlays; set => _normalOverlays = value; }
         public List<string> MaskOverlays { get => _maskOverlays; set => _maskOverlays = value; }
-        public string FinalBase { get => _finalBase; set => _finalBase = value; }
-        public string FinalNormal { get => _finalNormal; set => _finalNormal = value; }
-        public string FinalMask { get => _finalMask; set => _finalMask = value; }
+        public string FinalBase { get => CreateFinalBasePath(); }
+        public string FinalNormal { get => CreateFinalNormalPath(); }
+        public string FinalMask { get => CreateFinalMaskPath(); }
 
         public override string ToString() {
             return _textureSetName + (GroupName != _textureSetName ? $" | Group({_groupName})" : "");
+        }
+
+        public string CreateFinalBasePath() {
+            if (IsChildSet) {
+                return _baseTexture;
+            }
+            string path = !string.IsNullOrEmpty(_baseTexture) ? _baseTexture : (_baseOverlays.Count > 0 ? _baseOverlays[0] : "");  
+            if (!string.IsNullOrEmpty(path)) {
+                return Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(_baseOverlays) + ".png");
+            }
+            return "";
+        }
+        public string CreateFinalNormalPath() {
+            if (IsChildSet) {
+                return _normal;
+            }
+            string path = !string.IsNullOrEmpty(_normal) ? _normal : (_normalOverlays.Count > 0 ? _normalOverlays[0] : "");
+            if (!string.IsNullOrEmpty(path)) {
+                return Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(_normalOverlays) + ".png");
+            }
+            return "";
+        }
+        public string CreateFinalMaskPath() {
+            if (IsChildSet) {
+                return _mask;
+            }
+            string path = !string.IsNullOrEmpty(_mask) ? _mask : (_maskOverlays.Count > 0 ? _maskOverlays[0] : "");
+            if (!string.IsNullOrEmpty(path)) {
+                return Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(_maskOverlays) + ".png");
+            }
+            return "";
         }
     }
 }

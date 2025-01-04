@@ -174,11 +174,11 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             }
             if (destinationTextureSet != null) {
                 destinationTextureSet.Base = ImageManipulation.ReplaceExtension(
-                    ImageManipulation.AddSuffix(baseTextureSet.Base, $"_{prefix}_d_baseTexBaked"), ".png");
+                    ImageManipulation.AddSuffix(baseTextureSet.FinalBase, $"_{prefix}_d_baseTexBaked"), ".png");
                 destinationTextureSet.Normal = ImageManipulation.ReplaceExtension(
-                    ImageManipulation.AddSuffix(baseTextureSet.Normal, $"_{prefix}_n_baseTexBaked"), ".png");
+                    ImageManipulation.AddSuffix(baseTextureSet.FinalNormal, $"_{prefix}_n_baseTexBaked"), ".png");
                 destinationTextureSet.Mask = ImageManipulation.ReplaceExtension(
-                    ImageManipulation.AddSuffix(baseTextureSet.Mask, $"_{prefix}_m_baseTexBaked"), ".png");
+                    ImageManipulation.AddSuffix(baseTextureSet.FinalMask, $"_{prefix}_m_baseTexBaked"), ".png");
                 destinationTextureSet.Glow = ImageManipulation.ReplaceExtension(
                     ImageManipulation.AddSuffix(baseTextureSet.Glow, $"_{prefix}_g_baseTexBaked"), ".png");
                 destinationTextureSet.NormalMask = ImageManipulation.ReplaceExtension(
@@ -189,26 +189,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             }
         }
 
-        //private static void ConfigureTextureSet(string name, int race, int gender, int body,
-        //   TextureSet destinationTextureSet, TextureSet baseTextureSet) {
-        //    destinationTextureSet.TextureSetName = name;
-        //    destinationTextureSet.InternalBasePath = RacePaths.GetBodyTexturePath(0, gender, body, 0, race);
-        //    destinationTextureSet.InternalNormalPath = RacePaths.GetBodyTexturePath(1, gender, body, 0, race);
-        //    destinationTextureSet.InternalMaskPath = RacePaths.GetBodyTexturePath(2, gender, body, 0, race);
-        //    destinationTextureSet.InternalMaterialPath = RacePaths.GetBodyTexturePath(gender, body, 0, race);
-        //    destinationTextureSet.Base = baseTextureSet.Base;
-        //    destinationTextureSet.Normal = baseTextureSet.Normal;
-        //    destinationTextureSet.Mask = baseTextureSet.Mask;
-        //    destinationTextureSet.Glow = baseTextureSet.Glow;
-        //    destinationTextureSet.NormalMask = baseTextureSet.NormalMask;
-        //    destinationTextureSet.IgnoreNormalGeneration = baseTextureSet.IgnoreNormalGeneration;
-        //    destinationTextureSet.IgnoreMaskGeneration = baseTextureSet.IgnoreMaskGeneration;
-        //    destinationTextureSet.InvertNormalGeneration = baseTextureSet.InvertNormalGeneration;
-        //}
-
-
         private static void ConfigureTBSECrossCompatibility(TextureSet textureSet, int race, bool omniExport) {
-            ConfigureTextureSet(textureSet.TextureSetName,"", race, 1, 3, null, textureSet);
+            ConfigureTextureSet(textureSet.TextureSetName, "", race, 1, 3, null, textureSet);
             TextureSet tbseVanilla = new TextureSet();
 
             if (omniExport) {

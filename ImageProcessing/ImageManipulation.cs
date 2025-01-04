@@ -1062,7 +1062,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int maxX = 0;
             int maxY = 0;
             foreach (var image in images) {
-                if (File.Exists(image)) {
+                if (!string.IsNullOrEmpty(image) && File.Exists(image)) {
                     var imageData = Image<Rgba32>.Load(image);
                     if (imageData.Width > maxX) {
                         maxX = imageData.Bounds.Width;
@@ -1077,7 +1077,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             var outputImage = new Image<Rgba32>(maxX, maxY);
             foreach (var image in validImages) {
                 image.Mutate(o => o.Resize(new SixLabors.ImageSharp.Size(maxX, maxY)));
-                outputImage.Mutate(o => o.DrawImage(image, new SixLabors.ImageSharp.Point(0, 0), 1f));
+                outputImage.Mutate(o => o.DrawImage(image, new SixLabors.ImageSharp.Point(0, 0), PixelColorBlendingMode.Normal, 1f));
+                image.Dispose();
             }
             outputImage.SaveAsPng(ouputPath);
         }
