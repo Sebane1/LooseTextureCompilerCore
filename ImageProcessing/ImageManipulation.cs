@@ -1,4 +1,6 @@
+using FFXIVLooseTextureCompiler.Export;
 using KVImage;
+using LooseTextureCompilerCore.Export;
 using Lumina.Data.Files;
 using Penumbra.GameData.Files.Utility;
 using SixLabors.ImageSharp;
@@ -730,14 +732,14 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return MergeAlphaToRGB(alphaMap, tattoo);
         }
 
-        public static Bitmap SeperateTattooByDifference(Bitmap tattoo, string baseDirectory = null) {
+        public static Bitmap SeperateTattooByDifference(Bitmap tattoo, SkinType skinType = null, string baseDirectory = null, bool raen = false) {
             var value = FemaleBodyUVClassifier(tattoo);
             var uvMapType = UVMapTypeClassifier(tattoo);
             string underlayDifferentiator = "";
             string mapName = "";
             switch (uvMapType) {
                 case UVMapType.Diffuse:
-                    mapName = "diffuse.ltct";
+                    mapName = raen ? "diffuseRaen.ltct" : "diffuse.ltct";
                     break;
                 case UVMapType.Normal:
                     mapName = "normal.ltct";
@@ -746,15 +748,21 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             switch (value) {
                 case BodyUVType.Bibo:
                     underlayDifferentiator = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory :
-                    AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\bibo\\bibo\\" + mapName);
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[0].Normal : (!raen ? skinType.BackupTextures[0].Base : skinType.BackupTextures[0].BaseSecondary)
+                    ) : ("res\\textures\\bibo\\bibo\\" + mapName)));
                     break;
                 case BodyUVType.Gen3:
                     underlayDifferentiator = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory :
-                    AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\gen3\\gen3\\" + mapName);
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[1].Normal : (!raen ? skinType.BackupTextures[1].Base : skinType.BackupTextures[1].BaseSecondary)
+                    ) : ("res\\textures\\gen3\\gen3\\" + mapName)));
                     break;
                 case BodyUVType.Gen2:
                     underlayDifferentiator = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory :
-                    AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\gen3\\gen2\\" + mapName);
+                    AppDomain.CurrentDomain.BaseDirectory,
+                    (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[2].Normal : (!raen ? skinType.BackupTextures[2].Base : skinType.BackupTextures[2].BaseSecondary)
+                    ) : ("res\\textures\\gen3\\gen2\\" + mapName)));
                     break;
             }
             if (!string.IsNullOrEmpty(underlayDifferentiator)) {
@@ -1070,7 +1078,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     if (imageData.Height > maxY) {
                         maxY = imageData.Bounds.Height;
                     }
-                    validImages.Add(imageData as Image<Rgba32>);
+                    var data = imageData as Image<Rgba32>;
+                    if (data == null) {
+                        data = TexIO.BitmapToImageSharp(TexIO.ResolveBitmap(image));
+                    }
+                    validImages.Add(data);
                 }
             }
 

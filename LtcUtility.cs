@@ -16,8 +16,8 @@ namespace LooseTextureCompilerCore {
             }
         }
 
-        public static string CreateIdentifier(List<string> list) {
-            string values = "";
+        public static string CreateIdentifier(string path, List<string> list) {
+            string values = path;
             foreach (string value in list) {
                 values += value;
             }

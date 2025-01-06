@@ -281,7 +281,7 @@ namespace FFXIVLooseTextureCompiler {
                                 if (!string.IsNullOrEmpty(textureSet.FinalBase) && !string.IsNullOrEmpty(textureSet.InternalBasePath)) {
                                     if (BaseLogic(textureSet, baseTextureDiskPath, skipTexExport)) {
                                         AddDetailedGroupOption(textureSet.InternalBasePath,
-                                            baseTextureDiskPath.Replace(modPath + "\\", null), "Base", "Normal", textureSet,
+                                            baseTextureDiskPath.Replace(modPath + "\\", null), "Base", "", textureSet,
                                             textureSets, group, baseTextureOption, out baseTextureOption);
                                     } else {
                                         OnProgressChange.Invoke(this, EventArgs.Empty);
