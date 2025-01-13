@@ -1065,7 +1065,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             XNormal.CallXNormal(input, output, path, ImageManipulation.AddSuffix(path, "_contactBase"), false, 2048, 2048, false);
         }
 
-        internal static void MergeImageLayers(List<string> images, string ouputPath) {
+        public static void MergeImageLayers(List<string> images, string ouputPath) {
             List<Image<Rgba32>> validImages = new List<Image<Rgba32>>();
             int maxX = 0;
             int maxY = 0;
@@ -1093,6 +1093,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 image.Dispose();
             }
             outputImage.SaveAsPng(ouputPath);
+        }
+        public static void ConvertLegacyAuRaTail(string inputTexture, int tailNumber, bool gender, string baseDirectory = "") {
+            string pathInput = Path.Combine(string.IsNullOrEmpty(baseDirectory) ?  AppDomain.CurrentDomain.BaseDirectory : baseDirectory, 
+                $"res\\model\\tail\\input\\{(gender ? "AuRa_Female" : "AuRa_Male")}\\{tailNumber}\\3D\\c1401t000{tailNumber}_til.fbx");
+            string outputInput = Path.Combine(string.IsNullOrEmpty(baseDirectory) ? AppDomain.CurrentDomain.BaseDirectory : baseDirectory, 
+                $"res\\model\\tail\\output\\{(gender ? "AuRa_Female" : "AuRa_Male")}\\{tailNumber}\\3D\\c1401t000{tailNumber}_til.fbx");
+            XNormal.CallXNormal(pathInput, outputInput, inputTexture, ImageManipulation.AddSuffix(inputTexture, "_dawntrail"), false, 1024, 2048, true);
         }
     }
 }
