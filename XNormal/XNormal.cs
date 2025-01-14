@@ -1,4 +1,4 @@
-﻿using FFXIVLooseTextureCompiler.ImageProcessing;
+using FFXIVLooseTextureCompiler.ImageProcessing;
 using System.Diagnostics;
 
 namespace FFXIVLooseTextureCompiler {
