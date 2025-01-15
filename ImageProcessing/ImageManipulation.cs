@@ -49,9 +49,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
         }
         public enum UVMapType
         {
-            Diffuse,
+            Base,
             Normal,
-            Multi,
+            Mask,
             Glow
         }
         public static UVMapType UVMapTypeClassifier(string texture)
@@ -71,7 +71,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             }
             else if (uvMapTest.B == 152 && uvMapTest2.B == 152)
             {
-                return UVMapType.Multi;
+                return UVMapType.Mask;
             }
             else if (uvMapTest.B == 0 && uvMapTest2.B == 0 && uvMapTest.R == 0 && uvMapTest2.R == 0 && uvMapTest.G == 0 && uvMapTest2.G == 0)
             {
@@ -79,7 +79,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             }
             else
             {
-                return UVMapType.Diffuse;
+                return UVMapType.Base;
             }
         }
         public enum BodyUVType
@@ -132,7 +132,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                 for (int x = 0; x < file.Width; x++)
                 {
                     Color sourcePixel = source.GetPixel(x, y);
-                    if (sourcePixel.A > 5)
+                    if (sourcePixel.A > 5 && (sourcePixel.R > 5 || sourcePixel.G > 5 || sourcePixel.B > 5))
                     {
                         int value = sourcePixel.ToArgb();
                         if (!colours.ContainsKey(value))
@@ -892,7 +892,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             string mapName = "";
             switch (uvMapType)
             {
-                case UVMapType.Diffuse:
+                case UVMapType.Base:
                     mapName = raen ? "diffuseRaen.ltct" : "diffuse.ltct";
                     break;
                 case UVMapType.Normal:
@@ -1152,9 +1152,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
 
             Graphics graphics = Graphics.FromImage(canvas);
             graphics.Clear(Color.Black);
-            //Bitmap white = new Bitmap(enforcedSize, enforcedSize);
-            //graphics = Graphics.FromImage(white);
-            //graphics.Clear(Color.White);
 
             graphics = Graphics.FromImage(canvas);
             float size = scaleTexture ? ((float)enforcedSize * 0.4096f) : enforcedSize;

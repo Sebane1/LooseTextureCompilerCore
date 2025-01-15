@@ -56,6 +56,7 @@ namespace FFXIVLooseTextureCompiler
         private const string vanillaLala = "res\\model\\vanillap.sbm";
         private const string otopop = "res\\model\\genp.sbm";
         private const string asymLala = "res\\model\\asymp.sbm";
+        private static int outputSize = 4096;
         int count = 0;
 
         List<XNormalExportJob> biboToGen2Batch = new List<XNormalExportJob>();
@@ -81,6 +82,7 @@ namespace FFXIVLooseTextureCompiler
         public static string UserDataPath { get => userDataPath; set => userDataPath = value; }
         public static string LastArguments { get; set; }
         public string BasePathOverride { get => basePathOverride; set => basePathOverride = value; }
+        public static int OutputSize { get => outputSize; set => outputSize = value; }
 
         public static void GenerateBasedOnSourceBody(string internalPath, string inputPath, string outputPath, bool isNormalMap)
         {
@@ -160,7 +162,7 @@ namespace FFXIVLooseTextureCompiler
                     else if (outputPath.Contains("gen3"))
                     {
                         biboToGen3Batch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, isNormalMap ? biboLegacy : bibo,
-                            isNormalMap ? gen3Legacy : gen3, count++ + ".xml", isNormalMap));
+                            isNormalMap ? gen3Legacy : gen3, count++ + ".xml", isNormalMap, outputSize, outputSize));
                     }
                 }
                 else if (internalPath.Contains("eve") || internalPath.Contains("gen3"))
@@ -168,12 +170,12 @@ namespace FFXIVLooseTextureCompiler
                     if (outputPath.Contains("gen2"))
                     {
                         gen3ToGen2Batch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, gen3Legacy, gen2,
-                            count++ + ".xml", isNormalMap, 2048));
+                            count++ + ".xml", isNormalMap, outputSize / 2, outputSize));
                     }
                     else if (outputPath.Contains("bibo"))
                     {
                         gen3ToBiboBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, isNormalMap ? gen3Legacy : gen3,
-                            isNormalMap ? biboLegacy : bibo, count++ + ".xml", isNormalMap));
+                            isNormalMap ? biboLegacy : bibo, count++ + ".xml", isNormalMap, outputSize, outputSize));
                     }
                 }
                 else if (internalPath.Contains("body"))
@@ -181,24 +183,24 @@ namespace FFXIVLooseTextureCompiler
                     if (outputPath.Contains("bibo"))
                     {
                         gen2ToBiboBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, gen2, biboLegacy,
-                            count++ + ".xml", isNormalMap));
+                            count++ + ".xml", isNormalMap, outputSize, outputSize));
                     }
                     else if (outputPath.Contains($"gen3"))
                     {
                         gen2ToGen3Batch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, gen2, gen3Legacy,
-                            count++ + ".xml", isNormalMap));
+                            count++ + ".xml", isNormalMap, outputSize, outputSize));
                     }
                     else if (internalPath.Contains("--c1101b0001"))
                     {
                         if (outputPath.Contains("otopop"))
                         {
                             vanillaLalaToOtopopBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath,
-                                vanillaLala, otopop, count++ + ".xml", isNormalMap));
+                                vanillaLala, otopop, count++ + ".xml", isNormalMap, outputSize, outputSize));
                         }
                         else if (outputPath.Contains("asym_lala"))
                         {
                             vanillaLalaToAsymLalaBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath,
-                                vanillaLala, asymLala, count++ + ".xml", isNormalMap));
+                                vanillaLala, asymLala, count++ + ".xml", isNormalMap, outputSize, outputSize));
                         }
                     }
                     else if (internalPath.Contains("v01_c1101b0001_g"))
@@ -206,12 +208,12 @@ namespace FFXIVLooseTextureCompiler
                         if (outputPath.Contains("vanilla_lala"))
                         {
                             otopopToVanillaLalaBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, otopop,
-                                vanillaLala, count++ + ".xml", isNormalMap, 2048));
+                                vanillaLala, count++ + ".xml", isNormalMap, outputSize / 2, outputSize));
                         }
                         else if (outputPath.Contains("asym_lala"))
                         {
                             otopopToAsymLalaBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, otopop, asymLala,
-                                count++ + ".xml", isNormalMap));
+                                count++ + ".xml", isNormalMap, outputSize, outputSize));
                         }
                     }
                     else if (internalPath.Contains("v01_c1101b0001_b"))
@@ -219,12 +221,12 @@ namespace FFXIVLooseTextureCompiler
                         if (outputPath.Contains("vanilla_lala"))
                         {
                             asymLalaToVanillaLalaBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, asymLala,
-                                vanillaLala, count++ + ".xml", isNormalMap, 2048));
+                                vanillaLala, count++ + ".xml", isNormalMap, outputSize / 2));
                         }
                         else if (outputPath.Contains("otopop"))
                         {
                             asymLalaToOtopopBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, asymLala, otopop,
-                                count++ + ".xml", isNormalMap));
+                                count++ + ".xml", isNormalMap, outputSize, outputSize));
                         }
                     }
                 }
