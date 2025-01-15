@@ -1,8 +1,10 @@
 using FFXIVLooseTextureCompiler.ImageProcessing;
 using System.Diagnostics;
 
-namespace FFXIVLooseTextureCompiler {
-    public class XNormal {
+namespace FFXIVLooseTextureCompiler
+{
+    public class XNormal
+    {
         private static string xmlFile = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n" +
             "<Settings xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" Version=\"3.19.3\">\r\n" +
             "  <HighPolyModel DefaultMeshScale=\"100.000000\">\r\n" +
@@ -80,176 +82,246 @@ namespace FFXIVLooseTextureCompiler {
         public static string LastArguments { get; set; }
         public string BasePathOverride { get => basePathOverride; set => basePathOverride = value; }
 
-        public static void GenerateBasedOnSourceBody(string internalPath, string inputPath, string outputPath, bool isNormalMap) {
-            if (internalPath.Contains("bibo")) {
-                if (outputPath.Contains("gen2")) {
+        public static void GenerateBasedOnSourceBody(string internalPath, string inputPath, string outputPath, bool isNormalMap)
+        {
+            if (internalPath.Contains("bibo"))
+            {
+                if (outputPath.Contains("gen2"))
+                {
                     BiboToGen2(inputPath, outputPath);
                 }
-                if (outputPath.Contains("gen3")) {
+                if (outputPath.Contains("gen3"))
+                {
                     BiboToGen3(inputPath, outputPath);
                 }
-            } else if (internalPath.Contains("eve") || internalPath.Contains("gen3")) {
-                if (outputPath.Contains("gen2")) {
+            }
+            else if (internalPath.Contains("eve") || internalPath.Contains("gen3"))
+            {
+                if (outputPath.Contains("gen2"))
+                {
                     Gen3ToGen2(inputPath, outputPath);
                 }
-                if (outputPath.Contains("bibo")) {
+                if (outputPath.Contains("bibo"))
+                {
                     Gen3ToBibo(inputPath, outputPath);
                 }
-            } else if (internalPath.Contains("body")) {
-                if (outputPath.Contains("bibo")) {
+            }
+            else if (internalPath.Contains("body"))
+            {
+                if (outputPath.Contains("bibo"))
+                {
                     Gen2ToBibo(inputPath, outputPath);
                 }
-                if (outputPath.Contains($"gen3")) {
+                if (outputPath.Contains($"gen3"))
+                {
                     Gen2ToGen3(inputPath, outputPath);
                 }
-            } else if (internalPath.Contains("skin_otopop") || internalPath.Contains("v01_c1101b0001_g")) {
-                if (outputPath.Contains("vanilla_lala")) {
+            }
+            else if (internalPath.Contains("skin_otopop") || internalPath.Contains("v01_c1101b0001_g"))
+            {
+                if (outputPath.Contains("vanilla_lala"))
+                {
                     OtopopToVanillaLala(inputPath, outputPath);
                 }
-            } else if (internalPath.Contains("--c1101b0001")) {
-                if (outputPath.Contains("otopop")) {
+            }
+            else if (internalPath.Contains("--c1101b0001"))
+            {
+                if (outputPath.Contains("otopop"))
+                {
                     VanillaLalaToOtopop(inputPath, outputPath);
                 }
-            } else if (internalPath.Contains("v01_c1101b0001_b")) {
-                if (outputPath.Contains("otopop")) {
+            }
+            else if (internalPath.Contains("v01_c1101b0001_b"))
+            {
+                if (outputPath.Contains("otopop"))
+                {
                     AsymLalaToOtopop(inputPath, outputPath);
                 }
-                if (outputPath.Contains("vanilla_lala")) {
+                if (outputPath.Contains("vanilla_lala"))
+                {
                     AsymLalaToVanillaLala(inputPath, outputPath);
                 }
             }
         }
 
-        public void AddToBatch(string internalPath, string inputPath, string outputPath, bool isNormalMap) {
+        public void AddToBatch(string internalPath, string inputPath, string outputPath, bool isNormalMap)
+        {
             string environment = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
             userDataPath = environment + @"\FFXIVLooseTextureCompiler\";
-            if (File.Exists(inputPath)) {
-                if (internalPath.Contains("bibo")) {
-                    if (outputPath.Contains("gen2")) {
+            if (File.Exists(inputPath))
+            {
+                if (internalPath.Contains("bibo"))
+                {
+                    if (outputPath.Contains("gen2"))
+                    {
                         biboToGen2Batch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, biboLegacy, gen2,
                             count++ + ".xml", isNormalMap, 2048));
-                    } else if (outputPath.Contains("gen3")) {
+                    }
+                    else if (outputPath.Contains("gen3"))
+                    {
                         biboToGen3Batch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, isNormalMap ? biboLegacy : bibo,
                             isNormalMap ? gen3Legacy : gen3, count++ + ".xml", isNormalMap));
                     }
-                } else if (internalPath.Contains("eve") || internalPath.Contains("gen3")) {
-                    if (outputPath.Contains("gen2")) {
+                }
+                else if (internalPath.Contains("eve") || internalPath.Contains("gen3"))
+                {
+                    if (outputPath.Contains("gen2"))
+                    {
                         gen3ToGen2Batch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, gen3Legacy, gen2,
                             count++ + ".xml", isNormalMap, 2048));
-                    } else if (outputPath.Contains("bibo")) {
+                    }
+                    else if (outputPath.Contains("bibo"))
+                    {
                         gen3ToBiboBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, isNormalMap ? gen3Legacy : gen3,
                             isNormalMap ? biboLegacy : bibo, count++ + ".xml", isNormalMap));
                     }
-                } else if (internalPath.Contains("body")) {
-                    if (outputPath.Contains("bibo")) {
+                }
+                else if (internalPath.Contains("body"))
+                {
+                    if (outputPath.Contains("bibo"))
+                    {
                         gen2ToBiboBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, gen2, biboLegacy,
                             count++ + ".xml", isNormalMap));
-                    } else if (outputPath.Contains($"gen3")) {
+                    }
+                    else if (outputPath.Contains($"gen3"))
+                    {
                         gen2ToGen3Batch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, gen2, gen3Legacy,
                             count++ + ".xml", isNormalMap));
-                    } else if (internalPath.Contains("--c1101b0001")) {
-                        if (outputPath.Contains("otopop")) {
+                    }
+                    else if (internalPath.Contains("--c1101b0001"))
+                    {
+                        if (outputPath.Contains("otopop"))
+                        {
                             vanillaLalaToOtopopBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath,
                                 vanillaLala, otopop, count++ + ".xml", isNormalMap));
-                        } else if (outputPath.Contains("asym_lala")) {
+                        }
+                        else if (outputPath.Contains("asym_lala"))
+                        {
                             vanillaLalaToAsymLalaBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath,
                                 vanillaLala, asymLala, count++ + ".xml", isNormalMap));
                         }
-                    } else if (internalPath.Contains("v01_c1101b0001_g")) {
-                        if (outputPath.Contains("vanilla_lala")) {
+                    }
+                    else if (internalPath.Contains("v01_c1101b0001_g"))
+                    {
+                        if (outputPath.Contains("vanilla_lala"))
+                        {
                             otopopToVanillaLalaBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, otopop,
                                 vanillaLala, count++ + ".xml", isNormalMap, 2048));
-                        } else if (outputPath.Contains("asym_lala")) {
+                        }
+                        else if (outputPath.Contains("asym_lala"))
+                        {
                             otopopToAsymLalaBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, otopop, asymLala,
                                 count++ + ".xml", isNormalMap));
                         }
-                    } else if (internalPath.Contains("v01_c1101b0001_b")) {
-                        if (outputPath.Contains("vanilla_lala")) {
+                    }
+                    else if (internalPath.Contains("v01_c1101b0001_b"))
+                    {
+                        if (outputPath.Contains("vanilla_lala"))
+                        {
                             asymLalaToVanillaLalaBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, asymLala,
                                 vanillaLala, count++ + ".xml", isNormalMap, 2048));
-                        } else if (outputPath.Contains("otopop")) {
+                        }
+                        else if (outputPath.Contains("otopop"))
+                        {
                             asymLalaToOtopopBatch.Add(new XNormalExportJob(internalPath, inputPath, outputPath, asymLala, otopop,
                                 count++ + ".xml", isNormalMap));
                         }
                     }
                 }
-            } else {
+            }
+            else
+            {
                 // MessageBox.Show(inputPath + " does not exist!");
             }
         }
-        public static void BiboToGen2(string inputImage, string outputImage) {
+        public static void BiboToGen2(string inputImage, string outputImage)
+        {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, biboLegacy),
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen2), inputImage, outputImage.Replace("_baseTexBaked", null),
             ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
-        public static void BiboToGen3(string inputImage, string outputImage) {
+        public static void BiboToGen3(string inputImage, string outputImage)
+        {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, bibo),
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen3), inputImage, outputImage.Replace("_baseTexBaked", null),
             ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
-        public static void Gen3ToGen2(string inputImage, string outputImage) {
+        public static void Gen3ToGen2(string inputImage, string outputImage)
+        {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen3Legacy),
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen2), inputImage, outputImage.Replace("_baseTexBaked", null),
             ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
-        public static void Gen3ToBibo(string inputImage, string outputImage) {
+        public static void Gen3ToBibo(string inputImage, string outputImage)
+        {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen3),
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, bibo), inputImage, outputImage.Replace("_baseTexBaked", null),
             ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
-        public static void Gen2ToBibo(string inputImage, string outputImage) {
+        public static void Gen2ToBibo(string inputImage, string outputImage)
+        {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen2),
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, biboLegacy), inputImage, outputImage.Replace("_baseTexBaked", null),
             ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
-        public static void Gen2ToGen3(string inputImage, string outputImage) {
+        public static void Gen2ToGen3(string inputImage, string outputImage)
+        {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen2),
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, gen3Legacy), inputImage, outputImage.Replace("_baseTexBaked", null),
             ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
 
-        public static void OtopopToVanillaLala(string inputImage, string outputImage) {
+        public static void OtopopToVanillaLala(string inputImage, string outputImage)
+        {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, otopop),
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, vanillaLala), inputImage, outputImage.Replace("_baseTexBaked", null),
             ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
 
-        public static void VanillaLalaToOtopop(string inputImage, string outputImage) {
+        public static void VanillaLalaToOtopop(string inputImage, string outputImage)
+        {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, vanillaLala),
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, otopop), inputImage, outputImage.Replace("_baseTexBaked", null),
             ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
 
-        public static void VanillaLalaToAsymLala(string inputImage, string outputImage) {
+        public static void VanillaLalaToAsymLala(string inputImage, string outputImage)
+        {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, vanillaLala),
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, asymLala), inputImage, outputImage.Replace("_baseTexBaked", null),
             ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
-        public static void AsymLalaToVanillaLala(string inputImage, string outputImage) {
+        public static void AsymLalaToVanillaLala(string inputImage, string outputImage)
+        {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, asymLala),
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, vanillaLala), inputImage, outputImage.Replace("_baseTexBaked", null),
             ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
 
-        public static void AsymLalaToOtopop(string inputImage, string outputImage) {
+        public static void AsymLalaToOtopop(string inputImage, string outputImage)
+        {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, asymLala),
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, otopop), inputImage, outputImage.Replace("_baseTexBaked", null),
             ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
-        public static void OtopopToAsymLala(string inputImage, string outputImage) {
+        public static void OtopopToAsymLala(string inputImage, string outputImage)
+        {
             CallXNormal(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, otopop),
             Path.Combine(AppDomain.CurrentDomain.BaseDirectory, asymLala), inputImage, outputImage.Replace("_baseTexBaked", null),
             ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
 
-        public static void OpenXNormal() {
+        public static void OpenXNormal()
+        {
             string executable = !string.IsNullOrEmpty(xNormalPathOverride) ? xNormalPathOverride
             : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, xNormal);
             Process process = Process.Start(executable);
         }
-        public static void CallXNormal(string inputFBX, string outputFBX, string inputImage, string outputImage, bool isNormalMap = false, int width = 4096, int height = 4096, bool skipRgbSplit = false) {
+        public static void CallXNormal(string inputFBX, string outputFBX, string inputImage, string outputImage, bool isNormalMap = false, int width = 4096, int height = 4096, bool skipRgbSplit = false)
+        {
 
-            if (!skipRgbSplit) {
+            if (!skipRgbSplit)
+            {
                 var paths = ImageManipulation.SplitRGBAndAlpha(inputImage);
                 string path1 = ImageManipulation.AddSuffix(outputImage, "_rgb");
                 string path2 = ImageManipulation.AddSuffix(outputImage, "_alpha");
@@ -262,20 +334,25 @@ namespace FFXIVLooseTextureCompiler {
                      outputImage);
                 File.Delete(path1);
                 File.Delete(path2);
-            } else {
+            }
+            else
+            {
                 CallXNormalFinal(inputFBX, outputFBX, inputImage, outputImage, isNormalMap, width, height);
             }
         }
-        public static void CallXNormalFinal(string inputFBX, string outputFBX, string inputImage, string outputImage, bool isNormalMap = false, int width = 4096, int height = 4096) {
+        public static void CallXNormalFinal(string inputFBX, string outputFBX, string inputImage, string outputImage, bool isNormalMap = false, int width = 4096, int height = 4096)
+        {
             userDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\FFXIVLooseTextureCompiler\";
             string path = Path.Combine(userDataPath, xmlFileName);
             string executable = !string.IsNullOrEmpty(xNormalPathOverride) ? xNormalPathOverride
             : Path.Combine(AppDomain.CurrentDomain.BaseDirectory, xNormal);
 
-            if (!Directory.Exists(userDataPath)) {
+            if (!Directory.Exists(userDataPath))
+            {
                 Directory.CreateDirectory(userDataPath);
             }
-            using (StreamWriter writer = new StreamWriter(path)) {
+            using (StreamWriter writer = new StreamWriter(path))
+            {
                 string inputString = CleanXmlEscapeSequences(Path.Combine(!string.IsNullOrEmpty(basePathOverride) ?
                     basePathOverride : AppDomain.CurrentDomain.BaseDirectory, inputFBX));
                 string inputImageString = CleanXmlEscapeSequences(inputImage);
@@ -300,19 +377,23 @@ namespace FFXIVLooseTextureCompiler {
             process.WaitForExit();
             Thread.Sleep(100);
             string output = outputImage.Replace("_baseTexBaked", null);
-            if (File.Exists(outputImage)) {
+            if (File.Exists(outputImage))
+            {
                 File.Delete(outputImage);
             }
             File.Move(ImageManipulation.AddSuffix(outputImage.Replace("_baseTexBaked", null), "_baseTexBaked"),
                output);
         }
-        public void ProcessBatches() {
+        public void ProcessBatches()
+        {
             List<XNormalExportJob> exportJobs = new List<XNormalExportJob>();
-            exportJobs.AddRange(biboToGen2Batch);
-            exportJobs.AddRange(gen3ToGen2Batch);
+            //exportJobs.AddRange(biboToGen2Batch);
             exportJobs.AddRange(biboToGen3Batch);
+
             exportJobs.AddRange(gen3ToBiboBatch);
-            exportJobs.AddRange(gen2ToGen3Batch);
+            //exportJobs.AddRange(gen3ToGen2Batch);
+
+            exportJobs.AddRange(gen2ToBiboBatch);
             exportJobs.AddRange(gen2ToGen3Batch);
 
             exportJobs.AddRange(otopopToVanillaLalaBatch);
@@ -322,7 +403,8 @@ namespace FFXIVLooseTextureCompiler {
             exportJobs.AddRange(vanillaLalaToOtopopBatch);
             exportJobs.AddRange(vanillaLalaToAsymLalaBatch);
 
-            if (exportJobs.Count > 0) {
+            if (exportJobs.Count > 0)
+            {
 
                 Dictionary<string, string> generationCache = new Dictionary<string, string>();
                 string executable = !string.IsNullOrEmpty(xNormalPathOverride) ? xNormalPathOverride
@@ -330,14 +412,18 @@ namespace FFXIVLooseTextureCompiler {
                 ProcessStartInfo processStartInfo = new ProcessStartInfo(@"""" + executable + @"""");
                 processStartInfo.UseShellExecute = true;
                 processStartInfo.Arguments = "";
-                if (!Directory.Exists(userDataPath)) {
+                if (!Directory.Exists(userDataPath))
+                {
                     Directory.CreateDirectory(userDataPath);
                 }
-                foreach (XNormalExportJob xNormalExportJob in exportJobs) {
-                    if (!generationCache.ContainsKey(xNormalExportJob.OutputTexturePath)) {
+                foreach (XNormalExportJob xNormalExportJob in exportJobs)
+                {
+                    if (!generationCache.ContainsKey(xNormalExportJob.OutputTexturePath))
+                    {
                         string path = userDataPath + xNormalExportJob.OutputXMLPath;
                         processStartInfo.Arguments += @"""" + path + @""" ";
-                        using (StreamWriter writer = new StreamWriter(path)) {
+                        using (StreamWriter writer = new StreamWriter(path))
+                        {
                             writer.Write(string.Format(xmlFile,
                             CleanXmlEscapeSequences(Path.Combine(!string.IsNullOrEmpty(basePathOverride)
                             ? basePathOverride : AppDomain.CurrentDomain.BaseDirectory, xNormalExportJob.InputModel)),
@@ -351,23 +437,22 @@ namespace FFXIVLooseTextureCompiler {
                         generationCache.Add(xNormalExportJob.OutputTexturePath, xNormalExportJob.OutputTexturePath);
                     }
                 }
-                if (exportJobs.Count > 0) {
+                if (exportJobs.Count > 0)
+                {
                     LastArguments = processStartInfo.Arguments = processStartInfo.Arguments.Trim();
                     Process process = Process.Start(processStartInfo);
                     process.WaitForExit();
 
-                    string failures = "";
-                    foreach (XNormalExportJob xNormalExportJob in exportJobs) {
-                        string path = Path.Combine(userDataPath, xNormalExportJob.OutputXMLPath);
-                        string comparisonString = !xNormalExportJob.OutputTexturePath.Contains("baseTexBaked") ?
-                            ImageManipulation.AddSuffix(xNormalExportJob.OutputTexturePath, "_baseTexBaked.") :
-                            xNormalExportJob.OutputTexturePath;
-                        if (!File.Exists(comparisonString)) {
-                            failures += xNormalExportJob.OutputTexturePath + "\r\n Compared using " + comparisonString + "\r\n\r\n";
-                        }
+                    // Bibo and Gen3 to Gen2 dont need XNormal
+                    foreach (var item in biboToGen2Batch)
+                    {
+                        TexIO.SaveBitmap(ImageManipulation.CutInHalf(TexIO.ResolveBitmap(item.InputTexturePath)), ImageManipulation.AddSuffix(item.OutputTexturePath, "_baseTexBaked"));
                     }
-                    if (!string.IsNullOrEmpty(failures)) {
-                        //MessageBox.Show("/xXNormal failed to generate the following:\r\n" + failures);
+                    foreach (var item in gen3ToGen2Batch)
+                    {
+                        TexIO.SaveBitmap(ImageManipulation.CutInHalf(TexIO.ResolveBitmap(
+                            ImageManipulation.AddSuffix(item.OutputTexturePath.Replace("gen2", "bibo"), "_baseTexBaked"))),
+                            ImageManipulation.AddSuffix(item.OutputTexturePath, "_baseTexBaked"));
                     }
                 }
             }
@@ -385,7 +470,8 @@ namespace FFXIVLooseTextureCompiler {
             vanillaLalaToOtopopBatch?.Clear();
             vanillaLalaToAsymLalaBatch?.Clear();
         }
-        public static string CleanXmlEscapeSequences(string input) {
+        public static string CleanXmlEscapeSequences(string input)
+        {
             return input.Replace("&", @"&#38;").Replace("'", @"&#39;").Replace("'", @"&#39;")
                 .Replace("<", @"&#60;").Replace(">", @"&#62;").Replace(@"""", @"&#34");
         }

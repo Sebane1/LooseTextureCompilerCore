@@ -461,7 +461,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             {
                 if (File.Exists(file))
                 {
-                    using (FileStream stream = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.None))
+                    using (FileStream stream = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read))
                     {
                         stream.Close();
                     }
