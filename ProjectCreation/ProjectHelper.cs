@@ -23,6 +23,7 @@ namespace LooseTextureCompilerCore.ProjectCreation
         static string[] _faceTypes = new string[] { "Face 1", "Face 2", "Face 3", "Face 4", "Face 5", "Face 6", "Face 7", "Face 8", "Face 9" };
         static string[] _faceParts = new string[] { "Face", "Eyebrows", "Eyes", "Ears", "Face Paint", "Hair", "Face B", "Etc B" };
         static string[] _faceScales = new string[] { "Vanilla Scales", "Scaleless Vanilla", "Scaleless Varied" };
+
         public static void ExportJson(string jsonFilePath)
         {
             string jsonText = @"{
@@ -116,6 +117,10 @@ namespace LooseTextureCompilerCore.ProjectCreation
             }
         }
 
+        public static TextureSet CreateBodyTextureSet(Genders gender, BodyType baseBody, RaceInfo.RaceTypes race, int tail, bool uniqueAuRa = false)
+        {
+            return CreateBodyTextureSet((int)gender, (int)baseBody, (int)race, tail, uniqueAuRa);
+        }
         public static TextureSet CreateBodyTextureSet(int gender, int baseBody, int race, int tail, bool uniqueAuRa = false)
         {
             TextureSet textureSet = new TextureSet();
@@ -125,33 +130,39 @@ namespace LooseTextureCompilerCore.ProjectCreation
             AddBodyPaths(textureSet, gender, baseBody, race, tail, uniqueAuRa);
             return textureSet;
         }
+        public static TextureSet CreateFaceTextureSet(FaceTypes faceType, FaceParts facePart, int faceExtra,
+    Genders gender, RaceInfo.RaceTypes race, RaceInfo.SubRaceTypes subRace, FaceScales auraScales, bool asym)
+        {
+            return CreateFaceTextureSet((int)faceType, (int)facePart, faceExtra, (int)gender, (int)race, (int)subRace, (int)auraScales, asym);
+        }
 
-        public static TextureSet CreateFaceTextureSet(int faceType, int facePart, int faceExtra, int gender, int race, int subRace, int auraScales, bool asym)
+        public static TextureSet CreateFaceTextureSet(int faceType, int facePart, int faceExtra,
+            int gender, int race, int subRace, int auraScales, bool asym)
         {
             TextureSet textureSet = new TextureSet();
-            textureSet.TextureSetName = _faceParts[facePart] + (facePart == 4 ? " "
-                + (faceExtra + 1) : "") + ", " + (facePart != 4 ? _genders[gender] : "Unisex")
-                + ", " + (facePart != 4 ? RaceInfo.SubRaces[subRace] : "Multi Race") + ", "
-                + (facePart != 4 ? _faceTypes[faceType] : "Multi Face");
+            textureSet.TextureSetName = _faceParts[(int)facePart] + ((int)facePart == 4 ? " "
+                + (faceExtra + 1) : "") + ", " + ((int)facePart != 4 ? _genders[(int)gender] : "Unisex")
+                + ", " + ((int)facePart != 4 ? RaceInfo.SubRaces[(int)subRace] : "Multi Race") + ", "
+                + ((int)facePart != 4 ? _faceTypes[(int)faceType] : "Multi Face");
             switch (facePart)
             {
                 default:
-                    AddFacePaths(textureSet, subRace, facePart, faceType, gender, auraScales, asym);
+                    AddFacePaths(textureSet, (int)subRace, (int)facePart, (int)faceType, (int)gender, (int)auraScales, asym);
                     break;
                 case 2:
-                    AddEyePaths(textureSet, subRace, faceType, gender, auraScales, asym);
+                    AddEyePaths(textureSet, (int)subRace, (int)faceType, (int)gender, (int)auraScales, asym);
                     break;
                 case 4:
                     AddDecalPath(textureSet, faceExtra);
                     break;
                 case 5:
-                    AddHairPaths(textureSet, gender, facePart, faceExtra, race, subRace);
+                    AddHairPaths(textureSet, (int)gender, (int)facePart, faceExtra, (int)race, (int)subRace);
                     break;
             }
             textureSet.IgnoreMultiGeneration = true;
             if (facePart == 0)
             {
-                BackupTexturePaths.AddFaceBackupPaths(gender, subRace, faceExtra, textureSet);
+                BackupTexturePaths.AddFaceBackupPaths((int)gender, (int)subRace, faceExtra, textureSet);
             }
             return textureSet;
         }
@@ -202,6 +213,34 @@ namespace LooseTextureCompilerCore.ProjectCreation
 
             textureSet.InternalMaskPath = RacePaths.GetFacePath(2, gender, subrace,
             facePart, faceType, auraScales, asym);
+        }
+        public enum ChoiceTypes
+        {
+            Detailed = 0, Simple = 1, Dropdown = 2, GroupIsCheckbox = 3
+        }
+        public enum BodyType
+        {
+            VanillaAndGen2 = 0, BiboPlus = 1, Gen3 = 2, TBSEAndHRBODY = 3, TAIL = 4, Otopop = 5
+        }
+
+        public enum Genders
+        {
+            Masculine = 0, Feminine = 1
+        }
+
+        public enum FaceTypes
+        {
+            Face1 = 0, Face2 = 1, Face3 = 2, Face4 = 3, Face5 = 4, Face6 = 5, Face7 = 6, Face8 = 7, Face9 = 8
+        }
+
+        public enum FaceParts
+        {
+            Face = 0, Eyebrows = 1, Eyes = 2, Ears = 3, FacePaint = 4, Hair = 5, FaceB = 6, EtcB = 7
+        }
+
+        public enum FaceScales
+        {
+            VanillaScales = 0, ScalelessVanilla = 1, ScalelessVaried = 2
         }
     }
 }
