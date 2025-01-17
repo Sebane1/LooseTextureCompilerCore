@@ -182,7 +182,25 @@ namespace LooseTextureCompilerCore.ProjectCreation
         {
             textureSet.InternalBasePath = RacePaths.GetFaceTexturePath(faceExtra);
         }
-
+        public static void ExportProject(string path, string name, List<TextureSet> exportTextureSets, TextureProcessor textureProcessor, string xNormalPath = "", int generationType = 3, bool generateNormals = false, bool generateMulti = false, bool finalize = true)
+        {
+            List<TextureSet> textureSets = new List<TextureSet>();
+            string jsonFilepath = Path.Combine(path, "default_mod.json");
+            string metaFilePath = Path.Combine(path, "meta.json");
+            foreach (TextureSet item in exportTextureSets)
+            {
+                if (item.OmniExportMode)
+                {
+                    UniversalTextureSetCreator.ConfigureTextureSet(item);
+                }
+                textureSets.Add(item);
+            }
+            Directory.CreateDirectory(path);
+            textureProcessor.CleanGeneratedAssets(path);
+            textureProcessor.Export(textureSets, new Dictionary<string, int>(), path, generationType, generateNormals, generateMulti, File.Exists(xNormalPath) && finalize, xNormalPath);
+            ProjectHelper.ExportJson(jsonFilepath);
+            ProjectHelper.ExportMeta(metaFilePath, name);
+        }
         private static void AddHairPaths(TextureSet textureSet, int gender, int facePart, int faceExtra, int race, int subrace)
         {
             textureSet.TextureSetName = _faceParts[facePart] + " " + (faceExtra + 1)
