@@ -131,7 +131,7 @@ namespace LooseTextureCompilerCore.ProjectCreation
             return textureSet;
         }
         public static TextureSet CreateFaceTextureSet(FaceTypes faceType, FaceParts facePart, int faceExtra,
-    Genders gender, RaceInfo.RaceTypes race, RaceInfo.SubRaceTypes subRace, FaceScales auraScales, bool asym)
+        Genders gender, RaceInfo.RaceTypes race, RaceInfo.SubRaceTypes subRace, FaceScales auraScales, bool asym)
         {
             return CreateFaceTextureSet((int)faceType, (int)facePart, faceExtra, (int)gender, (int)race, (int)subRace, (int)auraScales, asym);
         }
@@ -182,7 +182,8 @@ namespace LooseTextureCompilerCore.ProjectCreation
         {
             textureSet.InternalBasePath = RacePaths.GetFaceTexturePath(faceExtra);
         }
-        public static void ExportProject(string path, string name, List<TextureSet> exportTextureSets, TextureProcessor textureProcessor, string xNormalPath = "", int generationType = 3, bool generateNormals = false, bool generateMulti = false, bool finalize = true)
+        public static void ExportProject(string path, string name, List<TextureSet> exportTextureSets, TextureProcessor textureProcessor, 
+            string xNormalPath = "", int generationType = 3, bool generateNormals = false, bool generateMulti = false, bool finalize = true)
         {
             List<TextureSet> textureSets = new List<TextureSet>();
             string jsonFilepath = Path.Combine(path, "default_mod.json");
