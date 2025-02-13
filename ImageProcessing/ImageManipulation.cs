@@ -59,7 +59,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 return UVMapType.Normal;
             } else if (uvMapTest.B == 152 && uvMapTest2.B == 152) {
                 return UVMapType.Mask;
-            } else if (uvMapTest.B < 5 && uvMapTest2.B < 5 && uvMapTest.R < 5 && uvMapTest2.R < 5 && uvMapTest.G < 5 && uvMapTest2.G < 5) {
+            }
+            else if ((uvMapTest.A > 50 && uvMapTest2.A > 50) && uvMapTest.B < 5 && uvMapTest2.B < 5 && uvMapTest.R < 5 && uvMapTest2.R < 5 && uvMapTest.G < 5 && uvMapTest2.G < 5)
+            {
                 return UVMapType.Glow;
             } else {
                 return UVMapType.Base;
