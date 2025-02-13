@@ -166,7 +166,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             }
             string path = !string.IsNullOrEmpty(_baseTexture) ? _baseTexture : (_baseOverlays.Count > 0 ? _baseOverlays[0] : "");  
             if (!string.IsNullOrEmpty(path)) {
-                return Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(path, _baseOverlays) + ".png");
+                return Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(path, _baseOverlays) + "_temp.png");
             }
             return "";
         }
@@ -176,7 +176,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             }
             string path = !string.IsNullOrEmpty(_normal) ? _normal : (_normalOverlays.Count > 0 ? _normalOverlays[0] : "");
             if (!string.IsNullOrEmpty(path)) {
-                return Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(path, _normalOverlays) + ".png");
+                return Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(path, _normalOverlays) + "_temp.png");
             }
             return "";
         }
@@ -186,9 +186,20 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             }
             string path = !string.IsNullOrEmpty(_mask) ? _mask : (_maskOverlays.Count > 0 ? _maskOverlays[0] : "");
             if (!string.IsNullOrEmpty(path)) {
-                return Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(path, _maskOverlays) + ".png");
+                return Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(path, _maskOverlays) + "_temp.png");
             }
             return "";
+        }
+        public void CleanTempFiles() {
+            if (File.Exists(FinalBase)) {
+                File.Delete(FinalBase);
+            }
+            if (File.Exists(FinalNormal)) {
+                File.Delete(FinalNormal);
+            }
+            if (File.Exists(FinalMask)) {
+                File.Delete(FinalMask);
+            }
         }
     }
 }

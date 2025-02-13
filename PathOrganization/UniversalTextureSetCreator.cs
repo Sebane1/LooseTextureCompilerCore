@@ -186,6 +186,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 destinationTextureSet.IgnoreNormalGeneration = baseTextureSet.IgnoreNormalGeneration;
                 destinationTextureSet.IgnoreMaskGeneration = baseTextureSet.IgnoreMaskGeneration;
                 destinationTextureSet.InvertNormalGeneration = baseTextureSet.InvertNormalGeneration;
+                destinationTextureSet.Material = baseTextureSet.Material;
             }
         }
 
