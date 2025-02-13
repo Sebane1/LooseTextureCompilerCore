@@ -103,7 +103,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             for (int y = 0; y < file.Height; y++) {
                 for (int x = 0; x < file.Width; x++) {
                     Color sourcePixel = source.GetPixel(x, y);
-                    if (sourcePixel.A > 5 && (sourcePixel.R > 5 || sourcePixel.G > 5 || sourcePixel.B > 5)) {
+                    if (sourcePixel.A > 20 && (sourcePixel.R > 50 || sourcePixel.G > 50 || sourcePixel.B > 50)) {
                         int value = sourcePixel.ToArgb();
                         if (!colours.ContainsKey(value)) {
                             colours[value] = 1;
