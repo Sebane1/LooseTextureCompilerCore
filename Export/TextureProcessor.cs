@@ -480,7 +480,7 @@ namespace FFXIVLooseTextureCompiler {
                 && !string.IsNullOrEmpty(textureSet.InternalMaterialPath))
                 || !string.IsNullOrEmpty(textureSet.Glow)) {
                 if (!skipMaterialExport) {
-                    if (!materialDiskPath.Contains(materialDiskPath)) {
+                    if (!_mtrlCache.ContainsKey(materialDiskPath)) {
                         _mtrlCache[materialDiskPath] = textureSet;
                         Task.Run(() => {
                             try {
