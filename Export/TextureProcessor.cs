@@ -166,6 +166,7 @@ namespace FFXIVLooseTextureCompiler {
                 _normalCache?.Clear();
                 _maskCache?.Clear();
                 _glowCache?.Clear();
+                _mtrlCache?.Clear();
                 _xnormalCache?.Clear();
                 _redirectionCache?.Clear();
                 _normalCache = new Dictionary<string, Bitmap>();
@@ -477,55 +478,60 @@ namespace FFXIVLooseTextureCompiler {
                 && !string.IsNullOrEmpty(textureSet.InternalMaterialPath))
                 || !string.IsNullOrEmpty(textureSet.Glow)) {
                 if (!skipMaterialExport) {
-                    Task.Run(() => {
-                        try {
-                            Directory.CreateDirectory(Path.GetDirectoryName(materialDiskPath));
-                            string value = !string.IsNullOrEmpty(textureSet.Material) ?
-                            textureSet.Material :
-                            Path.Combine((!string.IsNullOrEmpty(BasePath) ? BasePath :
-                            AppDomain.CurrentDomain.BaseDirectory),
-                            textureSet.InternalBasePath.Contains("eye") ?
-                            @"res\materials\eye_glow.mtrl"
-                            : @"res\materials\skin_glow.mtrl");
+                    if (!materialDiskPath.Contains(materialDiskPath)) {
+                        Task.Run(() => {
+                            try {
+                                Directory.CreateDirectory(Path.GetDirectoryName(materialDiskPath));
+                                string value = !string.IsNullOrEmpty(textureSet.Material) ?
+                                textureSet.Material :
+                                Path.Combine((!string.IsNullOrEmpty(BasePath) ? BasePath :
+                                AppDomain.CurrentDomain.BaseDirectory),
+                                textureSet.InternalBasePath.Contains("eye") ?
+                                @"res\materials\eye_glow.mtrl"
+                                : @"res\materials\skin_glow.mtrl");
 
-                            // Read donor .mtrl file
-                            var data = File.ReadAllBytes(value);
-                            MtrlFile mtrlFile = new MtrlFile(data);
-                            int index = 0;
+                                // Read donor .mtrl file
+                                var data = File.ReadAllBytes(value);
+                                MtrlFile mtrlFile = new MtrlFile(data);
+                                int index = 0;
 
-                            // Set texture paths on material.
-                            if (!string.IsNullOrEmpty(textureSet.InternalBasePath)) {
-                                mtrlFile.Textures[index++].Path = textureSet.InternalBasePath;
-                            }
-                            mtrlFile.Textures[index++].Path = textureSet.InternalNormalPath;
-                            mtrlFile.Textures[index++].Path = textureSet.InternalMaskPath;
+                                // Set texture paths on material.
+                                if (!string.IsNullOrEmpty(textureSet.InternalBasePath)) {
+                                    mtrlFile.Textures[index++].Path = textureSet.InternalBasePath;
+                                }
+                                mtrlFile.Textures[index++].Path = textureSet.InternalNormalPath;
+                                mtrlFile.Textures[index++].Path = textureSet.InternalMaskPath;
 
-                            if (!string.IsNullOrEmpty(textureSet.Glow)) {
-                                // Get emmisive values
-                                MtrlFile.Constant constant = new MtrlFile.Constant();
-                                foreach (var item in mtrlFile.ShaderPackage.Constants) {
-                                    if (item.Id == 0x38A64362) {
-                                        Color colour = ImageManipulation.CalculateMajorityColour(GetMergedBitmap(textureSet.Glow));
-                                        constant = item;
-                                        var constantValue = mtrlFile.GetConstantValue<float>(constant);
+                                if (!string.IsNullOrEmpty(textureSet.Glow)) {
+                                    // Get emmisive values
+                                    MtrlFile.Constant constant = new MtrlFile.Constant();
+                                    foreach (var item in mtrlFile.ShaderPackage.Constants) {
+                                        if (item.Id == 0x38A64362) {
+                                            Color colour = ImageManipulation.CalculateMajorityColour(GetMergedBitmap(textureSet.Glow));
+                                            constant = item;
+                                            var constantValue = mtrlFile.GetConstantValue<float>(constant);
 
-                                        // Set emmisive colour RGB
-                                        constantValue[0] = (float)colour.R / 255f;
-                                        constantValue[1] = (float)colour.G / 255f;
-                                        constantValue[2] = (float)colour.B / 255f;
-                                        break;
+                                            // Set emmisive colour RGB
+                                            constantValue[0] = (float)colour.R / 255f;
+                                            constantValue[1] = (float)colour.G / 255f;
+                                            constantValue[2] = (float)colour.B / 255f;
+                                            break;
+                                        }
                                     }
                                 }
+                                while (TexIO.IsFileLocked(materialDiskPath)) {
+                                    Thread.Sleep(1000);
+                                }
+                                File.WriteAllBytes(materialDiskPath, mtrlFile.Write());
+                                _mtrlCache[materialDiskPath] = textureSet;
+                            } catch (Exception e) {
+                                OnError?.Invoke(this, e.Message);
                             }
-                            while (TexIO.IsFileLocked(materialDiskPath)){
-                                Thread.Sleep(1000);
-                            }
-                            File.WriteAllBytes(materialDiskPath, mtrlFile.Write());
-                        } catch (Exception e) {
-                            OnError?.Invoke(this, e.Message);
-                        }
+                            OnProgressChange?.Invoke(this, EventArgs.Empty);
+                        });
+                    } else {
                         OnProgressChange?.Invoke(this, EventArgs.Empty);
-                    });
+                    }
                     outputGenerated = true;
                 }
             }
@@ -757,9 +763,6 @@ namespace FFXIVLooseTextureCompiler {
                     Graphics g = Graphics.FromImage(underlay);
                     g.Clear(Color.FromArgb(255, 160, 113, 94));
                     if (!string.IsNullOrEmpty(baseTextureNormal)) {
-                        //g.CompositingQuality = CompositingQuality.HighQuality;
-                        //g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                        //g.SmoothingMode = SmoothingMode.HighQuality;
                         g.DrawImage(TexIO.ResolveBitmap(baseTextureNormal), 0, 0, bitmap.Width, bitmap.Height);
                     }
                     MapWriting.TransplantData(underlay, bitmap).Save(stream, ImageFormat.Png);
@@ -835,9 +838,6 @@ namespace FFXIVLooseTextureCompiler {
                                     layeringImage));
                                 Graphics g = Graphics.FromImage(image);
                                 g.Clear(Color.Transparent);
-                                //g.CompositingQuality = CompositingQuality.HighQuality;
-                                //g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                                //g.SmoothingMode = SmoothingMode.HighQuality;
                                 g.DrawImage(layer, 0, 0, bitmap.Width, bitmap.Height);
                                 g.DrawImage(GetMergedBitmap(inputFile), 0, 0, bitmap.Width, bitmap.Height);
                             } else {
