@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -174,6 +175,7 @@ namespace FFXIVLooseTextureCompiler {
                 _glowCache = new Dictionary<string, Bitmap>();
                 _xnormalCache = new Dictionary<string, string>();
                 _redirectionCache = new Dictionary<string, TextureSet>();
+                _mtrlCache = new Dictionary<string, TextureSet>();
                 _xnormal = new XNormal();
                 _xnormal.XNormalPathOverride = xNormalPathOverride;
                 _xnormal.BasePathOverride = _basePath;
@@ -479,6 +481,7 @@ namespace FFXIVLooseTextureCompiler {
                 || !string.IsNullOrEmpty(textureSet.Glow)) {
                 if (!skipMaterialExport) {
                     if (!materialDiskPath.Contains(materialDiskPath)) {
+                        _mtrlCache[materialDiskPath] = textureSet;
                         Task.Run(() => {
                             try {
                                 Directory.CreateDirectory(Path.GetDirectoryName(materialDiskPath));
@@ -519,11 +522,12 @@ namespace FFXIVLooseTextureCompiler {
                                         }
                                     }
                                 }
-                                while (TexIO.IsFileLocked(materialDiskPath)) {
+                                Stopwatch timeoutTimer = new Stopwatch();
+                                timeoutTimer.Start();
+                                while (TexIO.IsFileLocked(materialDiskPath) && timeoutTimer.ElapsedMilliseconds < 30000) {
                                     Thread.Sleep(1000);
                                 }
                                 File.WriteAllBytes(materialDiskPath, mtrlFile.Write());
-                                _mtrlCache[materialDiskPath] = textureSet;
                             } catch (Exception e) {
                                 OnError?.Invoke(this, e.Message);
                             }
