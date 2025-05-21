@@ -1,3 +1,4 @@
+using LooseTextureCompilerCore;
 using Lumina.Data.Files;
 using OtterTex;
 using Penumbra.LTCImport.Dds;
@@ -413,7 +414,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                 {
                     ProcessStartInfo info = new ProcessStartInfo
                     {
-                        FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "optipng.exe"),
+                        FileName = Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "optipng.exe"),
                         Arguments = "-clobber " + @"""" + file + @"""",
                         WorkingDirectory = rootDirectory,
                         UseShellExecute = false

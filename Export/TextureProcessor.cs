@@ -11,6 +11,7 @@ using FFXIVLooseTextureCompiler.ImageProcessing;
 using FFXIVLooseTextureCompiler.PathOrganization;
 using FFXIVLooseTextureCompiler.Racial;
 using FFXIVVoicePackCreator.Json;
+using LooseTextureCompilerCore;
 using Newtonsoft.Json;
 using Penumbra.GameData.Files;
 using Penumbra.LTCImport.Dds;
@@ -45,7 +46,7 @@ namespace FFXIVLooseTextureCompiler {
         public string BasePath { get => _basePath; set => _basePath = value; }
 
         public TextureProcessor(string basePath = null) {
-            _basePath = !string.IsNullOrEmpty(basePath) ? basePath : AppDomain.CurrentDomain.BaseDirectory;
+            _basePath = !string.IsNullOrEmpty(basePath) ? basePath : GlobalPathStorage.OriginalBaseDirectory;
             OnProgressChange += delegate {
                 _exportCompletion++;
             };
@@ -545,7 +546,7 @@ namespace FFXIVLooseTextureCompiler {
                                 string value = !string.IsNullOrEmpty(textureSet.Material) ?
                                 textureSet.Material :
                                 Path.Combine((!string.IsNullOrEmpty(BasePath) ? BasePath :
-                                AppDomain.CurrentDomain.BaseDirectory),
+                                GlobalPathStorage.OriginalBaseDirectory),
                                 textureSet.InternalBasePath.Contains("eye") ?
                                 @"res\materials\eye_glow.mtrl"
                                 : @"res\materials\skin_glow.mtrl");

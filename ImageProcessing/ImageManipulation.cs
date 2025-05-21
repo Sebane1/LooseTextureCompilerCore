@@ -1,11 +1,13 @@
 using FFXIVLooseTextureCompiler.Export;
 using KVImage;
+using LooseTextureCompilerCore;
 using LooseTextureCompilerCore.Export;
 using Lumina.Data.Files;
 using Penumbra.GameData.Files.Utility;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Numerics;
@@ -501,9 +503,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public static Bitmap BitmapToEyeMulti(Bitmap image, string baseDirectory = null) {
             string gloss = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
-                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\gloss.png");
+                : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\gloss.png");
             string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
-                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\template.png");
+                : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\template.png");
             Bitmap canvas = new Bitmap(image.Width, image.Height, PixelFormat.Format32bppArgb);
             Bitmap newEye = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 1.0f, 1.1f, 1);
 
@@ -523,7 +525,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public static Bitmap BitmapToEyeMultiDawntrail(Bitmap image, bool scaleTexture, string baseDirectory = null) {
             int enforcedSize = 2048;
             string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
-                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\multi.png");
+                : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\multi.png");
             Bitmap canvas = new Bitmap(enforcedSize, enforcedSize, PixelFormat.Format32bppArgb);
             Bitmap newEye = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 0.8f, 1.5f, 1);
 
@@ -553,7 +555,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public static Bitmap BitmapToEyeBaseDawntrail(Bitmap image, bool scaleTexture, string baseDirectory = null) {
             int enforcedSize = 2048;
             string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
-                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\diffuse.png");
+                : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\diffuse.png");
             Bitmap canvas = new Bitmap(enforcedSize, enforcedSize, PixelFormat.Format32bppArgb);
             Bitmap newEye = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 1.0f, 1.1f, 1);
 
@@ -780,21 +782,21 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             switch (value) {
                 case BodyUVType.Bibo:
                     underlayDifferentiator = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory :
-                    AppDomain.CurrentDomain.BaseDirectory,
+                    GlobalPathStorage.OriginalBaseDirectory,
                     (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[0].Normal :
                     (!raen ? skinType.BackupTextures[0].Base : skinType.BackupTextures[0].BaseSecondary)
                     ) : ("res\\textures\\bibo\\bibo\\" + mapName)));
                     break;
                 case BodyUVType.Gen3:
                     underlayDifferentiator = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory :
-                    AppDomain.CurrentDomain.BaseDirectory,
+                    GlobalPathStorage.OriginalBaseDirectory,
                     (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[1].Normal :
                     (!raen ? skinType.BackupTextures[1].Base : skinType.BackupTextures[1].BaseSecondary)
                     ) : ("res\\textures\\gen3\\gen3\\" + mapName)));
                     break;
                 case BodyUVType.Gen2:
                     underlayDifferentiator = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory :
-                    AppDomain.CurrentDomain.BaseDirectory,
+                    GlobalPathStorage.OriginalBaseDirectory,
                     (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[2].Normal :
                     (!raen ? skinType.BackupTextures[2].Base : skinType.BackupTextures[2].BaseSecondary)
                     ) : ("res\\textures\\gen3\\gen2\\" + mapName)));
@@ -892,7 +894,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public static Bitmap ImageToCatchlightLegacy(Bitmap file, string baseDirectory = null) {
             string catchlightTemplate = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
-                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\catchlight.png");
+                : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\catchlight.png");
             Bitmap catchlight = Brightness.BrightenImage(Grayscale.MakeGrayscale(file), 0.6f, 1.5f, 1);
             Graphics graphics = Graphics.FromImage(catchlight);
             graphics.DrawImage(new Bitmap(new Bitmap(catchlightTemplate), catchlight.Width, catchlight.Height), 0, 0);
@@ -902,7 +904,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public static Bitmap ImageToEyeNormal(Bitmap file, string baseDirectory = null) {
             Bitmap newFile = TexIO.NewBitmap(file);
             string normalTemplate = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
-                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\normal.png");
+                : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\normal.png");
             Bitmap normal = Normal.Calculate(InvertImage(Brightness.BrightenImage(Grayscale.MakeGrayscale(newFile), 0.8f, 1.5f, 1)));
             Graphics graphics = Graphics.FromImage(normal);
             graphics.DrawImage(new Bitmap(new Bitmap(normalTemplate), file.Width, file.Height), 0, 0);
@@ -995,7 +997,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         private static Bitmap ImageToEyeNormalDawntrail(Bitmap image, bool scaleTexture, string baseDirectory) {
             int enforcedSize = 2048;
             string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
-                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\normaldt.png");
+                : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\normaldt.png");
             Bitmap canvas = new Bitmap(enforcedSize, enforcedSize, PixelFormat.Format32bppArgb);
             Bitmap normal = Normal.Calculate(InvertImage(Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 0.8f, 1.5f, 1)));
 
@@ -1092,8 +1094,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static void CreateContact(string baseBath, string path) {
-            string input = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res\\model\\eyes\\eye_map_baking\\EyeInputLayout.fbx");
-            string output = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res\\model\\eyes\\eye_map_baking\\EyeOutputLayout.fbx");
+            string input = Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "res\\model\\eyes\\eye_map_baking\\EyeInputLayout.fbx");
+            string output = Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "res\\model\\eyes\\eye_map_baking\\EyeOutputLayout.fbx");
             XNormal.CallXNormal(input, output, path, ImageManipulation.AddSuffix(path, "_contactBase"), false, 2048, 2048, false);
         }
 
@@ -1128,9 +1130,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
         }
         public static void ConvertLegacyAuRaTail(string inputTexture, int tailNumber, bool gender, string baseDirectory = "") {
-            string pathInput = Path.Combine(string.IsNullOrEmpty(baseDirectory) ? AppDomain.CurrentDomain.BaseDirectory : baseDirectory,
+            string pathInput = Path.Combine(string.IsNullOrEmpty(baseDirectory) ? GlobalPathStorage.OriginalBaseDirectory : baseDirectory,
                 $"res\\model\\tail\\input\\{(gender ? "AuRa_Female" : "AuRa_Male")}\\{tailNumber}\\3D\\c1401t000{tailNumber}_til.fbx");
-            string outputInput = Path.Combine(string.IsNullOrEmpty(baseDirectory) ? AppDomain.CurrentDomain.BaseDirectory : baseDirectory,
+            string outputInput = Path.Combine(string.IsNullOrEmpty(baseDirectory) ? GlobalPathStorage.OriginalBaseDirectory : baseDirectory,
                 $"res\\model\\tail\\output\\{(gender ? "AuRa_Female" : "AuRa_Male")}\\{tailNumber}\\3D\\c1401t000{tailNumber}_til.fbx");
             XNormal.CallXNormal(pathInput, outputInput, inputTexture, ImageManipulation.AddSuffix(inputTexture, "_dawntrail"), false, 1024, 2048, true);
         }
