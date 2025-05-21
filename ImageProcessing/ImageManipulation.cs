@@ -59,9 +59,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 return UVMapType.Normal;
             } else if (uvMapTest.B == 152 && uvMapTest2.B == 152) {
                 return UVMapType.Mask;
-            }
-            else if ((uvMapTest.A > 50 && uvMapTest2.A > 50) && uvMapTest.B < 5 && uvMapTest2.B < 5 && uvMapTest.R < 5 && uvMapTest2.R < 5 && uvMapTest.G < 5 && uvMapTest2.G < 5)
-            {
+            } else if ((uvMapTest.A > 50 && uvMapTest2.A > 50) && uvMapTest.B < 5 && uvMapTest2.B < 5 && uvMapTest.R < 5 && uvMapTest2.R < 5 && uvMapTest.G < 5 && uvMapTest2.G < 5) {
                 return UVMapType.Glow;
             } else {
                 return UVMapType.Base;
@@ -724,6 +722,42 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             destination.UnlockBits();
             return image;
         }
+        //public static Image<Rgba32> MergeAlphaToRGB(Bitmap alpha, Bitmap rgb) {
+        //    Bitmap image = TexIO.NewBitmap(rgb.Width, rgb.Height);
+        //    Graphics.FromImage(image).Clear(Color.Transparent);
+        //    LockBitmap destination = new LockBitmap(image);
+        //    LockBitmap alphaBits = new LockBitmap(alpha);
+        //    LockBitmap rgbBits = new LockBitmap(rgb);
+        //    alphaBits.LockBits();
+        //    rgbBits.LockBits();
+        //    destination.LockBits();
+        //    for (int y = 0; y < image.Height; y++) {
+        //        for (int x = 0; x < image.Width; x++) {
+        //            try {
+        //                Color alphaPixel = new Color();
+        //                try {
+        //                    alphaPixel = alphaBits.GetPixel(x, y);
+        //                } catch {
+
+        //                }
+        //                Color rgbPixel = new Color();
+        //                try {
+        //                    rgbPixel = rgbBits.GetPixel(x, y);
+        //                } catch {
+
+        //                }
+        //                Color col = Color.FromArgb(alphaPixel.R, rgbPixel.R, rgbPixel.G, rgbPixel.B);
+        //                destination.SetPixel(x, y, col);
+        //            } catch {
+        //                break;
+        //            }
+        //        }
+        //    };
+        //    alphaBits.UnlockBits();
+        //    rgbBits.UnlockBits();
+        //    destination.UnlockBits();
+        //    return image;
+        //}
 
         public static Bitmap SeperateTattoo(Bitmap tattoo) {
             Bitmap alphaMap = InvertImage(Brightness.BrightenImage(Grayscale.MakeGrayscale(tattoo), 1, 1.9f));
@@ -747,21 +781,21 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 case BodyUVType.Bibo:
                     underlayDifferentiator = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory :
                     AppDomain.CurrentDomain.BaseDirectory,
-                    (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[0].Normal : 
+                    (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[0].Normal :
                     (!raen ? skinType.BackupTextures[0].Base : skinType.BackupTextures[0].BaseSecondary)
                     ) : ("res\\textures\\bibo\\bibo\\" + mapName)));
                     break;
                 case BodyUVType.Gen3:
                     underlayDifferentiator = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory :
                     AppDomain.CurrentDomain.BaseDirectory,
-                    (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[1].Normal : 
+                    (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[1].Normal :
                     (!raen ? skinType.BackupTextures[1].Base : skinType.BackupTextures[1].BaseSecondary)
                     ) : ("res\\textures\\gen3\\gen3\\" + mapName)));
                     break;
                 case BodyUVType.Gen2:
                     underlayDifferentiator = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory :
                     AppDomain.CurrentDomain.BaseDirectory,
-                    (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[2].Normal : 
+                    (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[2].Normal :
                     (!raen ? skinType.BackupTextures[2].Base : skinType.BackupTextures[2].BaseSecondary)
                     ) : ("res\\textures\\gen3\\gen2\\" + mapName)));
                     break;
@@ -1082,12 +1116,16 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
 
             var outputImage = new Image<Rgba32>(maxX, maxY);
-            foreach (var image in validImages) {
-                image.Mutate(o => o.Resize(new SixLabors.ImageSharp.Size(maxX, maxY)));
-                outputImage.Mutate(o => o.DrawImage(image, new SixLabors.ImageSharp.Point(0, 0), PixelColorBlendingMode.Normal, 1f));
-                image.Dispose();
+            if (validImages.Count > 1) {
+                foreach (var image in validImages) {
+                    image.Mutate(o => o.Resize(new SixLabors.ImageSharp.Size(maxX, maxY)));
+                    outputImage.Mutate(o => o.DrawImage(image, new SixLabors.ImageSharp.Point(0, 0), PixelColorBlendingMode.Normal, 1f));
+                    image.Dispose();
+                }
+                outputImage.SaveAsPng(ouputPath);
+            } else {
+                validImages[0].SaveAsPng(ouputPath);
             }
-            outputImage.SaveAsPng(ouputPath);
         }
         public static void ConvertLegacyAuRaTail(string inputTexture, int tailNumber, bool gender, string baseDirectory = "") {
             string pathInput = Path.Combine(string.IsNullOrEmpty(baseDirectory) ? AppDomain.CurrentDomain.BaseDirectory : baseDirectory,

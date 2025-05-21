@@ -39,6 +39,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private string _material;
         private string _internalMaterialPath;
 
+        Dictionary<string, ulong> _hashes = new Dictionary<string, ulong>();
+
         public string TextureSetName { get => _textureSetName; set => _textureSetName = value; }
 
         #region Obsolete Properties 
@@ -155,6 +157,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public string FinalBase { get => CreateFinalBasePath(); }
         public string FinalNormal { get => CreateFinalNormalPath(); }
         public string FinalMask { get => CreateFinalMaskPath(); }
+        public Dictionary<string, ulong> Hashes { get => _hashes; set => _hashes = value; }
 
         public override string ToString() {
             return _textureSetName + (GroupName != _textureSetName ? $" | Group({_groupName})" : "");
@@ -191,15 +194,18 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             return "";
         }
         public void CleanTempFiles() {
-            if (File.Exists(FinalBase)) {
-                File.Delete(FinalBase);
-            }
-            if (File.Exists(FinalNormal)) {
-                File.Delete(FinalNormal);
-            }
-            if (File.Exists(FinalMask)) {
-                File.Delete(FinalMask);
-            }
+            Task.Run(() => {
+                Thread.Sleep(60000);
+                if (File.Exists(FinalBase)) {
+                    File.Delete(FinalBase);
+                }
+                if (File.Exists(FinalNormal)) {
+                    File.Delete(FinalNormal);
+                }
+                if (File.Exists(FinalMask)) {
+                    File.Delete(FinalMask);
+                }
+            });
         }
     }
 }

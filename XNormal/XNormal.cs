@@ -178,7 +178,7 @@ namespace FFXIVLooseTextureCompiler
                             isNormalMap ? biboLegacy : bibo, count++ + ".xml", isNormalMap, outputSize, outputSize));
                     }
                 }
-                else if (internalPath.Contains("body"))
+                else if (internalPath.Contains("body") || internalPath.Contains("skin_mask"))
                 {
                     if (outputPath.Contains("bibo"))
                     {
