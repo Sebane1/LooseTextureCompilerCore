@@ -4,6 +4,7 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Reflection.Metadata;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using CoenM.ImageHash;
 using CoenM.ImageHash.HashAlgorithms;
@@ -15,10 +16,12 @@ using LooseTextureCompilerCore;
 using Newtonsoft.Json;
 using Penumbra.GameData.Files;
 using Penumbra.LTCImport.Dds;
+using SixLabors.ImageSharp.Drawing;
 using SixLabors.ImageSharp.PixelFormats;
 using static FFXIVLooseTextureCompiler.TextureProcessor;
 using Color = System.Drawing.Color;
 using Group = FFXIVVoicePackCreator.Json.Group;
+using Path = System.IO.Path;
 using Size = System.Drawing.Size;
 
 namespace FFXIVLooseTextureCompiler {
@@ -40,6 +43,7 @@ namespace FFXIVLooseTextureCompiler {
         string _basePath = "";
         int _exportCompletion = 0;
         private int _exportMax;
+        private DifferenceHash _hashAlgorithm;
 
         public int ExportMax { get => _exportMax; }
         public int ExportCompletion { get => _exportCompletion; }
@@ -55,6 +59,7 @@ namespace FFXIVLooseTextureCompiler {
         public event EventHandler OnProgressChange;
         public event EventHandler OnStartedProcessing;
         public event EventHandler OnLaunchedXnormal;
+        public event EventHandler<string> OnProgressReport;
         public event EventHandler<string> OnError;
 
         private Bitmap GetMergedBitmap(string file) {
@@ -71,8 +76,11 @@ namespace FFXIVLooseTextureCompiler {
                     Bitmap merged = ImageManipulation.MergeAlphaToRGB(alpha, rgb);
                     TexIO.SaveBitmap(merged, file);
                     try {
-                        File.Delete(path1);
-                        File.Delete(path2);
+                        Task.Run(() => {
+                            Thread.Sleep(5000);
+                            File.Delete(path1);
+                            File.Delete(path2);
+                        });
                     } catch {
 
                     }
@@ -84,66 +92,70 @@ namespace FFXIVLooseTextureCompiler {
             return TexIO.ResolveBitmap(file);
         }
 
+        public ulong CreateHash(string path) {
+            if (_hashAlgorithm == null) {
+                _hashAlgorithm = new DifferenceHash();
+            }
+            OnProgressReport?.Invoke(this, "Preparing " + Path.GetFileNameWithoutExtension(path));
+            var image = TexIO.ResolveBitmap(path);
+            OnProgressReport?.Invoke(this, "Scaling " + Path.GetFileNameWithoutExtension(path));
+            var resized = TexIO.Resize(image, 100, 100);
+            OnProgressReport?.Invoke(this, "Translating " + Path.GetFileNameWithoutExtension(path));
+            var imageSharped = TexIO.BitmapToImageSharp(resized);
+            OnProgressReport?.Invoke(this, "Hashing " + Path.GetFileNameWithoutExtension(path));
+            var hash = _hashAlgorithm.Hash(imageSharped);
+            OnProgressReport?.Invoke(this, "Hash Calculated");
+            return hash;
+        }
         public void BatchTextureSet(TextureSet parent, TextureSet child) {
+            OnProgressReport?.Invoke(this, "XNormal Batch " + parent.TextureSetName);
             if (!string.IsNullOrEmpty(child.FinalBase)) {
-                using var stream = File.OpenRead(parent.FinalBase);
-
                 // Create a hash algorithm
-                var hashAlgorithm = new DifferenceHash();
-                var hash = hashAlgorithm.Hash(TexIO.BitmapToImageSharp(TexIO.ResolveBitmap(parent.FinalBase)));
+                var hash = CreateHash(parent.FinalBase);
 
                 if (!parent.Hashes.ContainsKey(child.FinalBase) || hash != parent.Hashes[child.FinalBase]) {
+                    OnProgressReport?.Invoke(this, "Add To XNormal");
                     AddToXnormalPool(parent, child, XNormalTextureType.Base);
                     if (_finalizeResults) {
                         parent.Hashes[child.FinalBase] = hash;
                     }
                 }
-                stream.Dispose();
             }
             if (!string.IsNullOrEmpty(child.FinalNormal)) {
-                using var stream = File.OpenRead(parent.FinalNormal);
-
                 // Create a hash algorithm
-                var hashAlgorithm = new DifferenceHash();
-                var hash = hashAlgorithm.Hash(TexIO.BitmapToImageSharp(TexIO.ResolveBitmap(parent.FinalNormal)));
+                var hash = CreateHash(parent.FinalNormal);
 
                 if (!parent.Hashes.ContainsKey(child.FinalNormal) || hash != parent.Hashes[child.FinalNormal]) {
+                    OnProgressReport?.Invoke(this, "Add To XNormal");
                     AddToXnormalPool(parent, child, XNormalTextureType.Normal);
                     if (_finalizeResults) {
                         parent.Hashes[child.FinalNormal] = hash;
                     }
                 }
-                stream.Dispose();
             }
             if (!string.IsNullOrEmpty(child.FinalMask)) {
-                using var stream = File.OpenRead(parent.FinalMask);
-
                 // Create a hash algorithm
-                var hashAlgorithm = new DifferenceHash();
-                var hash = hashAlgorithm.Hash(TexIO.BitmapToImageSharp(TexIO.ResolveBitmap(parent.FinalMask)));
+                var hash = CreateHash(parent.FinalMask);
 
                 if (!parent.Hashes.ContainsKey(child.FinalMask) || hash != parent.Hashes[child.FinalMask]) {
+                    OnProgressReport?.Invoke(this, "Add To XNormal");
                     AddToXnormalPool(parent, child, XNormalTextureType.Mask);
                     if (_finalizeResults) {
                         parent.Hashes[child.FinalMask] = hash;
                     }
                 }
-                stream.Dispose();
             }
             if (!string.IsNullOrEmpty(child.Glow)) {
-                using var stream = File.OpenRead(parent.Glow);
-
                 // Create a hash algorithm
-                var hashAlgorithm = new DifferenceHash();
-                var hash = hashAlgorithm.Hash(TexIO.BitmapToImageSharp(TexIO.ResolveBitmap(parent.Glow)));
+                var hash = CreateHash(parent.Glow);
 
                 if (!parent.Hashes.ContainsKey(child.Glow) || hash != parent.Hashes[child.Glow]) {
+                    OnProgressReport?.Invoke(this, "Add To XNormal");
                     AddToXnormalPool(parent, child, XNormalTextureType.Glow);
                     if (_finalizeResults) {
                         parent.Hashes[child.Glow] = hash;
                     }
                 }
-                stream.Dispose();
             }
         }
         public enum XNormalTextureType {
@@ -243,8 +255,9 @@ namespace FFXIVLooseTextureCompiler {
                 Dictionary<string, string> alreadyCalculatedBases = new Dictionary<string, string>();
                 Dictionary<string, string> alreadyCalculatedNormals = new Dictionary<string, string>();
                 Dictionary<string, string> alreadyCalculatedMasks = new Dictionary<string, string>();
-
+                OnProgressReport?.Invoke(this, "Preparing Data");
                 foreach (TextureSet textureSet in textureSetList) {
+                    OnProgressReport?.Invoke(this, "Merging Layers " + textureSet.TextureSetName);
                     if (!alreadyCalculatedBases.ContainsKey(textureSet.FinalBase) &&
                         (!string.IsNullOrEmpty(textureSet.Base) || textureSet.BaseOverlays.Count > 0)) {
                         List<string> images = new List<string>();
@@ -291,7 +304,6 @@ namespace FFXIVLooseTextureCompiler {
                     }
                     OnProgressChange.Invoke(this, EventArgs.Empty);
                 }
-                
                 if (_finalizeResults) {
                     if (OnLaunchedXnormal != null) {
                         OnLaunchedXnormal.Invoke(this, EventArgs.Empty);
@@ -301,6 +313,7 @@ namespace FFXIVLooseTextureCompiler {
                 if (OnStartedProcessing != null) {
                     OnStartedProcessing.Invoke(this, EventArgs.Empty);
                 }
+                OnProgressReport?.Invoke(this, "Export To Penumbra");
                 foreach (List<TextureSet> textureSets in groups.Values) {
                     int choiceOption = groupOptionTypes.ContainsKey(textureSets[0].GroupName)
                     ? (groupOptionTypes[textureSets[0].GroupName] == 0

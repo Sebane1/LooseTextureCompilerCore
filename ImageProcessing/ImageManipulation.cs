@@ -112,7 +112,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         }
                     }
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             int index = 0;
             int lastCount = 0;
@@ -142,7 +143,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         FlattenToThreshold(sourcePixel.B, threshhold));
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -175,7 +177,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         source.SetPixel(x, y, col);
                     }
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -216,7 +219,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     Color col = Color.FromArgb(255, sourcePixel.A, sourcePixel.A, sourcePixel.A);
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -235,7 +239,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         source.SetPixel(x, y, col);
                     }
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -254,7 +259,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     }
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -268,7 +274,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     Color col = Color.FromArgb(255, sourcePixel.R, sourcePixel.R, sourcePixel.R);
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -282,7 +289,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     Color col = Color.FromArgb(255, sourcePixel.G, sourcePixel.G, sourcePixel.G);
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -313,7 +321,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         : (sourcePixel.G < 20 ? sourcePixel.G : 126)), 0, 255), 0);
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -330,7 +339,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         (sourcePixel.G < 20 ? sourcePixel.G : 126), 0, 255), 0);
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -345,7 +355,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     Color col = Color.FromArgb(255, sourcePixel.B, sourcePixel.B, sourcePixel.B);
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -376,7 +387,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         correctionSource.SetPixel(x, y, Color.FromArgb(0, sourcePixel.R, sourcePixel.G, sourcePixel.B));
                     }
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             correctionSource.UnlockBits();
             if (blurResult) {
@@ -413,7 +425,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         correctionSource.SetPixel(x, y, Color.FromArgb(0, sourcePixel.R, sourcePixel.G, sourcePixel.B));
                     }
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             correctionSource.UnlockBits();
             if (blurResult) {
@@ -479,7 +492,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     Color col = Color.FromArgb(255, sourcePixel.A, sourcePixel.A, sourcePixel.A);
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -586,7 +600,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     Color col = Color.FromArgb(sourcePixel.R, sourcePixel.R, sourcePixel.R, sourcePixel.R);
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -613,7 +628,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         Color col = Color.FromArgb(alphaPixel.R, redPixel.R, greenPixel.G, bluePixel.B);
                         destination.SetPixel(x, y, col);
                     }
-                };
+                }
+                ;
             } catch {
                 // Todo send out an error.
             }
@@ -718,7 +734,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         break;
                     }
                 }
-            };
+            }
+            ;
             alphaBits.UnlockBits();
             rgbBits.UnlockBits();
             destination.UnlockBits();
@@ -826,7 +843,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         alphaBits.SetPixel(x, y, col);
                     }
                 }
-            };
+            }
+            ;
             alphaBits.UnlockBits();
         }
         public static Bitmap MergeNormals(string inputFile, Bitmap baseTexture, Bitmap canvasImage, Bitmap normalMask, string baseTextureNormal) {
@@ -1045,7 +1063,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 } else {
                     break;
                 }
-            };
+            }
+            ;
             source.UnlockBits();
         }
         public static void EraseSection(Bitmap bitmap, Vector2 startPoint, Vector2 size) {
@@ -1061,7 +1080,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         }
                     }
                 }
-            };
+            }
+            ;
             source.UnlockBits();
         }
 

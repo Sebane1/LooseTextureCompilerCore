@@ -195,15 +195,19 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         }
         public void CleanTempFiles() {
             Task.Run(() => {
-                Thread.Sleep(60000);
-                if (File.Exists(FinalBase)) {
-                    File.Delete(FinalBase);
-                }
-                if (File.Exists(FinalNormal)) {
-                    File.Delete(FinalNormal);
-                }
-                if (File.Exists(FinalMask)) {
-                    File.Delete(FinalMask);
+                Thread.Sleep(20000);
+                try {
+                    if (File.Exists(FinalBase)) {
+                        File.Delete(FinalBase);
+                    }
+                    if (File.Exists(FinalNormal)) {
+                        File.Delete(FinalNormal);
+                    }
+                    if (File.Exists(FinalMask)) {
+                        File.Delete(FinalMask);
+                    }
+                } catch {
+
                 }
             });
         }
