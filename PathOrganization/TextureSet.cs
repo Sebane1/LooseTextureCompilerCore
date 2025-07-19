@@ -3,6 +3,7 @@ using LooseTextureCompilerCore;
 
 namespace FFXIVLooseTextureCompiler.PathOrganization {
     public class TextureSet {
+        public static string GroupLocalization = "Group";
         private string _textureSetName = "";
         private string _groupName = "";
 
@@ -160,14 +161,14 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public Dictionary<string, ulong> Hashes { get => _hashes; set => _hashes = value; }
 
         public override string ToString() {
-            return _textureSetName + (GroupName != _textureSetName ? $" | Group({_groupName})" : "");
+            return _textureSetName + (GroupName != _textureSetName ? " | " + GroupLocalization + $"({_groupName})" : "");
         }
 
         public string CreateFinalBasePath() {
             if (IsChildSet) {
                 return _baseTexture;
             }
-            string path = !string.IsNullOrEmpty(_baseTexture) ? _baseTexture : (_baseOverlays.Count > 0 ? _baseOverlays[0] : "");  
+            string path = !string.IsNullOrEmpty(_baseTexture) ? _baseTexture : (_baseOverlays.Count > 0 ? _baseOverlays[0] : "");
             if (!string.IsNullOrEmpty(path)) {
                 return Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(path, _baseOverlays) + "_temp.png");
             }
