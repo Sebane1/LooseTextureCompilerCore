@@ -325,7 +325,7 @@ namespace FFXIVLooseTextureCompiler
 
             if (!skipRgbSplit)
             {
-                var paths = ImageManipulation.SplitRGBAndAlpha(inputImage);
+                var paths = ImageManipulation.SplitRGBAndAlphaToFile(inputImage);
                 string path1 = ImageManipulation.AddSuffix(outputImage, "_rgb");
                 string path2 = ImageManipulation.AddSuffix(outputImage, "_alpha");
                 CallXNormalFinal(inputFBX, outputFBX, paths[0], path1, isNormalMap, width, height);

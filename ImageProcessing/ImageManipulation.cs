@@ -7,6 +7,7 @@ using Penumbra.GameData.Files.Utility;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Processing.Processors.Transforms;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -1093,7 +1094,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             TexIO.SaveBitmap(TexIO.ResolveBitmap(fileName), ImageManipulation.ReplaceExtension(fileName, ".tex"));
         }
 
-        public static string[] SplitRGBAndAlpha(string item) {
+        public static string[] SplitRGBAndAlphaToFile(string item) {
             Bitmap image = TexIO.ResolveBitmap(item);
             string path1 = ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(item, "_RGB."), ".png");
             string path2 = ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(item, "_Alpha."), ".png");
@@ -1103,6 +1104,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 path1,
                 path2
             };
+        }
+        public static Bitmap[] SplitRGBAndAlpha(Bitmap image) {
+            return new Bitmap[] { ImageManipulation.ExtractRGB(image), ImageManipulation.ExtractAlpha(image) };
         }
 
         public static void SplitImageToRGBA(string fileName) {
@@ -1149,6 +1153,65 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 validImages[0].SaveAsPng(ouputPath);
             }
         }
+
+        public static Image<Rgba32> RGBFriendlyTransparentResize(Image<Rgba32> source, int width, int height) {
+            var values = SplitRGBAndAlpha(TexIO.ImageSharpToBitmap(source));
+            var rgb = TexIO.Resize(values[0], width, height);
+            var alpha = TexIO.Resize(values[1], width, height);
+            var mergedResult = MergeAlphaToRGB(alpha, rgb);
+            return TexIO.BitmapToImageSharp(mergedResult);
+        }
+        private static void BlendImageOnto(Image<Rgba32> srcImage, Image<Rgba32> dstImage) {
+            var srcFrame = srcImage.Frames.RootFrame;
+            var dstFrame = dstImage.Frames.RootFrame;
+
+            int height = Math.Min(srcFrame.Height, dstFrame.Height);
+            int width = Math.Min(srcFrame.Width, dstFrame.Width);
+
+            // Buffer to store source rows temporarily
+            Rgba32[][] srcRows = new Rgba32[height][];
+
+            // Step 1: Extract source rows to buffer
+            srcFrame.ProcessPixelRows(srcAccessor =>
+            {
+                for (int y = 0; y < height; y++) {
+                    var srcRowSpan = srcAccessor.GetRowSpan(y);
+                    srcRows[y] = srcRowSpan.Slice(0, width).ToArray(); // Crop to width
+                }
+            });
+
+            // Step 2: Process destination rows and blend with source rows
+            dstFrame.ProcessPixelRows(dstAccessor =>
+            {
+                for (int y = 0; y < height; y++) {
+                    var dstRowSpan = dstAccessor.GetRowSpan(y);
+                    var srcRow = srcRows[y];
+
+                    for (int x = 0; x < width; x++) {
+                        dstRowSpan[x] = BlendPixel(srcRow[x], dstRowSpan[x]);
+                    }
+                }
+            });
+        }
+
+
+        private static Rgba32 BlendPixel(Rgba32 src, Rgba32 dst) {
+            if (src.A == 0) {
+                return dst; // Keep destination unchanged if source is fully transparent
+            }
+
+            float srcA = src.A / 255f;
+            float dstA = dst.A / 255f;
+            float outA = srcA + dstA * (1 - srcA);
+
+            byte outR = (byte)((src.R * srcA + dst.R * dstA * (1 - srcA)) / (outA > 0 ? outA : 1));
+            byte outG = (byte)((src.G * srcA + dst.G * dstA * (1 - srcA)) / (outA > 0 ? outA : 1));
+            byte outB = (byte)((src.B * srcA + dst.B * dstA * (1 - srcA)) / (outA > 0 ? outA : 1));
+            byte outAlpha = (byte)(outA * 255);
+
+            return new Rgba32(outR, outG, outB, outAlpha);
+        }
+
         public static void ConvertLegacyAuRaTail(string inputTexture, int tailNumber, bool gender, string baseDirectory = "") {
             string pathInput = Path.Combine(string.IsNullOrEmpty(baseDirectory) ? GlobalPathStorage.OriginalBaseDirectory : baseDirectory,
                 $"res\\model\\tail\\input\\{(gender ? "AuRa_Female" : "AuRa_Male")}\\{tailNumber}\\3D\\c1401t000{tailNumber}_til.fbx");
