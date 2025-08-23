@@ -3,6 +3,7 @@ using LooseTextureCompilerCore;
 
 namespace FFXIVLooseTextureCompiler.PathOrganization {
     public class TextureSet {
+        public static string GroupLocalization = "Group";
         private string _textureSetName = "";
         private string _groupName = "";
 
@@ -38,6 +39,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private string _normalCorrection = "";
         private string _material;
         private string _internalMaterialPath;
+
+        Dictionary<string, ulong> _hashes = new Dictionary<string, ulong>();
 
         public string TextureSetName { get => _textureSetName; set => _textureSetName = value; }
 
@@ -155,16 +158,17 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public string FinalBase { get => CreateFinalBasePath(); }
         public string FinalNormal { get => CreateFinalNormalPath(); }
         public string FinalMask { get => CreateFinalMaskPath(); }
+        public Dictionary<string, ulong> Hashes { get => _hashes; set => _hashes = value; }
 
         public override string ToString() {
-            return _textureSetName + (GroupName != _textureSetName ? $" | Group({_groupName})" : "");
+            return _textureSetName + (GroupName != _textureSetName ? " | " + GroupLocalization + $"({_groupName})" : "");
         }
 
         public string CreateFinalBasePath() {
             if (IsChildSet) {
                 return _baseTexture;
             }
-            string path = !string.IsNullOrEmpty(_baseTexture) ? _baseTexture : (_baseOverlays.Count > 0 ? _baseOverlays[0] : "");  
+            string path = !string.IsNullOrEmpty(_baseTexture) ? _baseTexture : (_baseOverlays.Count > 0 ? _baseOverlays[0] : "");
             if (!string.IsNullOrEmpty(path)) {
                 return Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(path, _baseOverlays) + "_temp.png");
             }
@@ -191,15 +195,22 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             return "";
         }
         public void CleanTempFiles() {
-            if (File.Exists(FinalBase)) {
-                File.Delete(FinalBase);
-            }
-            if (File.Exists(FinalNormal)) {
-                File.Delete(FinalNormal);
-            }
-            if (File.Exists(FinalMask)) {
-                File.Delete(FinalMask);
-            }
+            Task.Run(() => {
+                Thread.Sleep(20000);
+                try {
+                    if (File.Exists(FinalBase)) {
+                        File.Delete(FinalBase);
+                    }
+                    if (File.Exists(FinalNormal)) {
+                        File.Delete(FinalNormal);
+                    }
+                    if (File.Exists(FinalMask)) {
+                        File.Delete(FinalMask);
+                    }
+                } catch {
+
+                }
+            });
         }
     }
 }

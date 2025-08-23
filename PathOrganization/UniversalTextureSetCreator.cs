@@ -1,8 +1,10 @@
 ﻿using FFXIVLooseTextureCompiler.Export;
 using FFXIVLooseTextureCompiler.ImageProcessing;
 using FFXIVLooseTextureCompiler.Racial;
+using LooseTextureCompilerCore;
 using LooseTextureCompilerCore.Export;
 using Penumbra.GameData.Enums;
+using System.Diagnostics;
 
 namespace FFXIVLooseTextureCompiler.PathOrganization {
     public static class UniversalTextureSetCreator {
@@ -201,32 +203,32 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 Directory.CreateDirectory(
                     Path.GetDirectoryName(
                     Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory,
+                    GlobalPathStorage.OriginalBaseDirectory,
                     tbseVanilla.BackupTexturePaths.Base)));
 
                 string vanillaBase =
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                    Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
                     tbseVanilla.BackupTexturePaths.Base);
                 if (!File.Exists(vanillaBase)) {
                     TexIO.WriteImageToXOR(ImageManipulation.CutInHalf(
                         TexIO.ResolveBitmap(
-                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                        Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
                         textureSet.BackupTexturePaths.Base))), vanillaBase);
                 }
                 string vanillaRaen =
-                     Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                     Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
                      tbseVanilla.BackupTexturePaths.BaseSecondary);
                 if (!File.Exists(vanillaRaen)) {
                     TexIO.WriteImageToXOR(ImageManipulation.CutInHalf(
                          TexIO.ResolveBitmap(
-                         Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                         Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
                          textureSet.BackupTexturePaths.BaseSecondary))), vanillaRaen);
                 }
-                string vanillaNormal = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                string vanillaNormal = Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
                     tbseVanilla.BackupTexturePaths.Normal);
                 if (!File.Exists(vanillaNormal)) {
                     TexIO.WriteImageToXOR(ImageManipulation.CutInHalf(
-                        TexIO.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                        TexIO.ResolveBitmap(Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
                         textureSet.BackupTexturePaths.Normal))), vanillaNormal);
                 }
                 if (File.Exists(textureSet.Base)) {

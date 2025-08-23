@@ -1,8 +1,10 @@
 ﻿using FFXIVLooseTextureCompiler.ImageProcessing;
 using FFXIVLooseTextureCompiler.PathOrganization;
 using FFXIVLooseTextureCompiler.Racial;
+using LooseTextureCompilerCore;
 using LooseTextureCompilerCore.Export;
 using Newtonsoft.Json;
+using System.Diagnostics;
 
 namespace FFXIVLooseTextureCompiler.Export {
     public class BackupTexturePaths {
@@ -163,19 +165,19 @@ namespace FFXIVLooseTextureCompiler.Export {
         public static BackupTexturePaths AsymLalaPath(int skinType) {
             if (!File.Exists(_otopopSkinTypes[skinType].BackupTextures[1].Base)) {
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(
-                AppDomain.CurrentDomain.BaseDirectory,
+                GlobalPathStorage.OriginalBaseDirectory,
                 _otopopSkinTypes[skinType].BackupTextures[1].Base)));
 
                 TexIO.WriteImageToXOR(ImageManipulation.MirrorAndDuplicate(
-                TexIO.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                TexIO.ResolveBitmap(Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
                     _otopopSkinTypes[skinType].BackupTextures[2].Base))),
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                    Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
                     _otopopSkinTypes[skinType].BackupTextures[1].Base));
 
                 TexIO.WriteImageToXOR(ImageManipulation.MirrorAndDuplicate(
-                    TexIO.ResolveBitmap(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                    TexIO.ResolveBitmap(Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
                     _otopopSkinTypes[skinType].BackupTextures[2].Normal))),
-                    Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                    Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
                     _otopopSkinTypes[skinType].BackupTextures[1].Normal));
             }
             return _otopopSkinTypes[skinType].BackupTextures[1];

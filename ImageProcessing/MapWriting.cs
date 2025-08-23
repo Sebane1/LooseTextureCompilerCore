@@ -51,7 +51,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             source.UnlockBits();
             mergedImagePixels.UnlockBits();
             //debug.UnlockBits();
-            //debugImage.Save(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "atramentumTest.png"));
+            //debugImage.Save(Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "atramentumTest.png"));
             return baseTexture;
         }
         public static Bitmap.Color FlattenColours(Bitmap.Color colour, int minBrightness = 90) {
