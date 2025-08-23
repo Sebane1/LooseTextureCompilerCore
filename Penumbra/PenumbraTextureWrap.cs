@@ -1,11 +1,11 @@
-﻿#region Assembly ImGuiScene, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+#region Assembly ImGuiScene, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
 // C:\Users\stel9\AppData\Roaming\XIVLauncher\addon\Hooks\dev\ImGuiScene.dll
 // Decompiled with ICSharpCode.Decompiler 7.1.0.6543
 #endregion
 
 
 public interface PenumbraTextureWrap : IDisposable {
-    IntPtr ImGuiHandle { get; }
+    IntPtr Handle { get; }
 
     int Width { get; }
 
