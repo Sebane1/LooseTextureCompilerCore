@@ -1,3 +1,4 @@
+using LooseTextureCompilerCore;
 using Lumina.Data.Files;
 using OtterTex;
 using Penumbra.LTCImport.Dds;
@@ -68,7 +69,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                 RGBAPixels[i + 1] = G;
                 RGBAPixels[i + 2] = R;
                 RGBAPixels[i + 3] = noAlpha ? (byte)255 : A;
-
             }
             System.Runtime.InteropServices.Marshal.Copy(RGBAPixels, 0, ptr, RGBAPixels.Length);
             output.UnlockBits(bmpData);
@@ -123,7 +123,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                 var scratch = PenumbraTexFileParser.Parse(stream);
                 var rgba = scratch.GetRGBA(out var f).ThrowIfError(f);
                 byte[] RGBAPixels = rgba.Pixels[..(f.Meta.Width * f.Meta.Height * f.Meta.Format.BitsPerPixel() / 8)].ToArray();
-                var bitmap = RGBAToBitmap(RGBAPixels, scratch.Meta.Width, scratch.Meta.Height, false);
+                var bitmap = RGBAToBitmap(RGBAPixels, scratch.Meta.Width, scratch.Meta.Height, noAlpha);
                 return bitmap;
             }
         }
@@ -132,7 +132,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             var scratch = PenumbraTexFileParser.Parse(stream);
             var rgba = scratch.GetRGBA(out var f).ThrowIfError(f);
             byte[] RGBAPixels = rgba.Pixels[..(f.Meta.Width * f.Meta.Height * f.Meta.Format.BitsPerPixel() / 8)].ToArray();
-            var bitmap = RGBAToBitmap(RGBAPixels, scratch.Meta.Width, scratch.Meta.Height, false);
+            var bitmap = RGBAToBitmap(RGBAPixels, scratch.Meta.Width, scratch.Meta.Height, noAlpha);
             return bitmap;
         }
 
@@ -414,7 +414,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                 {
                     ProcessStartInfo info = new ProcessStartInfo
                     {
-                        FileName = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "optipng.exe"),
+                        FileName = Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "optipng.exe"),
                         Arguments = "-clobber " + @"""" + file + @"""",
                         WorkingDirectory = rootDirectory,
                         UseShellExecute = false

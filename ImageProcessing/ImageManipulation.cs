@@ -1,11 +1,14 @@
 using FFXIVLooseTextureCompiler.Export;
 using KVImage;
+using LooseTextureCompilerCore;
 using LooseTextureCompilerCore.Export;
 using Lumina.Data.Files;
 using Penumbra.GameData.Files.Utility;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Processing.Processors.Transforms;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Numerics;
@@ -59,9 +62,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 return UVMapType.Normal;
             } else if (uvMapTest.B == 152 && uvMapTest2.B == 152) {
                 return UVMapType.Mask;
-            }
-            else if ((uvMapTest.A > 50 && uvMapTest2.A > 50) && uvMapTest.B < 5 && uvMapTest2.B < 5 && uvMapTest.R < 5 && uvMapTest2.R < 5 && uvMapTest.G < 5 && uvMapTest2.G < 5)
-            {
+            } else if ((uvMapTest.A > 50 && uvMapTest2.A > 50) && uvMapTest.B < 5 && uvMapTest2.B < 5 && uvMapTest.R < 5 && uvMapTest2.R < 5 && uvMapTest.G < 5 && uvMapTest2.G < 5) {
                 return UVMapType.Glow;
             } else {
                 return UVMapType.Base;
@@ -112,7 +113,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         }
                     }
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             int index = 0;
             int lastCount = 0;
@@ -142,7 +144,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         FlattenToThreshold(sourcePixel.B, threshhold));
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -175,7 +178,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         source.SetPixel(x, y, col);
                     }
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -216,7 +220,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     Color col = Color.FromArgb(255, sourcePixel.A, sourcePixel.A, sourcePixel.A);
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -235,7 +240,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         source.SetPixel(x, y, col);
                     }
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -254,7 +260,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     }
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -268,7 +275,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     Color col = Color.FromArgb(255, sourcePixel.R, sourcePixel.R, sourcePixel.R);
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -282,7 +290,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     Color col = Color.FromArgb(255, sourcePixel.G, sourcePixel.G, sourcePixel.G);
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -313,7 +322,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         : (sourcePixel.G < 20 ? sourcePixel.G : 126)), 0, 255), 0);
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -330,7 +340,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         (sourcePixel.G < 20 ? sourcePixel.G : 126), 0, 255), 0);
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -345,7 +356,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     Color col = Color.FromArgb(255, sourcePixel.B, sourcePixel.B, sourcePixel.B);
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -376,7 +388,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         correctionSource.SetPixel(x, y, Color.FromArgb(0, sourcePixel.R, sourcePixel.G, sourcePixel.B));
                     }
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             correctionSource.UnlockBits();
             if (blurResult) {
@@ -413,7 +426,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         correctionSource.SetPixel(x, y, Color.FromArgb(0, sourcePixel.R, sourcePixel.G, sourcePixel.B));
                     }
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             correctionSource.UnlockBits();
             if (blurResult) {
@@ -479,7 +493,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     Color col = Color.FromArgb(255, sourcePixel.A, sourcePixel.A, sourcePixel.A);
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -503,9 +518,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public static Bitmap BitmapToEyeMulti(Bitmap image, string baseDirectory = null) {
             string gloss = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
-                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\gloss.png");
+                : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\gloss.png");
             string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
-                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\template.png");
+                : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\template.png");
             Bitmap canvas = new Bitmap(image.Width, image.Height, PixelFormat.Format32bppArgb);
             Bitmap newEye = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 1.0f, 1.1f, 1);
 
@@ -525,7 +540,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public static Bitmap BitmapToEyeMultiDawntrail(Bitmap image, bool scaleTexture, string baseDirectory = null) {
             int enforcedSize = 2048;
             string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
-                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\multi.png");
+                : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\multi.png");
             Bitmap canvas = new Bitmap(enforcedSize, enforcedSize, PixelFormat.Format32bppArgb);
             Bitmap newEye = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 0.8f, 1.5f, 1);
 
@@ -555,7 +570,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public static Bitmap BitmapToEyeBaseDawntrail(Bitmap image, bool scaleTexture, string baseDirectory = null) {
             int enforcedSize = 2048;
             string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
-                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\diffuse.png");
+                : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\diffuse.png");
             Bitmap canvas = new Bitmap(enforcedSize, enforcedSize, PixelFormat.Format32bppArgb);
             Bitmap newEye = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 1.0f, 1.1f, 1);
 
@@ -586,7 +601,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     Color col = Color.FromArgb(sourcePixel.R, sourcePixel.R, sourcePixel.R, sourcePixel.R);
                     source.SetPixel(x, y, col);
                 }
-            };
+            }
+            ;
             source.UnlockBits();
             return image;
         }
@@ -613,7 +629,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         Color col = Color.FromArgb(alphaPixel.R, redPixel.R, greenPixel.G, bluePixel.B);
                         destination.SetPixel(x, y, col);
                     }
-                };
+                }
+                ;
             } catch {
                 // Todo send out an error.
             }
@@ -718,12 +735,49 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         break;
                     }
                 }
-            };
+            }
+            ;
             alphaBits.UnlockBits();
             rgbBits.UnlockBits();
             destination.UnlockBits();
             return image;
         }
+        //public static Image<Rgba32> MergeAlphaToRGB(Bitmap alpha, Bitmap rgb) {
+        //    Bitmap image = TexIO.NewBitmap(rgb.Width, rgb.Height);
+        //    Graphics.FromImage(image).Clear(Color.Transparent);
+        //    LockBitmap destination = new LockBitmap(image);
+        //    LockBitmap alphaBits = new LockBitmap(alpha);
+        //    LockBitmap rgbBits = new LockBitmap(rgb);
+        //    alphaBits.LockBits();
+        //    rgbBits.LockBits();
+        //    destination.LockBits();
+        //    for (int y = 0; y < image.Height; y++) {
+        //        for (int x = 0; x < image.Width; x++) {
+        //            try {
+        //                Color alphaPixel = new Color();
+        //                try {
+        //                    alphaPixel = alphaBits.GetPixel(x, y);
+        //                } catch {
+
+        //                }
+        //                Color rgbPixel = new Color();
+        //                try {
+        //                    rgbPixel = rgbBits.GetPixel(x, y);
+        //                } catch {
+
+        //                }
+        //                Color col = Color.FromArgb(alphaPixel.R, rgbPixel.R, rgbPixel.G, rgbPixel.B);
+        //                destination.SetPixel(x, y, col);
+        //            } catch {
+        //                break;
+        //            }
+        //        }
+        //    };
+        //    alphaBits.UnlockBits();
+        //    rgbBits.UnlockBits();
+        //    destination.UnlockBits();
+        //    return image;
+        //}
 
         public static Bitmap SeperateTattoo(Bitmap tattoo) {
             Bitmap alphaMap = InvertImage(Brightness.BrightenImage(Grayscale.MakeGrayscale(tattoo), 1, 1.9f));
@@ -746,22 +800,22 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             switch (value) {
                 case BodyUVType.Bibo:
                     underlayDifferentiator = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory :
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[0].Normal : 
+                    GlobalPathStorage.OriginalBaseDirectory,
+                    (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[0].Normal :
                     (!raen ? skinType.BackupTextures[0].Base : skinType.BackupTextures[0].BaseSecondary)
                     ) : ("res\\textures\\bibo\\bibo\\" + mapName)));
                     break;
                 case BodyUVType.Gen3:
                     underlayDifferentiator = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory :
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[1].Normal : 
+                    GlobalPathStorage.OriginalBaseDirectory,
+                    (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[1].Normal :
                     (!raen ? skinType.BackupTextures[1].Base : skinType.BackupTextures[1].BaseSecondary)
                     ) : ("res\\textures\\gen3\\gen3\\" + mapName)));
                     break;
                 case BodyUVType.Gen2:
                     underlayDifferentiator = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory :
-                    AppDomain.CurrentDomain.BaseDirectory,
-                    (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[2].Normal : 
+                    GlobalPathStorage.OriginalBaseDirectory,
+                    (skinType != null ? (mapName.Contains("normal") ? skinType.BackupTextures[2].Normal :
                     (!raen ? skinType.BackupTextures[2].Base : skinType.BackupTextures[2].BaseSecondary)
                     ) : ("res\\textures\\gen3\\gen2\\" + mapName)));
                     break;
@@ -790,7 +844,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         alphaBits.SetPixel(x, y, col);
                     }
                 }
-            };
+            }
+            ;
             alphaBits.UnlockBits();
         }
         public static Bitmap MergeNormals(string inputFile, Bitmap baseTexture, Bitmap canvasImage, Bitmap normalMask, string baseTextureNormal) {
@@ -858,7 +913,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public static Bitmap ImageToCatchlightLegacy(Bitmap file, string baseDirectory = null) {
             string catchlightTemplate = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
-                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\catchlight.png");
+                : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\catchlight.png");
             Bitmap catchlight = Brightness.BrightenImage(Grayscale.MakeGrayscale(file), 0.6f, 1.5f, 1);
             Graphics graphics = Graphics.FromImage(catchlight);
             graphics.DrawImage(new Bitmap(new Bitmap(catchlightTemplate), catchlight.Width, catchlight.Height), 0, 0);
@@ -868,7 +923,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public static Bitmap ImageToEyeNormal(Bitmap file, string baseDirectory = null) {
             Bitmap newFile = TexIO.NewBitmap(file);
             string normalTemplate = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
-                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\normal.png");
+                : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\normal.png");
             Bitmap normal = Normal.Calculate(InvertImage(Brightness.BrightenImage(Grayscale.MakeGrayscale(newFile), 0.8f, 1.5f, 1)));
             Graphics graphics = Graphics.FromImage(normal);
             graphics.DrawImage(new Bitmap(new Bitmap(normalTemplate), file.Width, file.Height), 0, 0);
@@ -961,7 +1016,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         private static Bitmap ImageToEyeNormalDawntrail(Bitmap image, bool scaleTexture, string baseDirectory) {
             int enforcedSize = 2048;
             string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
-                : AppDomain.CurrentDomain.BaseDirectory, "res\\textures\\eyes\\normaldt.png");
+                : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\normaldt.png");
             Bitmap canvas = new Bitmap(enforcedSize, enforcedSize, PixelFormat.Format32bppArgb);
             Bitmap normal = Normal.Calculate(InvertImage(Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 0.8f, 1.5f, 1)));
 
@@ -1009,7 +1064,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 } else {
                     break;
                 }
-            };
+            }
+            ;
             source.UnlockBits();
         }
         public static void EraseSection(Bitmap bitmap, Vector2 startPoint, Vector2 size) {
@@ -1025,7 +1081,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         }
                     }
                 }
-            };
+            }
+            ;
             source.UnlockBits();
         }
 
@@ -1037,7 +1094,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             TexIO.SaveBitmap(TexIO.ResolveBitmap(fileName), ImageManipulation.ReplaceExtension(fileName, ".tex"));
         }
 
-        public static string[] SplitRGBAndAlpha(string item) {
+        public static string[] SplitRGBAndAlphaToFile(string item) {
             Bitmap image = TexIO.ResolveBitmap(item);
             string path1 = ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(item, "_RGB."), ".png");
             string path2 = ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(item, "_Alpha."), ".png");
@@ -1047,6 +1104,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 path1,
                 path2
             };
+        }
+        public static Bitmap[] SplitRGBAndAlpha(Bitmap image) {
+            return new Bitmap[] { ImageManipulation.ExtractRGB(image), ImageManipulation.ExtractAlpha(image) };
         }
 
         public static void SplitImageToRGBA(string fileName) {
@@ -1058,8 +1118,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static void CreateContact(string baseBath, string path) {
-            string input = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res\\model\\eyes\\eye_map_baking\\EyeInputLayout.fbx");
-            string output = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "res\\model\\eyes\\eye_map_baking\\EyeOutputLayout.fbx");
+            string input = Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "res\\model\\eyes\\eye_map_baking\\EyeInputLayout.fbx");
+            string output = Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "res\\model\\eyes\\eye_map_baking\\EyeOutputLayout.fbx");
             XNormal.CallXNormal(input, output, path, ImageManipulation.AddSuffix(path, "_contactBase"), false, 2048, 2048, false);
         }
 
@@ -1082,17 +1142,80 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
 
             var outputImage = new Image<Rgba32>(maxX, maxY);
-            foreach (var image in validImages) {
-                image.Mutate(o => o.Resize(new SixLabors.ImageSharp.Size(maxX, maxY)));
-                outputImage.Mutate(o => o.DrawImage(image, new SixLabors.ImageSharp.Point(0, 0), PixelColorBlendingMode.Normal, 1f));
-                image.Dispose();
+            if (validImages.Count > 1) {
+                foreach (var image in validImages) {
+                    image.Mutate(o => o.Resize(new SixLabors.ImageSharp.Size(maxX, maxY)));
+                    outputImage.Mutate(o => o.DrawImage(image, new SixLabors.ImageSharp.Point(0, 0), PixelColorBlendingMode.Normal, 1f));
+                    image.Dispose();
+                }
+                outputImage.SaveAsPng(ouputPath);
+            } else {
+                validImages[0].SaveAsPng(ouputPath);
             }
-            outputImage.SaveAsPng(ouputPath);
         }
+
+        public static Image<Rgba32> RGBFriendlyTransparentResize(Image<Rgba32> source, int width, int height) {
+            var values = SplitRGBAndAlpha(TexIO.ImageSharpToBitmap(source));
+            var rgb = TexIO.Resize(values[0], width, height);
+            var alpha = TexIO.Resize(values[1], width, height);
+            var mergedResult = MergeAlphaToRGB(alpha, rgb);
+            return TexIO.BitmapToImageSharp(mergedResult);
+        }
+        private static void BlendImageOnto(Image<Rgba32> srcImage, Image<Rgba32> dstImage) {
+            var srcFrame = srcImage.Frames.RootFrame;
+            var dstFrame = dstImage.Frames.RootFrame;
+
+            int height = Math.Min(srcFrame.Height, dstFrame.Height);
+            int width = Math.Min(srcFrame.Width, dstFrame.Width);
+
+            // Buffer to store source rows temporarily
+            Rgba32[][] srcRows = new Rgba32[height][];
+
+            // Step 1: Extract source rows to buffer
+            srcFrame.ProcessPixelRows(srcAccessor =>
+            {
+                for (int y = 0; y < height; y++) {
+                    var srcRowSpan = srcAccessor.GetRowSpan(y);
+                    srcRows[y] = srcRowSpan.Slice(0, width).ToArray(); // Crop to width
+                }
+            });
+
+            // Step 2: Process destination rows and blend with source rows
+            dstFrame.ProcessPixelRows(dstAccessor =>
+            {
+                for (int y = 0; y < height; y++) {
+                    var dstRowSpan = dstAccessor.GetRowSpan(y);
+                    var srcRow = srcRows[y];
+
+                    for (int x = 0; x < width; x++) {
+                        dstRowSpan[x] = BlendPixel(srcRow[x], dstRowSpan[x]);
+                    }
+                }
+            });
+        }
+
+
+        private static Rgba32 BlendPixel(Rgba32 src, Rgba32 dst) {
+            if (src.A == 0) {
+                return dst; // Keep destination unchanged if source is fully transparent
+            }
+
+            float srcA = src.A / 255f;
+            float dstA = dst.A / 255f;
+            float outA = srcA + dstA * (1 - srcA);
+
+            byte outR = (byte)((src.R * srcA + dst.R * dstA * (1 - srcA)) / (outA > 0 ? outA : 1));
+            byte outG = (byte)((src.G * srcA + dst.G * dstA * (1 - srcA)) / (outA > 0 ? outA : 1));
+            byte outB = (byte)((src.B * srcA + dst.B * dstA * (1 - srcA)) / (outA > 0 ? outA : 1));
+            byte outAlpha = (byte)(outA * 255);
+
+            return new Rgba32(outR, outG, outB, outAlpha);
+        }
+
         public static void ConvertLegacyAuRaTail(string inputTexture, int tailNumber, bool gender, string baseDirectory = "") {
-            string pathInput = Path.Combine(string.IsNullOrEmpty(baseDirectory) ? AppDomain.CurrentDomain.BaseDirectory : baseDirectory,
+            string pathInput = Path.Combine(string.IsNullOrEmpty(baseDirectory) ? GlobalPathStorage.OriginalBaseDirectory : baseDirectory,
                 $"res\\model\\tail\\input\\{(gender ? "AuRa_Female" : "AuRa_Male")}\\{tailNumber}\\3D\\c1401t000{tailNumber}_til.fbx");
-            string outputInput = Path.Combine(string.IsNullOrEmpty(baseDirectory) ? AppDomain.CurrentDomain.BaseDirectory : baseDirectory,
+            string outputInput = Path.Combine(string.IsNullOrEmpty(baseDirectory) ? GlobalPathStorage.OriginalBaseDirectory : baseDirectory,
                 $"res\\model\\tail\\output\\{(gender ? "AuRa_Female" : "AuRa_Male")}\\{tailNumber}\\3D\\c1401t000{tailNumber}_til.fbx");
             XNormal.CallXNormal(pathInput, outputInput, inputTexture, ImageManipulation.AddSuffix(inputTexture, "_dawntrail"), false, 1024, 2048, true);
         }
