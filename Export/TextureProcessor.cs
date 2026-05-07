@@ -109,13 +109,13 @@ namespace FFXIVLooseTextureCompiler {
             return hash;
         }
         public void BatchTextureSet(TextureSet parent, TextureSet child) {
-            OnProgressReport?.Invoke(this, "XNormal Batch " + parent.TextureSetName);
+            OnProgressReport?.Invoke(this, "UV Transfer Batching " + parent.TextureSetName);
             if (!string.IsNullOrEmpty(child.FinalBase)) {
                 // Create a hash algorithm
                 var hash = CreateHash(parent.FinalBase);
 
                 if (!parent.Hashes.ContainsKey(child.FinalBase) || hash != parent.Hashes[child.FinalBase]) {
-                    OnProgressReport?.Invoke(this, "Add To XNormal");
+                    OnProgressReport?.Invoke(this, "Queue For UV Transfer");
                     AddToXnormalPool(parent, child, XNormalTextureType.Base);
                     if (_finalizeResults) {
                         parent.Hashes[child.FinalBase] = hash;
@@ -127,7 +127,7 @@ namespace FFXIVLooseTextureCompiler {
                 var hash = CreateHash(parent.FinalNormal);
 
                 if (!parent.Hashes.ContainsKey(child.FinalNormal) || hash != parent.Hashes[child.FinalNormal]) {
-                    OnProgressReport?.Invoke(this, "Add To XNormal");
+                    OnProgressReport?.Invoke(this, "Queue For UV Transfer");
                     AddToXnormalPool(parent, child, XNormalTextureType.Normal);
                     if (_finalizeResults) {
                         parent.Hashes[child.FinalNormal] = hash;
@@ -139,7 +139,7 @@ namespace FFXIVLooseTextureCompiler {
                 var hash = CreateHash(parent.FinalMask);
 
                 if (!parent.Hashes.ContainsKey(child.FinalMask) || hash != parent.Hashes[child.FinalMask]) {
-                    OnProgressReport?.Invoke(this, "Add To XNormal");
+                    OnProgressReport?.Invoke(this, "Queue For UV Transfer");
                     AddToXnormalPool(parent, child, XNormalTextureType.Mask);
                     if (_finalizeResults) {
                         parent.Hashes[child.FinalMask] = hash;
@@ -151,7 +151,7 @@ namespace FFXIVLooseTextureCompiler {
                 var hash = CreateHash(parent.Glow);
 
                 if (!parent.Hashes.ContainsKey(child.Glow) || hash != parent.Hashes[child.Glow]) {
-                    OnProgressReport?.Invoke(this, "Add To XNormal");
+                    OnProgressReport?.Invoke(this, "Queue For UV Transfer");
                     AddToXnormalPool(parent, child, XNormalTextureType.Glow);
                     if (_finalizeResults) {
                         parent.Hashes[child.Glow] = hash;
