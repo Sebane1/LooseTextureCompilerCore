@@ -146,6 +146,42 @@ namespace FFXIVLooseTextureCompiler
                 }
             }
         }
+        public static bool TryGetMeshes(string internalPath, string outputPath, bool isNormalMap, out string sourceMesh, out string targetMesh)
+        {
+            sourceMesh = null;
+            targetMesh = null;
+            if (internalPath.Contains("bibo"))
+            {
+                if (outputPath.Contains("gen2")) { sourceMesh = biboLegacy; targetMesh = gen2; return true; }
+                if (outputPath.Contains("gen3")) { sourceMesh = isNormalMap ? biboLegacy : bibo; targetMesh = isNormalMap ? gen3Legacy : gen3; return true; }
+            }
+            else if (internalPath.Contains("eve") || internalPath.Contains("gen3"))
+            {
+                if (outputPath.Contains("gen2")) { sourceMesh = gen3Legacy; targetMesh = gen2; return true; }
+                if (outputPath.Contains("bibo")) { sourceMesh = isNormalMap ? gen3Legacy : gen3; targetMesh = isNormalMap ? biboLegacy : bibo; return true; }
+            }
+            else if (internalPath.Contains("body") || internalPath.Contains("skin_mask"))
+            {
+                if (outputPath.Contains("bibo")) { sourceMesh = gen2; targetMesh = biboLegacy; return true; }
+                if (outputPath.Contains("gen3")) { sourceMesh = gen2; targetMesh = gen3Legacy; return true; }
+                if (internalPath.Contains("--c1101b0001"))
+                {
+                    if (outputPath.Contains("otopop")) { sourceMesh = vanillaLala; targetMesh = otopop; return true; }
+                    if (outputPath.Contains("asym_lala")) { sourceMesh = vanillaLala; targetMesh = asymLala; return true; }
+                }
+                else if (internalPath.Contains("v01_c1101b0001_g"))
+                {
+                    if (outputPath.Contains("vanilla_lala")) { sourceMesh = otopop; targetMesh = vanillaLala; return true; }
+                    if (outputPath.Contains("asym_lala")) { sourceMesh = otopop; targetMesh = asymLala; return true; }
+                }
+                else if (internalPath.Contains("v01_c1101b0001_b"))
+                {
+                    if (outputPath.Contains("vanilla_lala")) { sourceMesh = asymLala; targetMesh = vanillaLala; return true; }
+                    if (outputPath.Contains("otopop")) { sourceMesh = asymLala; targetMesh = otopop; return true; }
+                }
+            }
+            return false;
+        }
 
         public void AddToBatch(string internalPath, string inputPath, string outputPath, bool isNormalMap)
         {

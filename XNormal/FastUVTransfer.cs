@@ -94,36 +94,94 @@ namespace FFXIVLooseTextureCompiler
             PerformTransfer(inputImage, outputImage, "otopop_to_asymlala_transfer.tif", XNormal.OtopopToAsymLala);
         }
 
-        public static void GenerateBasedOnSourceBody(string internalPath, string inputPath, string outputPath)
+        public static bool GenerateBasedOnSourceBody(string internalPath, string inputPath, string outputPath)
         {
+            bool wasHandled = true;
+
             if (internalPath.Contains("bibo"))
             {
                 if (outputPath.Contains("gen2")) BiboToGen2(inputPath, outputPath);
-                if (outputPath.Contains("gen3")) BiboToGen3(inputPath, outputPath);
+                else if (outputPath.Contains("gen3")) BiboToGen3(inputPath, outputPath);
+                else wasHandled = false;
             }
             else if (internalPath.Contains("eve") || internalPath.Contains("gen3"))
             {
                 if (outputPath.Contains("gen2")) Gen3ToGen2(inputPath, outputPath);
-                if (outputPath.Contains("bibo")) Gen3ToBibo(inputPath, outputPath);
+                else if (outputPath.Contains("bibo")) Gen3ToBibo(inputPath, outputPath);
+                else wasHandled = false;
             }
             else if (internalPath.Contains("body"))
             {
                 if (outputPath.Contains("bibo")) Gen2ToBibo(inputPath, outputPath);
-                if (outputPath.Contains("gen3")) Gen2ToGen3(inputPath, outputPath);
+                else if (outputPath.Contains("gen3")) Gen2ToGen3(inputPath, outputPath);
+                else wasHandled = false;
             }
             else if (internalPath.Contains("skin_otopop") || internalPath.Contains("v01_c1101b0001_g"))
             {
                 if (outputPath.Contains("vanilla_lala")) OtopopToVanillaLala(inputPath, outputPath);
+                else wasHandled = false;
             }
             else if (internalPath.Contains("--c1101b0001"))
             {
                 if (outputPath.Contains("otopop")) VanillaLalaToOtopop(inputPath, outputPath);
+                else wasHandled = false;
             }
             else if (internalPath.Contains("v01_c1101b0001_b"))
             {
                 if (outputPath.Contains("otopop")) AsymLalaToOtopop(inputPath, outputPath);
-                if (outputPath.Contains("vanilla_lala")) AsymLalaToVanillaLala(inputPath, outputPath);
+                else if (outputPath.Contains("vanilla_lala")) AsymLalaToVanillaLala(inputPath, outputPath);
+                else wasHandled = false;
+            }
+            else
+            {
+                wasHandled = false;
+            }
+
+            // --- ADDITIVE MODULAR FALLBACK FOR FACES/OTHER MESHES ---
+            // If the body path didn't explicitly handle it, but XNormal knows the mesh paths, we dynamically generate a transfer map!
+            if (!wasHandled)
+            {
+                if (XNormal.TryGetMeshes(internalPath, outputPath, false, out string sourceMesh, out string targetMesh))
+                {
+                    PerformModularTransfer(sourceMesh, targetMesh, inputPath, outputPath);
+                    return true;
+                }
+                else
+                {
+                    return false; // Unhandled entirely, TextureProcessor legacy path will catch it
+                }
+            }
+
+            return true;
+        }
+
+        public static void PerformModularTransfer(string sourceMeshRelPath, string targetMeshRelPath, string inputImage, string outputImage, string transferMapNameOverride = null)
+        {
+            string sourceMeshName = Path.GetFileNameWithoutExtension(sourceMeshRelPath);
+            string targetMeshName = Path.GetFileNameWithoutExtension(targetMeshRelPath);
+            string transferMapName = transferMapNameOverride ?? $"{sourceMeshName}_to_{targetMeshName}_transfer.tif";
+            
+            // Note: Since this is additive for faces/extras, we can put it in a generic folder, but sticking to "body" works for now 
+            // since that's where the res folder is, or we could use "dynamic". Let's use fastuvtransfer\dynamic
+            string transferMapDir = Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "res", "fastuvtransfer", "dynamic");
+            Directory.CreateDirectory(transferMapDir);
+            
+            string transferMapPath = Path.Combine(transferMapDir, transferMapName);
+
+            // If the map doesn't exist, generate it seamlessly using XNormal!
+            if (!File.Exists(transferMapPath))
+            {
+                XNormal.BakeTransferMap(sourceMeshRelPath, targetMeshRelPath, transferMapPath);
+            }
+
+            using (Bitmap sourceTexture = TexIO.ResolveBitmap(inputImage))
+            {
+                using (Bitmap result = UVTransferMap.ApplyTransferMap(sourceTexture, transferMapPath))
+                {
+                    TexIO.SaveBitmap(result, outputImage);
+                }
             }
         }
+
     }
 }

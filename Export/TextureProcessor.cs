@@ -204,10 +204,14 @@ namespace FFXIVLooseTextureCompiler {
                             string childAlpha = childTexturePath.Replace("baseTexBaked", "alpha");
                             string childRGB = childTexturePath.Replace("baseTexBaked", "rgb");
 
+                            bool useLegacy = true;
                             if (_finalizeResults && UseFastUVTransfer && xNormalTextureType != XNormalTextureType.Normal) {
-                                // Fast UV Transfer path: operates on the full RGBA image instantly.
-                                FastUVTransfer.GenerateBasedOnSourceBody(internalPath, parentTexturePath, childTexturePath);
-                            } else {
+                                if (FastUVTransfer.GenerateBasedOnSourceBody(internalPath, parentTexturePath, childTexturePath)) {
+                                    useLegacy = false;
+                                }
+                            } 
+                            
+                            if (useLegacy) {
                                 // Legacy XNormal path: requires RGB and Alpha to be split for precision baking.
                                 TexIO.SaveBitmap(ImageManipulation.ExtractTransparency(baseTexture), baseTextureAlpha);
                                 TexIO.SaveBitmap(ImageManipulation.ExtractRGB(baseTexture), baseTextureRGB);
