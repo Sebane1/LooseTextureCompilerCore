@@ -46,29 +46,35 @@ namespace LooseTextureCompilerCore.ProjectCreation
         {
             bool foundStringIdentifier = false;
             UVMapType uVMapType = UVMapType.Base;
-            if (file.ToLower().Contains("base"))
+            string fileNameWithoutExtension = System.IO.Path.GetFileNameWithoutExtension(file).ToLower();
+            // Handle Windows duplicate file numbering like "filename_d (1)"
+            fileNameWithoutExtension = System.Text.RegularExpressions.Regex.Replace(fileNameWithoutExtension, @"\s*\(\d+\)\s*$", "").Trim();
+
+            if (fileNameWithoutExtension.Contains("base") || fileNameWithoutExtension.EndsWith("_d") || fileNameWithoutExtension.Contains("_d_"))
             {
                 uVMapType = UVMapType.Base;
                 foundStringIdentifier = true;
             }
 
-            if (file.ToLower().Contains("norm"))
+            if (fileNameWithoutExtension.Contains("norm") || fileNameWithoutExtension.EndsWith("_n") || fileNameWithoutExtension.Contains("_n_"))
             {
                 uVMapType = UVMapType.Normal;
                 foundStringIdentifier = true;
             }
 
-            if (file.ToLower().Contains("mask"))
+            if (fileNameWithoutExtension.Contains("mask") || fileNameWithoutExtension.EndsWith("_m") || fileNameWithoutExtension.Contains("_m_"))
             {
                 uVMapType = UVMapType.Mask;
                 foundStringIdentifier = true;
             }
 
-            if (file.ToLower().Contains("glow"))
+            if (fileNameWithoutExtension.Contains("glow") || fileNameWithoutExtension.EndsWith("_g") || fileNameWithoutExtension.Contains("_g_"))
             {
                 uVMapType = UVMapType.Glow;
                 foundStringIdentifier = true;
             }
+
+
 
 
 
