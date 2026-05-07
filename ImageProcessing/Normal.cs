@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 using Color = System.Drawing.Color;
 
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
@@ -20,18 +20,18 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 source.LockBits();
                 destination.LockBits();
                 float brightness_difference = 255 * 0.5f;
-                for (int y = 0; y < h; y++) {
+                System.Threading.Tasks.Parallel.For(0, h, y => {
                     for (int x = 0; x < w; x++) {
-                        sample_l = x > 0 ? source.GetPixel(x - 1, y).GetBrightness() : source.GetPixel(x, y).GetBrightness();
-                        sample_r = x < w ? source.GetPixel(x + 1, y).GetBrightness() : source.GetPixel(x, y).GetBrightness();
-                        sample_u = y > 1 ? source.GetPixel(x, y - 1).GetBrightness() : source.GetPixel(x, y).GetBrightness();
-                        sample_d = y < h ? source.GetPixel(x, y + 1).GetBrightness() : source.GetPixel(x, y).GetBrightness();
-                        x_vector = (((sample_l - sample_r) + 1) * brightness_difference);
-                        y_vector = (((sample_u - sample_d) + 1) * brightness_difference);
-                        Color col = Color.FromArgb(255, (int)x_vector, (int)y_vector, 255);
+                        float l = x > 0 ? source.GetPixel(x - 1, y).GetBrightness() : source.GetPixel(x, y).GetBrightness();
+                        float r = x < w ? source.GetPixel(x + 1, y).GetBrightness() : source.GetPixel(x, y).GetBrightness();
+                        float u = y > 0 ? source.GetPixel(x, y - 1).GetBrightness() : source.GetPixel(x, y).GetBrightness();
+                        float d = y < h ? source.GetPixel(x, y + 1).GetBrightness() : source.GetPixel(x, y).GetBrightness();
+                        float x_v = (((l - r) + 1) * brightness_difference);
+                        float y_v = (((u - d) + 1) * brightness_difference);
+                        Color col = Color.FromArgb(255, (int)x_v, (int)y_v, 255);
                         destination.SetPixel(x, y, col);
                     }
-                }
+                });
                 destination.UnlockBits();
                 source.UnlockBits();
                 return normal;
@@ -63,23 +63,23 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             source.LockBits();
             destination.LockBits();
             #endregion
-            for (int y = 0; y < h + 1; y++) {
+            System.Threading.Tasks.Parallel.For(0, h + 1, y => {
                 for (int x = 0; x < w + 1; x++) {
                     Color originalPixel = source.GetPixel(x, y);
                     if (normalMask == null || maskReference?.GetPixel(x, y).A == 0) {
-                        sample_l = x > 0 ? source.GetPixel(x - 1, y).GetBrightness() : source.GetPixel(x, y).GetBrightness();
-                        sample_r = x < w ? source.GetPixel(x + 1, y).GetBrightness() : source.GetPixel(x, y).GetBrightness();
-                        sample_u = y > 1 ? source.GetPixel(x, y - 1).GetBrightness() : source.GetPixel(x, y).GetBrightness();
-                        sample_d = y < h ? source.GetPixel(x, y + 1).GetBrightness() : source.GetPixel(x, y).GetBrightness();
-                        x_vector = (((sample_l - sample_r) + 1) * .5f) * 255;
-                        y_vector = (((sample_u - sample_d) + 1) * .5f) * 255;
-                        Color col = Color.FromArgb(255, (int)x_vector, (int)y_vector, 255);
+                        float l = x > 0 ? source.GetPixel(x - 1, y).GetBrightness() : source.GetPixel(x, y).GetBrightness();
+                        float r = x < w ? source.GetPixel(x + 1, y).GetBrightness() : source.GetPixel(x, y).GetBrightness();
+                        float u = y > 0 ? source.GetPixel(x, y - 1).GetBrightness() : source.GetPixel(x, y).GetBrightness();
+                        float d = y < h ? source.GetPixel(x, y + 1).GetBrightness() : source.GetPixel(x, y).GetBrightness();
+                        float x_v = (((l - r) + 1) * .5f) * 255;
+                        float y_v = (((u - d) + 1) * .5f) * 255;
+                        Color col = Color.FromArgb(255, (int)x_v, (int)y_v, 255);
                         destination.SetPixel(x, y, col);
                     } else {
                         destination.SetPixel(x, y, Color.FromArgb(255, 128, 127, 255));
                     }
                 }
-            }
+            });
             destination.UnlockBits();
             source.UnlockBits();
             maskReference?.UnlockBits();
