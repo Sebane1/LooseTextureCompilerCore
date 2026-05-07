@@ -39,6 +39,7 @@ namespace FFXIVLooseTextureCompiler {
         private bool _finalizeResults;
         private bool _generateNormals;
         private bool _generateMulti;
+        public bool UseFastUVTransfer { get; set; } = true;
 
         string _basePath = "";
         int _exportCompletion = 0;
@@ -202,18 +203,25 @@ namespace FFXIVLooseTextureCompiler {
                             && Directory.Exists(Path.GetDirectoryName(baseTextureRGB))) {
                             string childAlpha = childTexturePath.Replace("baseTexBaked", "alpha");
                             string childRGB = childTexturePath.Replace("baseTexBaked", "rgb");
-                            TexIO.SaveBitmap(ImageManipulation.ExtractTransparency(baseTexture), baseTextureAlpha);
-                            TexIO.SaveBitmap(ImageManipulation.ExtractRGB(baseTexture), baseTextureRGB);
-                            if (_finalizeResults) {
-                                _xnormal.AddToBatch(internalPath, baseTextureAlpha, childAlpha, false);
-                                _xnormal.AddToBatch(internalPath, baseTextureRGB, childRGB, xNormalTextureType == XNormalTextureType.Normal);
+
+                            if (_finalizeResults && UseFastUVTransfer && xNormalTextureType != XNormalTextureType.Normal) {
+                                // Fast UV Transfer path: operates on the full RGBA image instantly.
+                                FastUVTransfer.GenerateBasedOnSourceBody(internalPath, parentTexturePath, childTexturePath);
                             } else {
-                                if (!File.Exists(ImageManipulation.AddSuffix(childTexturePath, "_baseTexBaked"))) {
-                                    if (!File.Exists(childAlpha)) {
-                                        new Bitmap(1024, 1024).Save(ImageManipulation.AddSuffix(childAlpha, "_baseTexBaked"), ImageFormat.Png);
-                                    }
-                                    if (!File.Exists(childRGB)) {
-                                        new Bitmap(1024, 1024).Save(ImageManipulation.AddSuffix(childRGB, "_baseTexBaked"), ImageFormat.Png);
+                                // Legacy XNormal path: requires RGB and Alpha to be split for precision baking.
+                                TexIO.SaveBitmap(ImageManipulation.ExtractTransparency(baseTexture), baseTextureAlpha);
+                                TexIO.SaveBitmap(ImageManipulation.ExtractRGB(baseTexture), baseTextureRGB);
+                                if (_finalizeResults) {
+                                    _xnormal.AddToBatch(internalPath, baseTextureAlpha, childAlpha, false);
+                                    _xnormal.AddToBatch(internalPath, baseTextureRGB, childRGB, xNormalTextureType == XNormalTextureType.Normal);
+                                } else {
+                                    if (!File.Exists(ImageManipulation.AddSuffix(childTexturePath, "_baseTexBaked"))) {
+                                        if (!File.Exists(childAlpha)) {
+                                            new Bitmap(1024, 1024).Save(ImageManipulation.AddSuffix(childAlpha, "_baseTexBaked"), ImageFormat.Png);
+                                        }
+                                        if (!File.Exists(childRGB)) {
+                                            new Bitmap(1024, 1024).Save(ImageManipulation.AddSuffix(childRGB, "_baseTexBaked"), ImageFormat.Png);
+                                        }
                                     }
                                 }
                             }

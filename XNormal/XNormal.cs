@@ -320,6 +320,106 @@ namespace FFXIVLooseTextureCompiler
             : Path.Combine(GlobalPathStorage.OriginalBaseDirectory, xNormal);
             Process process = Process.Start(executable);
         }
+
+        /// <summary>
+        /// Generates a coordinate identity map, bakes it through XNormal for the given mesh pair,
+        /// and saves the result as a 16-bit TIFF transfer map. This is a one-time developer tool
+        /// for pre-baking transfer maps to ship with the application.
+        /// </summary>
+        public static void BakeTransferMap(string sourceMeshRelative, string targetMeshRelative, string outputTifPath)
+        {
+            // Generate a temporary 16-bit coordinate map
+            string tempDir = Path.Combine(Path.GetTempPath(), "FFXIVLooseTextureCompiler_TransferMapBake");
+            Directory.CreateDirectory(tempDir);
+            string coordMapPath = Path.Combine(tempDir, "coordinate_map.png");
+
+            FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.GenerateCoordinateMap(4096, 4096, coordMapPath);
+
+            // Ensure output path is .tif for 16-bit precision
+            string tifOutput = Path.ChangeExtension(outputTifPath, ".tif");
+
+            // Bake through XNormal with skipRgbSplit=true (coordinate map has no meaningful alpha to split)
+            CallXNormal(
+                Path.Combine(GlobalPathStorage.OriginalBaseDirectory, sourceMeshRelative),
+                Path.Combine(GlobalPathStorage.OriginalBaseDirectory, targetMeshRelative),
+                coordMapPath,
+                tifOutput,
+                isNormalMap: false,
+                width: 4096,
+                height: 4096,
+                skipRgbSplit: true
+            );
+
+            // Clean up temp coordinate map
+            try { File.Delete(coordMapPath); } catch { }
+        }
+
+        /// <summary>
+        /// Bakes a 16-bit Bibo+ → Gen3 transfer map via XNormal.
+        /// </summary>
+        public static void BakeTransferMapBiboToGen3(string outputTifPath)
+        {
+            BakeTransferMap(bibo, gen3, outputTifPath);
+        }
+
+        /// <summary>
+        /// Bakes a 16-bit Gen3 → Bibo+ transfer map via XNormal.
+        /// </summary>
+        public static void BakeTransferMapGen3ToBibo(string outputTifPath)
+        {
+            BakeTransferMap(gen3, bibo, outputTifPath);
+        }
+
+        public static void BakeTransferMapBiboToGen2(string outputTifPath)
+        {
+            BakeTransferMap(biboLegacy, gen2, outputTifPath);
+        }
+
+        public static void BakeTransferMapGen2ToBibo(string outputTifPath)
+        {
+            BakeTransferMap(gen2, biboLegacy, outputTifPath);
+        }
+
+        public static void BakeTransferMapGen3ToGen2(string outputTifPath)
+        {
+            BakeTransferMap(gen3Legacy, gen2, outputTifPath);
+        }
+
+        public static void BakeTransferMapGen2ToGen3(string outputTifPath)
+        {
+            BakeTransferMap(gen2, gen3Legacy, outputTifPath);
+        }
+
+        public static void BakeTransferMapOtopopToVanilla(string outputTifPath)
+        {
+            BakeTransferMap(otopop, vanillaLala, outputTifPath);
+        }
+
+        public static void BakeTransferMapVanillaToOtopop(string outputTifPath)
+        {
+            BakeTransferMap(vanillaLala, otopop, outputTifPath);
+        }
+
+        public static void BakeTransferMapVanillaToAsymLala(string outputTifPath)
+        {
+            BakeTransferMap(vanillaLala, asymLala, outputTifPath);
+        }
+
+        public static void BakeTransferMapAsymLalaToVanilla(string outputTifPath)
+        {
+            BakeTransferMap(asymLala, vanillaLala, outputTifPath);
+        }
+
+        public static void BakeTransferMapOtopopToAsymLala(string outputTifPath)
+        {
+            BakeTransferMap(otopop, asymLala, outputTifPath);
+        }
+
+        public static void BakeTransferMapAsymLalaToOtopop(string outputTifPath)
+        {
+            BakeTransferMap(asymLala, otopop, outputTifPath);
+        }
+
         public static void CallXNormal(string inputFBX, string outputFBX, string inputImage, string outputImage, bool isNormalMap = false, int width = 4096, int height = 4096, bool skipRgbSplit = false)
         {
 
