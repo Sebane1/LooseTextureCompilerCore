@@ -101,7 +101,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Dictionary<int, int> colours = new Dictionary<int, int>();
             LockBitmap source = new LockBitmap(file);
             source.LockBits();
-            for (int y = 0; y < file.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, file.Height, y => {
                 for (int x = 0; x < file.Width; x++) {
                     Color sourcePixel = source.GetPixel(x, y);
                     if (sourcePixel.A > 20 && (sourcePixel.R > 50 || sourcePixel.G > 50 || sourcePixel.B > 50)) {
@@ -113,7 +113,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         }
                     }
                 }
-            }
+            });
             ;
             source.UnlockBits();
             int index = 0;
@@ -135,7 +135,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
-            for (int y = 0; y < image.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
                 for (int x = 0; x < image.Width; x++) {
                     Color sourcePixel = source.GetPixel(x, y);
                     Color col = Color.FromArgb(sourcePixel.A,
@@ -144,7 +144,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         FlattenToThreshold(sourcePixel.B, threshhold));
                     source.SetPixel(x, y, col);
                 }
-            }
+            });
             ;
             source.UnlockBits();
             return image;
@@ -170,7 +170,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
-            for (int y = 0; y < image.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
                 for (int x = 0; x < image.Width; x++) {
                     Color sourcePixel = source.GetPixel(x, y);
                     if (sourcePixel.A < 255) {
@@ -178,7 +178,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         source.SetPixel(x, y, col);
                     }
                 }
-            }
+            });
             ;
             source.UnlockBits();
             return image;
@@ -193,13 +193,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public static Bitmap InvertImage(Bitmap file) {
             Bitmap invertedImage = TexIO.NewBitmap(file);
             using (LockBitmap invertedBits = new LockBitmap(invertedImage)) {
-                for (int y = 0; y < invertedBits.Height; y++) {
+                System.Threading.Tasks.Parallel.For(0, invertedBits.Height, y => {
                     for (int x = 0; x < invertedBits.Width; x++) {
                         Color invertedPixel = invertedBits.GetPixel(x, y);
                         invertedPixel = Color.FromArgb(invertedPixel.A, (255 - invertedPixel.R), (255 - invertedPixel.G), (255 - invertedPixel.B));
                         invertedBits.SetPixel(x, y, invertedPixel);
                     }
-                }
+                });
             }
             return invertedImage;
         }
@@ -214,13 +214,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
-            for (int y = 0; y < image.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
                 for (int x = 0; x < image.Width; x++) {
                     Color sourcePixel = source.GetPixel(x, y);
                     Color col = Color.FromArgb(255, sourcePixel.A, sourcePixel.A, sourcePixel.A);
                     source.SetPixel(x, y, col);
                 }
-            }
+            });
             ;
             source.UnlockBits();
             return image;
@@ -231,7 +231,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap backingImageCopy = new Bitmap(backingImage);
             LockBitmap backingImageSource = new LockBitmap(backingImageCopy);
             source.LockBits();
-            for (int y = 0; y < image.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
                 for (int x = 0; x < image.Width; x++) {
                     Color sourcePixel = source.GetPixel(x, y);
                     Color backingPixel = backingImageSource.GetPixel(x, y);
@@ -240,7 +240,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         source.SetPixel(x, y, col);
                     }
                 }
-            }
+            });
             ;
             source.UnlockBits();
             return image;
@@ -249,7 +249,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
-            for (int y = 0; y < image.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
                 for (int x = 0; x < image.Width; x++) {
                     Color sourcePixel = source.GetPixel(x, y);
                     Color col = Color.FromArgb(255, sourcePixel.R, sourcePixel.G, sourcePixel.B);
@@ -260,7 +260,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     }
                     source.SetPixel(x, y, col);
                 }
-            }
+            });
             ;
             source.UnlockBits();
             return image;
@@ -269,13 +269,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
-            for (int y = 0; y < image.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
                 for (int x = 0; x < image.Width; x++) {
                     Color sourcePixel = source.GetPixel(x, y);
                     Color col = Color.FromArgb(255, sourcePixel.R, sourcePixel.R, sourcePixel.R);
                     source.SetPixel(x, y, col);
                 }
-            }
+            });
             ;
             source.UnlockBits();
             return image;
@@ -284,13 +284,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
-            for (int y = 0; y < image.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
                 for (int x = 0; x < image.Width; x++) {
                     Color sourcePixel = source.GetPixel(x, y);
                     Color col = Color.FromArgb(255, sourcePixel.G, sourcePixel.G, sourcePixel.G);
                     source.SetPixel(x, y, col);
                 }
-            }
+            });
             ;
             source.UnlockBits();
             return image;
@@ -307,7 +307,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 (int)(lipAreaWidth * (asym ? 2 : 1)),
                 (int)(0.8f * (float)file.Height));
             source.LockBits();
-            for (int y = 0; y < image.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
                 for (int x = 0; x < image.Width; x++) {
                     Color sourcePixel = source.GetPixel(x, y);
                     bool insideRectangle = rectangle.Contains(x, y);
@@ -322,7 +322,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         : (sourcePixel.G < 20 ? sourcePixel.G : 126)), 0, 255), 0);
                     source.SetPixel(x, y, col);
                 }
-            }
+            });
             ;
             source.UnlockBits();
             return image;
@@ -331,7 +331,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap image = new Bitmap(Grayscale.MakeGrayscale(file));
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
-            for (int y = 0; y < image.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
                 for (int x = 0; x < image.Width; x++) {
                     Color sourcePixel = source.GetPixel(x, y);
                     Color col = Color.FromArgb(255,
@@ -340,7 +340,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         (sourcePixel.G < 20 ? sourcePixel.G : 126), 0, 255), 0);
                     source.SetPixel(x, y, col);
                 }
-            }
+            });
             ;
             source.UnlockBits();
             return image;
@@ -350,13 +350,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
-            for (int y = 0; y < image.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
                 for (int x = 0; x < image.Width; x++) {
                     Color sourcePixel = source.GetPixel(x, y);
                     Color col = Color.FromArgb(255, sourcePixel.B, sourcePixel.B, sourcePixel.B);
                     source.SetPixel(x, y, col);
                 }
-            }
+            });
             ;
             source.UnlockBits();
             return image;
@@ -371,7 +371,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             source.LockBits();
             correctionSource.LockBits();
             Color correctionColor = Color.White;
-            for (int y = 0; y < correctionImage.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, correctionImage.Height, y => {
                 for (int x = 0; x < correctionImage.Width; x++) {
                     Color correctionPixel = correctionSource.GetPixel(x, y);
                     Color sourcePixel = source.GetPixel(x, y);
@@ -388,7 +388,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         correctionSource.SetPixel(x, y, Color.FromArgb(0, sourcePixel.R, sourcePixel.G, sourcePixel.B));
                     }
                 }
-            }
+            });
             ;
             source.UnlockBits();
             correctionSource.UnlockBits();
@@ -487,13 +487,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
-            for (int y = 0; y < image.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
                 for (int x = 0; x < image.Width; x++) {
                     Color sourcePixel = source.GetPixel(x, y);
                     Color col = Color.FromArgb(255, sourcePixel.A, sourcePixel.A, sourcePixel.A);
                     source.SetPixel(x, y, col);
                 }
-            }
+            });
             ;
             source.UnlockBits();
             return image;
@@ -504,13 +504,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             using (LockBitmap bitmap = new LockBitmap(image)) {
                 int i = int.MinValue;
                 for (int x = 0; x < bitmap.Width; x++) {
-                    for (int y = 0; y < bitmap.Height; y++) {
+                    System.Threading.Tasks.Parallel.For(0, bitmap.Height, y => {
                         // Set to some colour
                         Color color = Color.FromArgb(i);
                         color = Color.FromArgb(255, color.R, color.G, color.B);
                         bitmap.SetPixel(x, y, color);
                         i++;
-                    }
+                    });
                 }
             }
             return image;
@@ -595,13 +595,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
-            for (int y = 0; y < image.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
                 for (int x = 0; x < image.Width; x++) {
                     Color sourcePixel = source.GetPixel(x, y);
                     Color col = Color.FromArgb(sourcePixel.R, sourcePixel.R, sourcePixel.R, sourcePixel.R);
                     source.SetPixel(x, y, col);
                 }
-            }
+            });
             ;
             source.UnlockBits();
             return image;
@@ -620,7 +620,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             alphaBits.LockBits();
             destination.LockBits();
             try {
-                for (int y = 0; y < image.Height; y++) {
+                System.Threading.Tasks.Parallel.For(0, image.Height, y => {
                     for (int x = 0; x < image.Width; x++) {
                         Color redPixel = redBits.GetPixel(x, y);
                         Color greenPixel = greenBits.GetPixel(x, y);
@@ -629,7 +629,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         Color col = Color.FromArgb(alphaPixel.R, redPixel.R, greenPixel.G, bluePixel.B);
                         destination.SetPixel(x, y, col);
                     }
-                }
+                });
                 ;
             } catch {
                 // Todo send out an error.
@@ -714,7 +714,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             alphaBits.LockBits();
             rgbBits.LockBits();
             destination.LockBits();
-            for (int y = 0; y < image.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
                 for (int x = 0; x < image.Width; x++) {
                     try {
                         Color alphaPixel = new Color();
@@ -735,7 +735,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         break;
                     }
                 }
-            }
+            });
             ;
             alphaBits.UnlockBits();
             rgbBits.UnlockBits();
@@ -751,7 +751,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         //    alphaBits.LockBits();
         //    rgbBits.LockBits();
         //    destination.LockBits();
-        //    for (int y = 0; y < image.Height; y++) {
+        //    System.Threading.Tasks.Parallel.For(0, image.Height, y => {
         //        for (int x = 0; x < image.Width; x++) {
         //            try {
         //                Color alphaPixel = new Color();
@@ -772,7 +772,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         //                break;
         //            }
         //        }
-        //    };
+        //    });;
         //    alphaBits.UnlockBits();
         //    rgbBits.UnlockBits();
         //    destination.UnlockBits();
@@ -836,7 +836,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public static void BoostAlpha(Bitmap bitmap) {
             LockBitmap alphaBits = new LockBitmap(bitmap);
             alphaBits.LockBits();
-            for (int y = 0; y < bitmap.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, bitmap.Height, y => {
                 for (int x = 0; x < bitmap.Width; x++) {
                     Color alphaPixel = alphaBits.GetPixel(x, y);
                     if (alphaPixel.R > 5) {
@@ -844,7 +844,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         alphaBits.SetPixel(x, y, col);
                     }
                 }
-            }
+            });
             ;
             alphaBits.UnlockBits();
         }
@@ -1071,7 +1071,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public static void EraseSection(Bitmap bitmap, Vector2 startPoint, Vector2 size) {
             LockBitmap source = new LockBitmap(bitmap);
             source.LockBits();
-            for (int y = 0; y < bitmap.Height; y++) {
+            System.Threading.Tasks.Parallel.For(0, bitmap.Height, y => {
                 if (y >= startPoint.Y && y < startPoint.Y + size.Y) {
                     for (int x = 0; x < bitmap.Width; x++) {
                         Color sourcePixel = source.GetPixel(x, y);
@@ -1081,7 +1081,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         }
                     }
                 }
-            }
+            });
             ;
             source.UnlockBits();
         }
