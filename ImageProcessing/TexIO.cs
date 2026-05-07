@@ -234,17 +234,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             {
                 if (bitmap != null)
                 {
-                    var newImage = new SixLabors.ImageSharp.Image<Rgba32>(bitmap.Width, bitmap.Height);
                     LockBitmap startingData = new LockBitmap(bitmap);
                     startingData.LockBits();
-                    for (int y = 0; y < bitmap.Height; y++)
-                    {
-                        for (int x = 0; x < bitmap.Width; x++)
-                        {
-                            var rgbPixel = startingData.GetPixel(x, y);
-                            newImage[x, y] = new Rgba32(rgbPixel.R, rgbPixel.G, rgbPixel.B, rgbPixel.A);
-                        }
-                    };
+                    var newImage = SixLabors.ImageSharp.Image.LoadPixelData<Bgra32>(startingData.Pixels, bitmap.Width, bitmap.Height).CloneAs<Rgba32>();
                     startingData.UnlockBits();
                     return newImage;
                 }
@@ -259,15 +251,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             Bitmap canvas = new Bitmap(newImage.Width, newImage.Height, PixelFormat.Format32bppArgb);
             LockBitmap destination = new LockBitmap(canvas);
             destination.LockBits();
-            for (int y = 0; y < canvas.Height; y++)
-            {
-                for (int x = 0; x < canvas.Width; x++)
-                {
-                    var rgbPixel = newImage[x, y];
-                    Color col = Color.FromArgb(noAlpha ? 255 : rgbPixel.A, rgbPixel.R, rgbPixel.G, rgbPixel.B);
-                    destination.SetPixel(x, y, col);
+            var bgraImage = newImage.CloneAs<Bgra32>();
+            bgraImage.CopyPixelDataTo(destination.Pixels);
+            if (noAlpha) {
+                for (int i = 3; i < destination.Pixels.Length; i += 4) {
+                    destination.Pixels[i] = 255;
                 }
-            };
+            }
             destination.UnlockBits();
             return canvas;
         }

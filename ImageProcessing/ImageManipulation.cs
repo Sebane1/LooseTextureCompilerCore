@@ -1124,33 +1124,53 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static void MergeImageLayers(List<string> images, string ouputPath) {
-            List<Image<Rgba32>> validImages = new List<Image<Rgba32>>();
             int maxX = 0;
             int maxY = 0;
+            List<string> validPaths = new List<string>();
             foreach (var image in images) {
                 if (!string.IsNullOrEmpty(image) && File.Exists(image)) {
-                    var imageData = TexIO.BitmapToImageSharp(TexIO.ResolveBitmap(image));
-                    if (imageData.Width > maxX) {
-                        maxX = imageData.Bounds.Width;
+                    validPaths.Add(image);
+                    using (var bitmap = TexIO.ResolveBitmap(image)) {
+                        if (bitmap.Width > maxX) {
+                            maxX = bitmap.Width;
+                        }
+                        if (bitmap.Height > maxY) {
+                            maxY = bitmap.Height;
+                        }
                     }
-                    if (imageData.Height > maxY) {
-                        maxY = imageData.Bounds.Height;
-                    }
-                    var data = imageData as Image<Rgba32>;
-                    validImages.Add(data);
                 }
             }
 
-            var outputImage = new Image<Rgba32>(maxX, maxY);
-            if (validImages.Count > 1) {
-                foreach (var image in validImages) {
-                    image.Mutate(o => o.Resize(new SixLabors.ImageSharp.Size(maxX, maxY)));
-                    outputImage.Mutate(o => o.DrawImage(image, new SixLabors.ImageSharp.Point(0, 0), PixelColorBlendingMode.Normal, 1f));
-                    image.Dispose();
+            if (validPaths.Count == 0) return;
+
+            if (validPaths.Count == 1) {
+                using (var bitmap = TexIO.ResolveBitmap(validPaths[0])) {
+                    using (var imageData = TexIO.BitmapToImageSharp(bitmap)) {
+                        var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder() {
+                            TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
+                            ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
+                        };
+                        imageData.SaveAsPng(ouputPath, encoder);
+                    }
                 }
-                outputImage.SaveAsPng(ouputPath);
             } else {
-                validImages[0].SaveAsPng(ouputPath);
+                using (var outputImage = new Image<Rgba32>(maxX, maxY)) {
+                    foreach (var image in validPaths) {
+                        using (var bitmap = TexIO.ResolveBitmap(image)) {
+                            using (var layer = TexIO.BitmapToImageSharp(bitmap)) {
+                                if (layer.Width != maxX || layer.Height != maxY) {
+                                    layer.Mutate(o => o.Resize(new SixLabors.ImageSharp.Size(maxX, maxY)));
+                                }
+                                outputImage.Mutate(o => o.DrawImage(layer, new SixLabors.ImageSharp.Point(0, 0), PixelColorBlendingMode.Normal, 1f));
+                            }
+                        }
+                    }
+                    var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder() {
+                        TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
+                        ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
+                    };
+                    outputImage.SaveAsPng(ouputPath, encoder);
+                }
             }
         }
 
