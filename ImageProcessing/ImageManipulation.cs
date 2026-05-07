@@ -1157,10 +1157,14 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             TexIO.SaveBitmap(ImageManipulation.ExtractAlpha(image), ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(fileName, "_A."), ".png"));
         }
 
-        public static void CreateContact(string baseBath, string path) {
+        public static void CreateContact(string baseBath, string path, bool useFastUVTransfer = true) {
             string input = Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "res\\model\\eyes\\eye_map_baking\\EyeInputLayout.fbx");
             string output = Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "res\\model\\eyes\\eye_map_baking\\EyeOutputLayout.fbx");
-            XNormal.CallXNormal(input, output, path, ImageManipulation.AddSuffix(path, "_contactBase"), false, 2048, 2048, false);
+            if (useFastUVTransfer) {
+                FastUVTransfer.PerformModularTransfer(input, output, path, ImageManipulation.AddSuffix(path, "_contactBase"), "eye_contact_transfer.tif");
+            } else {
+                XNormal.CallXNormal(input, output, path, ImageManipulation.AddSuffix(path, "_contactBase"), false, 2048, 2048, false);
+            }
         }
 
         public static void MergeImageLayers(List<string> images, string ouputPath) {
@@ -1272,12 +1276,17 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return new Rgba32(outR, outG, outB, outAlpha);
         }
 
-        public static void ConvertLegacyAuRaTail(string inputTexture, int tailNumber, bool gender, string baseDirectory = "") {
+        public static void ConvertLegacyAuRaTail(string inputTexture, int tailNumber, bool gender, string baseDirectory = "", bool useFastUVTransfer = true) {
             string pathInput = Path.Combine(string.IsNullOrEmpty(baseDirectory) ? GlobalPathStorage.OriginalBaseDirectory : baseDirectory,
                 $"res\\model\\tail\\input\\{(gender ? "AuRa_Female" : "AuRa_Male")}\\{tailNumber}\\3D\\c1401t000{tailNumber}_til.fbx");
             string outputInput = Path.Combine(string.IsNullOrEmpty(baseDirectory) ? GlobalPathStorage.OriginalBaseDirectory : baseDirectory,
                 $"res\\model\\tail\\output\\{(gender ? "AuRa_Female" : "AuRa_Male")}\\{tailNumber}\\3D\\c1401t000{tailNumber}_til.fbx");
-            XNormal.CallXNormal(pathInput, outputInput, inputTexture, ImageManipulation.AddSuffix(inputTexture, "_dawntrail"), false, 1024, 2048, true);
+            if (useFastUVTransfer) {
+                string mapName = $"tail_{(gender ? "female" : "male")}_{tailNumber}_transfer.tif";
+                FastUVTransfer.PerformModularTransfer(pathInput, outputInput, inputTexture, ImageManipulation.AddSuffix(inputTexture, "_dawntrail"), mapName);
+            } else {
+                XNormal.CallXNormal(pathInput, outputInput, inputTexture, ImageManipulation.AddSuffix(inputTexture, "_dawntrail"), false, 1024, 2048, true);
+            }
         }
     }
 }

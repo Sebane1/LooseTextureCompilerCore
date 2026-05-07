@@ -47,8 +47,55 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap rgbSource = ImageManipulation.ExtractRGB(sourceTexture);
             Bitmap alphaSource = ImageManipulation.ExtractAlpha(sourceTexture);
 
-            Bitmap rgbResult = ApplyTransferMapInternal(rgbSource, transferMapPath, useBilinear);
-            Bitmap alphaResult = ApplyTransferMapInternal(alphaSource, transferMapPath, useBilinear);
+            float[] mapX, mapY;
+            bool[] mapValid;
+            int destWidth, destHeight;
+            bool is8Bit;
+
+            using (var transferImage = Image.Load<Rgba64>(transferMapPath)) {
+                destWidth = transferImage.Width;
+                destHeight = transferImage.Height;
+                mapX = new float[destWidth * destHeight];
+                mapY = new float[destWidth * destHeight];
+                mapValid = new bool[destWidth * destHeight];
+
+                int eightBitCount = 0;
+                int sampleCount = 0;
+
+                transferImage.ProcessPixelRows(accessor => {
+                    for (int y = 0; y < accessor.Height; y++) {
+                        Span<Rgba64> rowSpan = accessor.GetRowSpan(y);
+                        int rowOffset = y * destWidth;
+                        for (int x = 0; x < accessor.Width; x++) {
+                            Rgba64 pixel = rowSpan[x];
+                            int idx = rowOffset + x;
+                            bool valid = pixel.A >= 100;
+                            mapValid[idx] = valid;
+
+                            if (valid) {
+                                mapX[idx] = pixel.R / 65535.0f;
+                                mapY[idx] = pixel.G / 65535.0f;
+
+                                if (sampleCount < 1000) {
+                                    if (pixel.R % 257 == 0 && pixel.G % 257 == 0) {
+                                        eightBitCount++;
+                                    }
+                                    sampleCount++;
+                                }
+                            }
+                        }
+                    }
+                });
+
+                is8Bit = sampleCount > 0 && (float)eightBitCount / sampleCount > 0.95f;
+            }
+
+            if (is8Bit) {
+                SmoothCoordinates(mapX, mapY, mapValid, destWidth, destHeight);
+            }
+
+            Bitmap rgbResult = ApplyTransferMapInternal(rgbSource, mapX, mapY, mapValid, destWidth, destHeight, useBilinear);
+            Bitmap alphaResult = ApplyTransferMapInternal(alphaSource, mapX, mapY, mapValid, destWidth, destHeight, useBilinear);
 
             DilateEdges(rgbResult, 8);
             DilateEdges(alphaResult, 8);
@@ -63,99 +110,45 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return finalResult;
         }
 
-        /// <summary>
-        /// Core transfer map application. Reads the transfer map into float arrays for maximum precision,
-        /// detects 8-bit maps, and applies coordinate smoothing when needed.
-        /// </summary>
-        private static Bitmap ApplyTransferMapInternal(Bitmap sourceTexture, string transferMapPath, bool useBilinear) {
-            using (var transferImage = Image.Load<Rgba64>(transferMapPath)) {
-                int destWidth = transferImage.Width;
-                int destHeight = transferImage.Height;
-                int srcWidth = sourceTexture.Width;
-                int srcHeight = sourceTexture.Height;
+        private static Bitmap ApplyTransferMapInternal(Bitmap sourceTexture, float[] mapX, float[] mapY, bool[] mapValid, int destWidth, int destHeight, bool useBilinear) {
+            int srcWidth = sourceTexture.Width;
+            int srcHeight = sourceTexture.Height;
 
-                // Read transfer map into float arrays (normalized 0.0 - 1.0)
-                float[] mapX = new float[destWidth * destHeight];
-                float[] mapY = new float[destWidth * destHeight];
-                bool[] mapValid = new bool[destWidth * destHeight];
+            Bitmap result = new Bitmap(destWidth, destHeight, PixelFormat.Format32bppArgb);
+            LockBitmap destLock = new LockBitmap(result);
+            LockBitmap srcLock = new LockBitmap(sourceTexture);
 
-                bool is8Bit = false;
+            destLock.LockBits();
+            srcLock.LockBits();
 
-                transferImage.ProcessPixelRows(accessor => {
-                    // Sample some pixels to detect if the map is 8-bit (values are multiples of 257)
-                    int eightBitCount = 0;
-                    int sampleCount = 0;
+            int __safe_width = destWidth;
+            int __safe_height = destHeight;
+            System.Threading.Tasks.Parallel.For(0, __safe_height, y => {
+                int rowOffset = y * __safe_width;
+                for (int x = 0; x < __safe_width; x++) {
+                    int idx = rowOffset + x;
+                    if (!mapValid[idx]) continue;
 
-                    for (int y = 0; y < accessor.Height; y++) {
-                        Span<Rgba64> rowSpan = accessor.GetRowSpan(y);
-                        int rowOffset = y * destWidth;
-                        for (int x = 0; x < accessor.Width; x++) {
-                            Rgba64 pixel = rowSpan[x];
-                            int idx = rowOffset + x;
-                            bool valid = pixel.A >= 100;
-                            mapValid[idx] = valid;
+                    float srcXf = mapX[idx] * (srcWidth - 1);
+                    float srcYf = mapY[idx] * (srcHeight - 1);
 
-                            if (valid) {
-                                mapX[idx] = pixel.R / 65535.0f;
-                                mapY[idx] = pixel.G / 65535.0f;
-
-                                // Check if value is a multiple of 257 (8-bit upscaled to 16-bit)
-                                if (sampleCount < 1000) {
-                                    if (pixel.R % 257 == 0 && pixel.G % 257 == 0) {
-                                        eightBitCount++;
-                                    }
-                                    sampleCount++;
-                                }
-                            }
-                        }
+                    Color sampledColor;
+                    if (useBilinear) {
+                        sampledColor = BilinearSample(srcLock, srcXf, srcYf, srcWidth, srcHeight);
+                    } else {
+                        int srcXi = Math.Clamp((int)Math.Round(srcXf), 0, srcWidth - 1);
+                        int srcYi = Math.Clamp((int)Math.Round(srcYf), 0, srcHeight - 1);
+                        sampledColor = srcLock.GetPixel(srcXi, srcYi);
                     }
-                    is8Bit = sampleCount > 0 && (float)eightBitCount / sampleCount > 0.95f;
-                });
 
-                // If the map is 8-bit, smooth the coordinates to recover sub-pixel precision.
-                // Within UV islands, coordinates vary smoothly, so we can interpolate between
-                // the quantized 8-bit values to reconstruct the original smooth mapping.
-                if (is8Bit) {
-                    SmoothCoordinates(mapX, mapY, mapValid, destWidth, destHeight);
+                    destLock.SetPixel(x, y, Color.FromArgb(255, sampledColor.R, sampledColor.G, sampledColor.B));
                 }
+            });
 
-                // Now remap source pixels using the (possibly smoothed) coordinate arrays
-                Bitmap result = new Bitmap(destWidth, destHeight, PixelFormat.Format32bppArgb);
-                LockBitmap destLock = new LockBitmap(result);
-                LockBitmap srcLock = new LockBitmap(sourceTexture);
+            destLock.UnlockBits();
+            srcLock.UnlockBits();
 
-                destLock.LockBits();
-                srcLock.LockBits();
-
-                int __safe_width = destWidth;
-                int __safe_height = destHeight;
-                System.Threading.Tasks.Parallel.For(0, __safe_height, y => {
-                    int rowOffset = y * __safe_width;
-                    for (int x = 0; x < __safe_width; x++) {
-                        int idx = rowOffset + x;
-                        if (!mapValid[idx]) continue;
-
-                        float srcXf = mapX[idx] * (srcWidth - 1);
-                        float srcYf = mapY[idx] * (srcHeight - 1);
-
-                        Color sampledColor;
-                        if (useBilinear) {
-                            sampledColor = BilinearSample(srcLock, srcXf, srcYf, srcWidth, srcHeight);
-                        } else {
-                            int srcXi = Math.Clamp((int)Math.Round(srcXf), 0, srcWidth - 1);
-                            int srcYi = Math.Clamp((int)Math.Round(srcYf), 0, srcHeight - 1);
-                            sampledColor = srcLock.GetPixel(srcXi, srcYi);
-                        }
-
-                        destLock.SetPixel(x, y, Color.FromArgb(255, sampledColor.R, sampledColor.G, sampledColor.B));
-                    }
-                });
-
-                destLock.UnlockBits();
-                srcLock.UnlockBits();
-
-                return result;
-            }
+            return result;
         }
 
         /// <summary>
