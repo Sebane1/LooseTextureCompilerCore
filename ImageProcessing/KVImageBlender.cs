@@ -283,19 +283,19 @@ namespace KVImage {
 
 
         public void BlendImages(Image destImage, Image srcImage, BlendOperation BlendOp) {
-            BlendImages(destImage, 0, 0, destImage.Width, destImage.Height, srcImage, 0, 0, BlendOp);
+            using (var _ = BlendImages(destImage, 0, 0, destImage.Width, destImage.Height, srcImage, 0, 0, BlendOp)) { }
         }
 
         public void BlendImages(Image destImage, BlendOperation BlendOp) {
-            BlendImages(destImage, 0, 0, destImage.Width, destImage.Height, null, 0, 0, BlendOp);
+            using (var _ = BlendImages(destImage, 0, 0, destImage.Width, destImage.Height, null, 0, 0, BlendOp)) { }
         }
 
         public void BlendImages(Image destImage, int destX, int destY, BlendOperation BlendOp) {
-            BlendImages(destImage, destX, destY, destImage.Width - destX, destImage.Height - destY, null, 0, 0, BlendOp);
+            using (var _ = BlendImages(destImage, destX, destY, destImage.Width - destX, destImage.Height - destY, null, 0, 0, BlendOp)) { }
         }
 
         public void BlendImages(Image destImage, int destX, int destY, int destWidth, int destHeight, BlendOperation BlendOp) {
-            BlendImages(destImage, destX, destY, destWidth, destHeight, null, 0, 0, BlendOp);
+            using (var _ = BlendImages(destImage, destX, destY, destWidth, destHeight, null, 0, 0, BlendOp)) { }
         }
         #endregion
 

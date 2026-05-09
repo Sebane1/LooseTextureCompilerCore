@@ -37,7 +37,7 @@ namespace FFXIVLooseTextureCompiler {
         private List<KeyValuePair<string, string>> _textureSetQueue;
         private int _fileCount;
         private int _gcCounter;
-        private System.Threading.SemaphoreSlim _exportSemaphore = new System.Threading.SemaphoreSlim(Math.Max(1, Environment.ProcessorCount / 2));
+        private System.Threading.SemaphoreSlim _exportSemaphore = new System.Threading.SemaphoreSlim(Environment.ProcessorCount);
 
         private bool _finalizeResults;
         private bool _generateNormals;
@@ -69,7 +69,7 @@ namespace FFXIVLooseTextureCompiler {
         private void AddToBitmapCache(Dictionary<string, Bitmap> cache, string key, Bitmap bitmap) {
             lock (cache) {
                 if (!cache.ContainsKey(key)) {
-                    if (cache.Count >= 20) {
+                    if (cache.Count >= 250) {
                         string firstKey = cache.Keys.First();
                         if (cache[firstKey] != null) cache[firstKey].Dispose();
                         cache.Remove(firstKey);
@@ -724,6 +724,7 @@ namespace FFXIVLooseTextureCompiler {
 
         private bool BaseLogic(TextureSet textureSet, string baseTextureDiskPath, bool skipTexExport) {
             bool outputGenerated = false;
+            if (textureSet == null) return false;
             string underlay = "";
             if (textureSet.BackupTexturePaths != null) {
                 if (!textureSet.BackupTexturePaths.IsFace) {
@@ -880,10 +881,6 @@ namespace FFXIVLooseTextureCompiler {
                 return true;
             } finally {
                 _exportSemaphore.Release();
-                if (System.Threading.Interlocked.Increment(ref _gcCounter) % 10 == 0) {
-                    System.GC.Collect();
-                    System.GC.WaitForPendingFinalizers();
-                }
             }
         }
 

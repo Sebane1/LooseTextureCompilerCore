@@ -12,7 +12,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                             g.Clear(Bitmap.Color.White);
                             g.DrawImage(glow, 0, 0, glow.Width, glow.Height);
                         }
-                        using (var blendLeak = new KVImage.ImageBlender().BlendImages(mergedImage, glowMultiply, KVImage.ImageBlender.BlendOperation.Blend_Multiply)) { }
+                        new KVImage.ImageBlender().BlendImages(mergedImage, glowMultiply, KVImage.ImageBlender.BlendOperation.Blend_Multiply);
 
                         LockBitmap source = new LockBitmap(image);
                         LockBitmap destination = new LockBitmap(baseTexture);
@@ -144,7 +144,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         g.Clear(Bitmap.Color.White);
                         g.DrawImage(glow, 0, 0, glow.Width, glow.Height);
                     }
-                    using (var blendLeak = new KVImage.ImageBlender().BlendImages(mergedImage, glowMultiply, KVImage.ImageBlender.BlendOperation.Blend_Multiply)) { }
+                    new KVImage.ImageBlender().BlendImages(mergedImage, glowMultiply, KVImage.ImageBlender.BlendOperation.Blend_Multiply);
 
                     LockBitmap source = new LockBitmap(image);
                     LockBitmap destination = new LockBitmap(baseTexture);
