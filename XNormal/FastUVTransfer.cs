@@ -49,13 +49,20 @@ namespace FFXIVLooseTextureCompiler
 
             foreach (var item in biboToGen2Batch)
             {
-                TexIO.SaveBitmap(ImageManipulation.CutInHalf(TexIO.ResolveBitmap(item.Item1)), ImageManipulation.AddSuffix(item.Item2, "_baseTexBaked"));
+                while (!File.Exists(item.Item1))
+                {
+                    Thread.Sleep(100);
+                }
+                TexIO.SaveBitmap(ImageManipulation.CutInHalf(TexIO.ResolveBitmap(item.Item1)), item.Item2);
             }
             foreach (var item in gen3ToGen2Batch)
             {
-                TexIO.SaveBitmap(ImageManipulation.CutInHalf(TexIO.ResolveBitmap(
-                    ImageManipulation.AddSuffix(item.Item2.Replace("gen2", "bibo"), "_baseTexBaked"))),
-                    ImageManipulation.AddSuffix(item.Item2, "_baseTexBaked"));
+                string preBakedFile = item.Item2.Replace("gen2", "bibo");
+                while (!File.Exists(preBakedFile))
+                {
+                    Thread.Sleep(100);
+                }
+                TexIO.SaveBitmap(ImageManipulation.CutInHalf(TexIO.ResolveBitmap(preBakedFile)), item.Item2);
             }
 
             ClearBatches();

@@ -1,4 +1,4 @@
-﻿using FFXIVLooseTextureCompiler.Export;
+using FFXIVLooseTextureCompiler.Export;
 using LooseTextureCompilerCore;
 
 namespace FFXIVLooseTextureCompiler.PathOrganization {
@@ -159,6 +159,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public string FinalNormal { get => CreateFinalNormalPath(); }
         public string FinalMask { get => CreateFinalMaskPath(); }
         public Dictionary<string, ulong> Hashes { get => _hashes; set => _hashes = value; }
+        private int _cleanupVersion = 0;
 
         public override string ToString() {
             return _textureSetName + (GroupName != _textureSetName ? " | " + GroupLocalization + $"({_groupName})" : "");
@@ -194,9 +195,15 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             }
             return "";
         }
+        public void CancelCleanup() {
+            _cleanupVersion++;
+        }
         public void CleanTempFiles() {
+            _cleanupVersion++;
+            int currentVersion = _cleanupVersion;
             Task.Run(() => {
                 Thread.Sleep(20000);
+                if (_cleanupVersion != currentVersion) return;
                 try {
                     if (File.Exists(FinalBase)) {
                         File.Delete(FinalBase);

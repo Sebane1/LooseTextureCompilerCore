@@ -248,6 +248,10 @@ namespace FFXIVLooseTextureCompiler {
                 _maskCache?.Clear();
                 _glowCache?.Clear();
                 _mtrlCache?.Clear();
+
+                foreach (TextureSet textureSet in textureSetList) {
+                    textureSet.CancelCleanup();
+                }
                 _xnormalCache?.Clear();
                 _redirectionCache?.Clear();
                 _normalCache = new Dictionary<string, Bitmap>();
@@ -561,7 +565,7 @@ namespace FFXIVLooseTextureCompiler {
                     outputGenerated = true;
                 }
             }
-            if (skipTexExport) {
+            if (skipTexExport && outputGenerated) {
                 OnProgressChange?.Invoke(this, EventArgs.Empty);
             }
             return outputGenerated;
@@ -631,7 +635,7 @@ namespace FFXIVLooseTextureCompiler {
                     outputGenerated = true;
                 }
             }
-            if (skipMaterialExport) {
+            if (skipMaterialExport && outputGenerated) {
                 OnProgressChange?.Invoke(this, EventArgs.Empty);
             }
             return outputGenerated;
@@ -690,7 +694,7 @@ namespace FFXIVLooseTextureCompiler {
                 }
                 outputGenerated = true;
             }
-            if (skipTexExport) {
+            if (skipTexExport && outputGenerated) {
                 OnProgressChange?.Invoke(this, EventArgs.Empty);
             }
             return outputGenerated;
@@ -713,7 +717,7 @@ namespace FFXIVLooseTextureCompiler {
                 }
                 outputGenerated = true;
             }
-            if (skipTexExport) {
+            if (skipTexExport && outputGenerated) {
                 OnProgressChange?.Invoke(this, EventArgs.Empty);
             }
             return outputGenerated;
