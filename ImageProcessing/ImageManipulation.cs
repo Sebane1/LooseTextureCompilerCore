@@ -74,6 +74,26 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bibo,
             Gen3,
         }
+
+        public static string IdentifyUV(string file) {
+            if (string.IsNullOrEmpty(file)) return "";
+            string fileName = Path.GetFileNameWithoutExtension(file).ToLower();
+            string sourceUV = "";
+            if (fileName.Contains("bibo") || fileName.Contains("b+")) sourceUV = "bibo";
+            else if (fileName.Contains("gen3") || fileName.Contains("eve")) sourceUV = "gen3";
+            else if (fileName.Contains("tbse")) sourceUV = "tbse";
+            else if (fileName.Contains("gen2") || fileName.Contains("body") || fileName.Contains("mata")) sourceUV = "gen2";
+
+            if (string.IsNullOrEmpty(sourceUV)) {
+                switch (FemaleBodyUVClassifier(file)) {
+                    case BodyUVType.Bibo: sourceUV = "bibo"; break;
+                    case BodyUVType.Gen3: sourceUV = "gen3"; break;
+                    case BodyUVType.Gen2: sourceUV = "gen2"; break;
+                }
+            }
+            return sourceUV;
+        }
+
         public static BodyUVType FemaleBodyUVClassifier(string texture) {
             return FemaleBodyUVClassifier(TexIO.ResolveBitmap(texture));
         }

@@ -369,9 +369,15 @@ namespace FFXIVLooseTextureCompiler
                         List<string> images = new List<string>();
                         List<string> uvs = new List<string>();
                         images.Add(textureSet.Base);
-                        uvs.Add(textureSet.BaseUV);
-                        images.AddRange(textureSet.BaseOverlays);
-                        uvs.AddRange(textureSet.BaseOverlayUVs);
+                        uvs.Add(string.IsNullOrEmpty(textureSet.BaseUV) ? ImageManipulation.IdentifyUV(textureSet.Base) : textureSet.BaseUV);
+                        for (int j = 0; j < textureSet.BaseOverlays.Count; j++) {
+                            images.Add(textureSet.BaseOverlays[j]);
+                            if (j < textureSet.BaseOverlayUVs.Count && !string.IsNullOrEmpty(textureSet.BaseOverlayUVs[j])) {
+                                uvs.Add(textureSet.BaseOverlayUVs[j]);
+                            } else {
+                                uvs.Add(ImageManipulation.IdentifyUV(textureSet.BaseOverlays[j]));
+                            }
+                        }
                         ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalBase);
                         alreadyCalculatedBases[textureSet.FinalBase] = "";
                     }
@@ -382,9 +388,15 @@ namespace FFXIVLooseTextureCompiler
                         List<string> images = new List<string>();
                         List<string> uvs = new List<string>();
                         images.Add(textureSet.Normal);
-                        uvs.Add(textureSet.NormalUV);
-                        images.AddRange(textureSet.NormalOverlays);
-                        uvs.AddRange(textureSet.NormalOverlayUVs);
+                        uvs.Add(string.IsNullOrEmpty(textureSet.NormalUV) ? ImageManipulation.IdentifyUV(textureSet.Normal) : textureSet.NormalUV);
+                        for (int j = 0; j < textureSet.NormalOverlays.Count; j++) {
+                            images.Add(textureSet.NormalOverlays[j]);
+                            if (j < textureSet.NormalOverlayUVs.Count && !string.IsNullOrEmpty(textureSet.NormalOverlayUVs[j])) {
+                                uvs.Add(textureSet.NormalOverlayUVs[j]);
+                            } else {
+                                uvs.Add(ImageManipulation.IdentifyUV(textureSet.NormalOverlays[j]));
+                            }
+                        }
                         ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalNormal);
                         alreadyCalculatedNormals[textureSet.FinalNormal] = "";
                     }
@@ -395,9 +407,15 @@ namespace FFXIVLooseTextureCompiler
                         List<string> images = new List<string>();
                         List<string> uvs = new List<string>();
                         images.Add(textureSet.Mask);
-                        uvs.Add(textureSet.MaskUV);
-                        images.AddRange(textureSet.MaskOverlays);
-                        uvs.AddRange(textureSet.MaskOverlayUVs);
+                        uvs.Add(string.IsNullOrEmpty(textureSet.MaskUV) ? ImageManipulation.IdentifyUV(textureSet.Mask) : textureSet.MaskUV);
+                        for (int j = 0; j < textureSet.MaskOverlays.Count; j++) {
+                            images.Add(textureSet.MaskOverlays[j]);
+                            if (j < textureSet.MaskOverlayUVs.Count && !string.IsNullOrEmpty(textureSet.MaskOverlayUVs[j])) {
+                                uvs.Add(textureSet.MaskOverlayUVs[j]);
+                            } else {
+                                uvs.Add(ImageManipulation.IdentifyUV(textureSet.MaskOverlays[j]));
+                            }
+                        }
                         ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalMask);
                         alreadyCalculatedMasks[textureSet.FinalMask] = "";
                     }
