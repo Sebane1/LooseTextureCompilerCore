@@ -47,8 +47,16 @@ namespace FFXIVLooseTextureCompiler
 
             foreach (var item in modularBatch) PerformModularTransfer(item.SourceMesh, item.TargetMesh, item.Input, item.Output);
 
-            foreach (var item in biboToGen2Batch) BiboToGen2(item.Item1, item.Item2);
-            foreach (var item in gen3ToGen2Batch) Gen3ToGen2(item.Item1, item.Item2);
+            foreach (var item in biboToGen2Batch)
+            {
+                TexIO.SaveBitmap(ImageManipulation.CutInHalf(TexIO.ResolveBitmap(item.Item1)), ImageManipulation.AddSuffix(item.Item2, "_baseTexBaked"));
+            }
+            foreach (var item in gen3ToGen2Batch)
+            {
+                TexIO.SaveBitmap(ImageManipulation.CutInHalf(TexIO.ResolveBitmap(
+                    ImageManipulation.AddSuffix(item.Item2.Replace("gen2", "bibo"), "_baseTexBaked"))),
+                    ImageManipulation.AddSuffix(item.Item2, "_baseTexBaked"));
+            }
 
             ClearBatches();
         }
@@ -76,6 +84,12 @@ namespace FFXIVLooseTextureCompiler
             if (ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal)
             {
                 xnormalFallback(inputImage, outputImage);
+                string xnormalOutput = ImageManipulation.AddSuffix(outputImage, "_normals");
+                if (File.Exists(xnormalOutput))
+                {
+                    if (File.Exists(outputImage)) File.Delete(outputImage);
+                    File.Move(xnormalOutput, outputImage);
+                }
                 return;
             }
 
@@ -85,6 +99,12 @@ namespace FFXIVLooseTextureCompiler
             if (!File.Exists(transferMapPath))
             {
                 xnormalFallback(inputImage, outputImage);
+                string xnormalOutput = ImageManipulation.AddSuffix(outputImage, "_baseTexBaked");
+                if (File.Exists(xnormalOutput))
+                {
+                    if (File.Exists(outputImage)) File.Delete(outputImage);
+                    File.Move(xnormalOutput, outputImage);
+                }
                 return;
             }
 
@@ -99,20 +119,7 @@ namespace FFXIVLooseTextureCompiler
 
         public static void BiboToGen2(string inputImage, string outputImage)
         {
-            if (File.Exists(inputImage))
-            {
-                using (Bitmap sourceTexture = TexIO.ResolveBitmap(inputImage))
-                {
-                    using (Bitmap result = ImageManipulation.CutInHalf(sourceTexture))
-                    {
-                        TexIO.SaveBitmap(result, outputImage);
-                    }
-                }
-            }
-            else
-            {
-                PerformTransfer(inputImage, outputImage, "bibo_to_gen2_transfer.tif", XNormal.BiboToGen3);
-            }
+            PerformTransfer(inputImage, outputImage, "bibo_to_gen2_transfer.tif", XNormal.BiboToGen3);
         }
 
         public static void BiboToGen3(string inputImage, string outputImage)
@@ -122,29 +129,7 @@ namespace FFXIVLooseTextureCompiler
 
         public static void Gen3ToGen2(string inputImage, string outputImage)
         {
-            string siblingBibo = outputImage.Replace("gen2", "bibo");
-            bool cleanup = false;
-            string targetBibo = siblingBibo;
-
-            if (!File.Exists(siblingBibo))
-            {
-                targetBibo = ImageManipulation.AddSuffix(outputImage, "_temp_bibo");
-                Gen3ToBibo(inputImage, targetBibo);
-                cleanup = true;
-            }
-
-            using (Bitmap sourceTexture = TexIO.ResolveBitmap(targetBibo))
-            {
-                using (Bitmap result = ImageManipulation.CutInHalf(sourceTexture))
-                {
-                    TexIO.SaveBitmap(result, outputImage);
-                }
-            }
-
-            if (cleanup && File.Exists(targetBibo))
-            {
-                File.Delete(targetBibo);
-            }
+            PerformTransfer(inputImage, outputImage, "gen3_to_gen2_transfer.tif", XNormal.Gen3ToBibo);
         }
 
         public static void Gen3ToBibo(string inputImage, string outputImage)
@@ -257,12 +242,12 @@ namespace FFXIVLooseTextureCompiler
             string sourceMeshName = Path.GetFileNameWithoutExtension(sourceMeshRelPath);
             string targetMeshName = Path.GetFileNameWithoutExtension(targetMeshRelPath);
             string transferMapName = transferMapNameOverride ?? $"{sourceMeshName}_to_{targetMeshName}_transfer.tif";
-            
+
             // Note: Since this is additive for faces/extras, we can put it in a generic folder, but sticking to "body" works for now 
             // since that's where the res folder is, or we could use "dynamic". Let's use fastuvtransfer\dynamic
             string transferMapDir = Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "res", "fastuvtransfer", "dynamic");
             Directory.CreateDirectory(transferMapDir);
-            
+
             string transferMapPath = Path.Combine(transferMapDir, transferMapName);
 
             // If the map doesn't exist, generate it seamlessly using XNormal!
