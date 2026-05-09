@@ -355,13 +355,7 @@ namespace FFXIVLooseTextureCompiler
                 foreach (TextureSet textureSet in textureSetList)
                 {
                     OnProgressReport?.Invoke(this, "Merging Layers " + textureSet.TextureSetName);
-                    string targetUV = "";
-                    string lowerPath = textureSet.InternalBasePath.ToLower();
-                    if (lowerPath.Contains("bibo")) targetUV = "bibo";
-                    else if (lowerPath.Contains("gen3") || lowerPath.Contains("eve")) targetUV = "gen3";
-                    else if (lowerPath.Contains("body")) targetUV = "gen2";
-                    else if (lowerPath.Contains("skin_otopop")) targetUV = "otopop";
-                    else if (lowerPath.Contains("--c1101b0001") || lowerPath.Contains("vanilla_lala")) targetUV = "vanillalala";
+                    string targetUV = ImageManipulation.IdentifyTargetUV(textureSet.InternalBasePath);
 
                     if (!alreadyCalculatedBases.ContainsKey(textureSet.FinalBase) &&
                         (!string.IsNullOrEmpty(textureSet.Base) || textureSet.BaseOverlays.Count > 0))

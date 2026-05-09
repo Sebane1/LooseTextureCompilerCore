@@ -94,6 +94,21 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return sourceUV;
         }
 
+        public static string IdentifyTargetUV(string internalBasePath) {
+            string targetUV = "";
+            if (string.IsNullOrEmpty(internalBasePath)) return targetUV;
+            string lowerPath = internalBasePath.ToLower();
+            if (lowerPath.Contains("v01_c1101b0001_g") || lowerPath.Contains("skin_otopop")) targetUV = "otopop";
+            else if (lowerPath.Contains("v01_c1101b0001_b") || lowerPath.Contains("asymlala")) targetUV = "asymlala";
+            else if (lowerPath.Contains("--c1101b0001") || lowerPath.Contains("vanilla_lala")) targetUV = "vanillalala";
+            else if (lowerPath.Contains("_b_d") || lowerPath.Contains("_b_base") || lowerPath.Contains("tbse")) targetUV = "tbse";
+            else if (lowerPath.Contains("bibo") || lowerPath.Contains("b+")) targetUV = "bibo";
+            else if (lowerPath.Contains("gen3") || lowerPath.Contains("eve")) targetUV = "gen3";
+            else if (lowerPath.Contains("0201") || lowerPath.Contains("vanilla_male")) targetUV = "vanillamale"; 
+            else if (lowerPath.Contains("body") || lowerPath.Contains("mata")) targetUV = "gen2";
+            return targetUV;
+        }
+
         public static BodyUVType FemaleBodyUVClassifier(string texture) {
             return FemaleBodyUVClassifier(TexIO.ResolveBitmap(texture));
         }
