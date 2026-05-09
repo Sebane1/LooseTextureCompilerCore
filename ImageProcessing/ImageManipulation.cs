@@ -1195,13 +1195,47 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static void MergeImageLayers(List<string> images, string ouputPath) {
+            MergeImageLayers(images, new List<string>(), "", ouputPath);
+        }
+
+        public static void MergeImageLayers(List<string> images, List<string> uvs, string targetUV, string ouputPath) {
             int maxX = 0;
             int maxY = 0;
             List<string> validPaths = new List<string>();
-            foreach (var image in images) {
+            for (int i = 0; i < images.Count; i++) {
+                var image = images[i];
                 if (!string.IsNullOrEmpty(image) && File.Exists(image)) {
-                    validPaths.Add(image);
-                    using (var bitmap = TexIO.ResolveBitmap(image)) {
+                    string pathToLoad = image;
+
+                    if (uvs != null && i < uvs.Count && !string.IsNullOrEmpty(uvs[i]) && !string.IsNullOrEmpty(targetUV) && uvs[i].ToLower() != targetUV.ToLower()) {
+                        string fileHash = LooseTextureCompilerCore.LtcUtility.GetMD5HashFromFile(image);
+                        string cachedPath = Path.Combine(Path.GetDirectoryName(image), fileHash + $"_from_{uvs[i].ToLower()}_to_{targetUV.ToLower()}.png");
+                        if (!File.Exists(cachedPath)) {
+                            string conversionKey = uvs[i].ToLower() + "to" + targetUV.ToLower();
+                            try {
+                                switch (conversionKey) {
+                                    case "bibotogen2": FastUVTransfer.BiboToGen2(image, cachedPath); break;
+                                    case "bibotogen3": FastUVTransfer.BiboToGen3(image, cachedPath); break;
+                                    case "gen3togen2": FastUVTransfer.Gen3ToGen2(image, cachedPath); break;
+                                    case "gen3tobibo": FastUVTransfer.Gen3ToBibo(image, cachedPath); break;
+                                    case "gen2tobibo": FastUVTransfer.Gen2ToBibo(image, cachedPath); break;
+                                    case "gen2togen3": FastUVTransfer.Gen2ToGen3(image, cachedPath); break;
+                                    case "otopoptovanillalala": FastUVTransfer.OtopopToVanillaLala(image, cachedPath); break;
+                                    case "vanillalalatootopop": FastUVTransfer.VanillaLalaToOtopop(image, cachedPath); break;
+                                    case "vanillalalatoasymlala": FastUVTransfer.VanillaLalaToAsymLala(image, cachedPath); break;
+                                    case "asymlalatovanillalala": FastUVTransfer.AsymLalaToVanillaLala(image, cachedPath); break;
+                                    case "asymlalatootopop": FastUVTransfer.AsymLalaToOtopop(image, cachedPath); break;
+                                    case "otopoptoasymlala": FastUVTransfer.OtopopToAsymLala(image, cachedPath); break;
+                                }
+                            } catch { }
+                        }
+                        if (File.Exists(cachedPath)) {
+                            pathToLoad = cachedPath;
+                        }
+                    }
+
+                    validPaths.Add(pathToLoad);
+                    using (var bitmap = TexIO.ResolveBitmap(pathToLoad)) {
                         if (bitmap.Width > maxX) {
                             maxX = bitmap.Width;
                         }

@@ -8,11 +8,17 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private string _groupName = "";
 
         private string _baseTexture = "";
+        private string _baseUV = "";
         private List<string> _baseOverlays = new List<string>();
+        private List<string> _baseOverlayUVs = new List<string>();
         private string _normal = "";
+        private string _normalUV = "";
         private List<string> _normalOverlays = new List<string>();
+        private List<string> _normalOverlayUVs = new List<string>();
         private string _mask = "";
+        private string _maskUV = "";
         private List<string> _maskOverlays = new List<string>();
+        private List<string> _maskOverlayUVs = new List<string>();
 
         private string _internalBasePath = "";
         private string _internalNormalPath = "";
@@ -90,8 +96,11 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
 
 
         public string Base { get { if (_baseTexture == null) { _baseTexture = ""; } return _baseTexture; } set => _baseTexture = value; }
+        public string BaseUV { get { if (_baseUV == null) { _baseUV = ""; } return _baseUV; } set => _baseUV = value; }
         public string Normal { get { if (_normal == null) { _normal = ""; } return _normal; } set => _normal = value; }
+        public string NormalUV { get { if (_normalUV == null) { _normalUV = ""; } return _normalUV; } set => _normalUV = value; }
         public string Mask { get { if (_mask == null) { _mask = ""; } return _mask; } set => _mask = value; }
+        public string MaskUV { get { if (_maskUV == null) { _maskUV = ""; } return _maskUV; } set => _maskUV = value; }
         public string NormalMask { get { if (_normalMask == null) { _normalMask = ""; } return _normalMask; } set => _normalMask = value; }
         public string Material { get { if (_material == null) { _material = ""; } return _material; } set => _material = value; }
 
@@ -152,9 +161,12 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public int SkinType { get => _skinType; set => _skinType = value; }
         public bool UsesScales { get => _usesScales; set => _usesScales = value; }
         public bool InvertNormalAlpha { get => _invertNormalAlpha; set => _invertNormalAlpha = value; }
-        public List<string> BaseOverlays { get => _baseOverlays; set => _baseOverlays = value; }
-        public List<string> NormalOverlays { get => _normalOverlays; set => _normalOverlays = value; }
-        public List<string> MaskOverlays { get => _maskOverlays; set => _maskOverlays = value; }
+        public List<string> BaseOverlays { get { if (_baseOverlays == null) { _baseOverlays = new List<string>(); } return _baseOverlays; } set => _baseOverlays = value; }
+        public List<string> BaseOverlayUVs { get { if (_baseOverlayUVs == null) { _baseOverlayUVs = new List<string>(); } return _baseOverlayUVs; } set => _baseOverlayUVs = value; }
+        public List<string> NormalOverlays { get { if (_normalOverlays == null) { _normalOverlays = new List<string>(); } return _normalOverlays; } set => _normalOverlays = value; }
+        public List<string> NormalOverlayUVs { get { if (_normalOverlayUVs == null) { _normalOverlayUVs = new List<string>(); } return _normalOverlayUVs; } set => _normalOverlayUVs = value; }
+        public List<string> MaskOverlays { get { if (_maskOverlays == null) { _maskOverlays = new List<string>(); } return _maskOverlays; } set => _maskOverlays = value; }
+        public List<string> MaskOverlayUVs { get { if (_maskOverlayUVs == null) { _maskOverlayUVs = new List<string>(); } return _maskOverlayUVs; } set => _maskOverlayUVs = value; }
         public string FinalBase { get => CreateFinalBasePath(); }
         public string FinalNormal { get => CreateFinalNormalPath(); }
         public string FinalMask { get => CreateFinalMaskPath(); }

@@ -17,5 +17,16 @@ namespace LooseTextureCompilerCore {
             }
             return CreateMD5(values);
         }
+
+        public static string GetMD5HashFromFile(string fileName) {
+            if (System.IO.File.Exists(fileName)) {
+                using (var md5 = System.Security.Cryptography.MD5.Create()) {
+                    using (var stream = System.IO.File.OpenRead(fileName)) {
+                        return Convert.ToHexString(md5.ComputeHash(stream));
+                    }
+                }
+            }
+            return "";
+        }
     }
 }
