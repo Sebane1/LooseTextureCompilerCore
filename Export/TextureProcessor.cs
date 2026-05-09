@@ -24,6 +24,7 @@ using Color = System.Drawing.Color;
 using Group = FFXIVVoicePackCreator.Json.Group;
 using Path = System.IO.Path;
 using Size = System.Drawing.Size;
+using FFXIVLooseTextureCompiler.Export;
 
 namespace FFXIVLooseTextureCompiler
 {
@@ -40,6 +41,7 @@ namespace FFXIVLooseTextureCompiler
         private int _fileCount;
         private int _gcCounter;
         private System.Threading.SemaphoreSlim _exportSemaphore = new System.Threading.SemaphoreSlim(Environment.ProcessorCount);
+        private int _activeExportThreads = 0;
 
         private bool _finalizeResults;
         private bool _generateNormals;
@@ -1043,6 +1045,10 @@ namespace FFXIVLooseTextureCompiler
             string baseTextureNormal = "", string modifierMap = "", string layeringImage = "",
             string normalCorrection = "", string alphaOverride = "", bool modifier = false, bool invertAlpha = false, bool dontInvertAlphaOverride = false)
         {
+            while (MemoryHelper.GetMaxSafeThreadsBasedOnRAM() <= _activeExportThreads) {
+                await Task.Delay(250);
+            }
+            Interlocked.Increment(ref _activeExportThreads);
             await _exportSemaphore.WaitAsync();
             try
             {
@@ -1140,6 +1146,7 @@ namespace FFXIVLooseTextureCompiler
             finally
             {
                 _exportSemaphore.Release();
+                Interlocked.Decrement(ref _activeExportThreads);
             }
         }
 
