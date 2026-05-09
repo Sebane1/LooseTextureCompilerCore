@@ -4,53 +4,51 @@ using Bitmap = System.Drawing;
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
     public class MapWriting {
         public static Bitmap.Bitmap CalculateBase(Bitmap.Bitmap file, Bitmap.Bitmap glow) {
-            Bitmap.Bitmap image = new Bitmap.Bitmap(glow, file.Width, file.Height);
             Bitmap.Bitmap baseTexture = new Bitmap.Bitmap(file);
-            Bitmap.Bitmap mergedImage = new Bitmap.Bitmap(baseTexture);
-            //Bitmap.Bitmap  debugImage = new Bitmap.Bitmap (file.Width, file.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-
-            Bitmap.Bitmap glowMultiply = new Bitmap.Bitmap(mergedImage);
-            Graphics g = Graphics.FromImage(glowMultiply);
-            g.Clear(Bitmap.Color.White);
-            g.DrawImage(glow, 0, 0, glow.Width, glow.Height);
-            new KVImage.ImageBlender().BlendImages(mergedImage, glowMultiply, KVImage.ImageBlender.BlendOperation.Blend_Multiply);
-
-            LockBitmap source = new LockBitmap(image);
-            LockBitmap destination = new LockBitmap(baseTexture);
-            LockBitmap mergedImagePixels = new LockBitmap(mergedImage);
-            //LockBitmap debug = new LockBitmap(debugImage);
-
-            source.LockBits();
-            destination.LockBits();
-            //debug.LockBits();
-            mergedImagePixels.LockBits();
-            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
-                for (int x = 0; x < image.Width; x++) {
-                    Bitmap.Color sourcePixel = source.GetPixel(x, y);
-                    Bitmap.Color mergedPixel = mergedImagePixels.GetPixel(x, y);
-                    Bitmap.Color comparisonColour = FlattenColours(sourcePixel);
-                    if (!(comparisonColour.R == 0 && comparisonColour.G == 0 && comparisonColour.B == 0)) {
-                        if (sourcePixel.A > 20) {
-                            Bitmap.Color col = Bitmap.Color.FromArgb(255 - sourcePixel.A, sourcePixel.R, sourcePixel.G, sourcePixel.B);
-                            destination.SetPixel(x, y, col);
-                        } else if (sourcePixel.A > 10) {
-                            Bitmap.Color col = Bitmap.Color.FromArgb(255 - sourcePixel.A, mergedPixel.R, mergedPixel.G, mergedPixel.B);
-                            destination.SetPixel(x, y, col);
-                        } else if (sourcePixel.A > 0) {
-                            Bitmap.Color col = Bitmap.Color.FromArgb(mergedPixel.A, mergedPixel.R, mergedPixel.G, mergedPixel.B);
-                            destination.SetPixel(x, y, col);
+            using (Bitmap.Bitmap image = new Bitmap.Bitmap(glow, file.Width, file.Height)) {
+                using (Bitmap.Bitmap mergedImage = new Bitmap.Bitmap(baseTexture)) {
+                    using (Bitmap.Bitmap glowMultiply = new Bitmap.Bitmap(mergedImage)) {
+                        using (Graphics g = Graphics.FromImage(glowMultiply)) {
+                            g.Clear(Bitmap.Color.White);
+                            g.DrawImage(glow, 0, 0, glow.Width, glow.Height);
                         }
-                    } else {
-                        Bitmap.Color col = Bitmap.Color.FromArgb(mergedPixel.A, mergedPixel.R, mergedPixel.G, mergedPixel.B);
-                        destination.SetPixel(x, y, col);
+                        using (var blendLeak = new KVImage.ImageBlender().BlendImages(mergedImage, glowMultiply, KVImage.ImageBlender.BlendOperation.Blend_Multiply)) { }
+
+                        LockBitmap source = new LockBitmap(image);
+                        LockBitmap destination = new LockBitmap(baseTexture);
+                        LockBitmap mergedImagePixels = new LockBitmap(mergedImage);
+
+                        source.LockBits();
+                        destination.LockBits();
+                        mergedImagePixels.LockBits();
+                        System.Threading.Tasks.Parallel.For(0, image.Height, y => {
+                            for (int x = 0; x < image.Width; x++) {
+                                Bitmap.Color sourcePixel = source.GetPixel(x, y);
+                                Bitmap.Color mergedPixel = mergedImagePixels.GetPixel(x, y);
+                                Bitmap.Color comparisonColour = FlattenColours(sourcePixel);
+                                if (!(comparisonColour.R == 0 && comparisonColour.G == 0 && comparisonColour.B == 0)) {
+                                    if (sourcePixel.A > 20) {
+                                        Bitmap.Color col = Bitmap.Color.FromArgb(255 - sourcePixel.A, sourcePixel.R, sourcePixel.G, sourcePixel.B);
+                                        destination.SetPixel(x, y, col);
+                                    } else if (sourcePixel.A > 10) {
+                                        Bitmap.Color col = Bitmap.Color.FromArgb(255 - sourcePixel.A, mergedPixel.R, mergedPixel.G, mergedPixel.B);
+                                        destination.SetPixel(x, y, col);
+                                    } else if (sourcePixel.A > 0) {
+                                        Bitmap.Color col = Bitmap.Color.FromArgb(mergedPixel.A, mergedPixel.R, mergedPixel.G, mergedPixel.B);
+                                        destination.SetPixel(x, y, col);
+                                    }
+                                } else {
+                                    Bitmap.Color col = Bitmap.Color.FromArgb(mergedPixel.A, mergedPixel.R, mergedPixel.G, mergedPixel.B);
+                                    destination.SetPixel(x, y, col);
+                                }
+                            }
+                        });
+                        destination.UnlockBits();
+                        source.UnlockBits();
+                        mergedImagePixels.UnlockBits();
                     }
                 }
-            });
-            destination.UnlockBits();
-            source.UnlockBits();
-            mergedImagePixels.UnlockBits();
-            //debug.UnlockBits();
-            //debugImage.Save(Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "atramentumTest.png"));
+            }
             return baseTexture;
         }
         public static Bitmap.Color FlattenColours(Bitmap.Color colour, int minBrightness = 90) {
@@ -60,112 +58,117 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 colour.B > minBrightness ? colour.B : 0);
         }
         public static Bitmap.Bitmap CalculateEyeMulti(Bitmap.Bitmap file, Bitmap.Bitmap glow) {
-            Bitmap.Bitmap image = new Bitmap.Bitmap(glow, file.Width, file.Height);
             Bitmap.Bitmap multi = new Bitmap.Bitmap(file);
-            LockBitmap source = new LockBitmap(image);
-            LockBitmap destination = new LockBitmap(multi);
-            source.LockBits();
-            destination.LockBits();
-            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
-                for (int x = 0; x < image.Width; x++) {
-                    Bitmap.Color sourcePixel = source.GetPixel(x, y);
-                    Bitmap.Color destinationPixel = destination.GetPixel(x, y);
-                    if (sourcePixel.A > 0) {
-                        Bitmap.Color col = Bitmap.Color.FromArgb(255 - sourcePixel.A,
-                            destinationPixel.R, destinationPixel.G, destinationPixel.B);
-                        destination.SetPixel(x, y, col);
+            using (Bitmap.Bitmap image = new Bitmap.Bitmap(glow, file.Width, file.Height)) {
+                LockBitmap source = new LockBitmap(image);
+                LockBitmap destination = new LockBitmap(multi);
+                source.LockBits();
+                destination.LockBits();
+                System.Threading.Tasks.Parallel.For(0, image.Height, y => {
+                    for (int x = 0; x < image.Width; x++) {
+                        Bitmap.Color sourcePixel = source.GetPixel(x, y);
+                        Bitmap.Color destinationPixel = destination.GetPixel(x, y);
+                        if (sourcePixel.A > 0) {
+                            Bitmap.Color col = Bitmap.Color.FromArgb(255 - sourcePixel.A,
+                                destinationPixel.R, destinationPixel.G, destinationPixel.B);
+                            destination.SetPixel(x, y, col);
+                        }
                     }
-                }
-            });
-            destination.UnlockBits();
-            source.UnlockBits();
+                });
+                destination.UnlockBits();
+                source.UnlockBits();
+            }
             return multi;
         }
 
         public static Bitmap.Bitmap CalculateMulti(Bitmap.Bitmap file, Bitmap.Bitmap glow) {
-            Bitmap.Bitmap image = new Bitmap.Bitmap(glow, file.Width, file.Height);
             Bitmap.Bitmap multi = new Bitmap.Bitmap(file);
-            LockBitmap source = new LockBitmap(image);
-            LockBitmap destination = new LockBitmap(multi);
-            source.LockBits();
-            destination.LockBits();
-            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
-                for (int x = 0; x < image.Width; x++) {
-                    Bitmap.Color sourcePixel = source.GetPixel(x, y);
-                    Bitmap.Color destinationPixel = destination.GetPixel(x, y);
-                    if (sourcePixel.A > 20) {
-                        Bitmap.Color col = Bitmap.Color.FromArgb(destinationPixel.A,
-                            destinationPixel.R,
-                            destinationPixel.G,
-                            sourcePixel.A);
-                        destination.SetPixel(x, y, col);
-                    }
-                }
-            });
-            destination.UnlockBits();
-            source.UnlockBits();
-            return multi;
-        }
-        public static Bitmap.Bitmap CalculateLegacyAtraMulti(Bitmap.Bitmap file, Bitmap.Bitmap glow) {
-            Bitmap.Bitmap image = new Bitmap.Bitmap(glow, file.Width, file.Height);
-            Bitmap.Bitmap multi = new Bitmap.Bitmap(file);
-            LockBitmap source = new LockBitmap(image);
-            LockBitmap destination = new LockBitmap(multi);
-            source.LockBits();
-            destination.LockBits();
-            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
-                for (int x = 0; x < image.Width; x++) {
-                    Bitmap.Color sourcePixel = source.GetPixel(x, y);
-                    Bitmap.Color destinationPixel = destination.GetPixel(x, y);
-                    Bitmap.Color comparisonColour = FlattenColours(sourcePixel, 90);
-                    if (!(comparisonColour.R == 0 && comparisonColour.G == 0 && comparisonColour.B == 0)) {
+            using (Bitmap.Bitmap image = new Bitmap.Bitmap(glow, file.Width, file.Height)) {
+                LockBitmap source = new LockBitmap(image);
+                LockBitmap destination = new LockBitmap(multi);
+                source.LockBits();
+                destination.LockBits();
+                System.Threading.Tasks.Parallel.For(0, image.Height, y => {
+                    for (int x = 0; x < image.Width; x++) {
+                        Bitmap.Color sourcePixel = source.GetPixel(x, y);
+                        Bitmap.Color destinationPixel = destination.GetPixel(x, y);
                         if (sourcePixel.A > 20) {
                             Bitmap.Color col = Bitmap.Color.FromArgb(destinationPixel.A,
                                 destinationPixel.R,
                                 destinationPixel.G,
-                                255 - sourcePixel.A);
+                                sourcePixel.A);
                             destination.SetPixel(x, y, col);
                         }
                     }
-                }
-            });
-            destination.UnlockBits();
-            source.UnlockBits();
+                });
+                destination.UnlockBits();
+                source.UnlockBits();
+            }
+            return multi;
+        }
+        public static Bitmap.Bitmap CalculateLegacyAtraMulti(Bitmap.Bitmap file, Bitmap.Bitmap glow) {
+            Bitmap.Bitmap multi = new Bitmap.Bitmap(file);
+            using (Bitmap.Bitmap image = new Bitmap.Bitmap(glow, file.Width, file.Height)) {
+                LockBitmap source = new LockBitmap(image);
+                LockBitmap destination = new LockBitmap(multi);
+                source.LockBits();
+                destination.LockBits();
+                System.Threading.Tasks.Parallel.For(0, image.Height, y => {
+                    for (int x = 0; x < image.Width; x++) {
+                        Bitmap.Color sourcePixel = source.GetPixel(x, y);
+                        Bitmap.Color destinationPixel = destination.GetPixel(x, y);
+                        Bitmap.Color comparisonColour = FlattenColours(sourcePixel, 90);
+                        if (!(comparisonColour.R == 0 && comparisonColour.G == 0 && comparisonColour.B == 0)) {
+                            if (sourcePixel.A > 20) {
+                                Bitmap.Color col = Bitmap.Color.FromArgb(destinationPixel.A,
+                                    destinationPixel.R,
+                                    destinationPixel.G,
+                                    255 - sourcePixel.A);
+                                destination.SetPixel(x, y, col);
+                            }
+                        }
+                    }
+                });
+                destination.UnlockBits();
+                source.UnlockBits();
+            }
             return multi;
         }
 
         public static Bitmap.Bitmap TransplantData(Bitmap.Bitmap file, Bitmap.Bitmap glow) {
             Bitmap.Bitmap image = glow;
             Bitmap.Bitmap baseTexture = new Bitmap.Bitmap(file);
-            Bitmap.Bitmap mergedImage = new Bitmap.Bitmap(baseTexture);
-
-            Bitmap.Bitmap glowMultiply = new Bitmap.Bitmap(mergedImage);
-            Graphics g = Graphics.FromImage(glowMultiply);
-            g.Clear(Bitmap.Color.White);
-            g.DrawImage(glow, 0, 0, glow.Width, glow.Height);
-            new KVImage.ImageBlender().BlendImages(mergedImage, glowMultiply, KVImage.ImageBlender.BlendOperation.Blend_Multiply);
-
-            LockBitmap source = new LockBitmap(image);
-            LockBitmap destination = new LockBitmap(baseTexture);
-            LockBitmap mergedImagePixels = new LockBitmap(mergedImage);
-            source.LockBits();
-            destination.LockBits();
-            mergedImagePixels.LockBits();
-            if (file.Width == glow.Width && file.Height == glow.Height) {
-                System.Threading.Tasks.Parallel.For(0, image.Height, y => {
-                    for (int x = 0; x < image.Width; x++) {
-                        Bitmap.Color sourcePixel = source.GetPixel(x, y);
-                        Bitmap.Color mergedPixel = mergedImagePixels.GetPixel(x, y);
-                        if (sourcePixel.A > 0) {
-                            Bitmap.Color col = Bitmap.Color.FromArgb(sourcePixel.A, sourcePixel.R, sourcePixel.G, sourcePixel.B);
-                            destination.SetPixel(x, y, col);
-                        }
+            using (Bitmap.Bitmap mergedImage = new Bitmap.Bitmap(baseTexture)) {
+                using (Bitmap.Bitmap glowMultiply = new Bitmap.Bitmap(mergedImage)) {
+                    using (Graphics g = Graphics.FromImage(glowMultiply)) {
+                        g.Clear(Bitmap.Color.White);
+                        g.DrawImage(glow, 0, 0, glow.Width, glow.Height);
                     }
-                });
+                    using (var blendLeak = new KVImage.ImageBlender().BlendImages(mergedImage, glowMultiply, KVImage.ImageBlender.BlendOperation.Blend_Multiply)) { }
+
+                    LockBitmap source = new LockBitmap(image);
+                    LockBitmap destination = new LockBitmap(baseTexture);
+                    LockBitmap mergedImagePixels = new LockBitmap(mergedImage);
+                    source.LockBits();
+                    destination.LockBits();
+                    mergedImagePixels.LockBits();
+                    if (file.Width == glow.Width && file.Height == glow.Height) {
+                        System.Threading.Tasks.Parallel.For(0, image.Height, y => {
+                            for (int x = 0; x < image.Width; x++) {
+                                Bitmap.Color sourcePixel = source.GetPixel(x, y);
+                                Bitmap.Color mergedPixel = mergedImagePixels.GetPixel(x, y);
+                                if (sourcePixel.A > 0) {
+                                    Bitmap.Color col = Bitmap.Color.FromArgb(sourcePixel.A, sourcePixel.R, sourcePixel.G, sourcePixel.B);
+                                    destination.SetPixel(x, y, col);
+                                }
+                            }
+                        });
+                    }
+                    destination.UnlockBits();
+                    source.UnlockBits();
+                    mergedImagePixels.UnlockBits();
+                }
             }
-            destination.UnlockBits();
-            source.UnlockBits();
-            mergedImagePixels.UnlockBits();
             return baseTexture;
         }
 

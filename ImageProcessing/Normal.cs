@@ -44,20 +44,16 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             #region Global Variables
             int w = image.Width - 1;
             int h = image.Height - 1;
-            float sample_l;
-            float sample_r;
-            float sample_u;
-            float sample_d;
-            float x_vector;
-            float y_vector;
             image.RotateFlip(RotateFlipType.RotateNoneFlipX);
             Bitmap normal = new Bitmap(image.Width, image.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             LockBitmap source = new LockBitmap(image);
             LockBitmap destination = new LockBitmap(normal);
             LockBitmap maskReference = null;
+            Bitmap scaledMask = null;
             if (normalMask != null) {
                 normalMask.RotateFlip(RotateFlipType.RotateNoneFlipX);
-                maskReference = new LockBitmap(new Bitmap(normalMask, image.Width, image.Height));
+                scaledMask = new Bitmap(normalMask, image.Width, image.Height);
+                maskReference = new LockBitmap(scaledMask);
                 maskReference.LockBits();
             }
             source.LockBits();
@@ -65,7 +61,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             #endregion
             System.Threading.Tasks.Parallel.For(0, h + 1, y => {
                 for (int x = 0; x < w + 1; x++) {
-                    Color originalPixel = source.GetPixel(x, y);
                     if (normalMask == null || maskReference?.GetPixel(x, y).A == 0) {
                         float l = x > 0 ? source.GetPixel(x - 1, y).GetBrightness() : source.GetPixel(x, y).GetBrightness();
                         float r = x < w ? source.GetPixel(x + 1, y).GetBrightness() : source.GetPixel(x, y).GetBrightness();
@@ -83,13 +78,26 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             destination.UnlockBits();
             source.UnlockBits();
             maskReference?.UnlockBits();
+            scaledMask?.Dispose();
+            
             normal.RotateFlip(RotateFlipType.RotateNoneFlipX);
-            Bitmap normal1 = new Bitmap(normal);
-            Bitmap normal2 = new Bitmap(normal);
-            KVImage.ImageBlender imageBlender = new KVImage.ImageBlender();
             image.RotateFlip(RotateFlipType.RotateNoneFlipX);
-            return ImageManipulation.MergeAlphaToRGB(ImageManipulation.ExtractAlpha(image), imageBlender.BlendImages(normal1, 0, 0, normal1.Width, normal1.Height,
-                Contrast.AdjustContrast(normal2, 120), 0, 0, KVImage.ImageBlender.BlendOperation.Blend_Overlay));
+            
+            KVImage.ImageBlender imageBlender = new KVImage.ImageBlender();
+            Bitmap result;
+            using (Bitmap normal1 = new Bitmap(normal)) {
+                using (Bitmap normal2 = new Bitmap(normal)) {
+                    using (Bitmap contrasted = Contrast.AdjustContrast(normal2, 120)) {
+                        using (Bitmap blended = imageBlender.BlendImages(normal1, 0, 0, normal1.Width, normal1.Height, contrasted, 0, 0, KVImage.ImageBlender.BlendOperation.Blend_Overlay)) {
+                            using (Bitmap extAlpha = ImageManipulation.ExtractAlpha(image)) {
+                                result = ImageManipulation.MergeAlphaToRGB(extAlpha, blended);
+                            }
+                        }
+                    }
+                }
+            }
+            normal.Dispose();
+            return result;
         }
     }
 }
