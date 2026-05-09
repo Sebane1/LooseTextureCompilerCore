@@ -21,25 +21,61 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         source.LockBits();
                         destination.LockBits();
                         mergedImagePixels.LockBits();
-                        System.Threading.Tasks.Parallel.For(0, image.Height, y => {
-                            for (int x = 0; x < image.Width; x++) {
-                                Bitmap.Color sourcePixel = source.GetPixel(x, y);
-                                Bitmap.Color mergedPixel = mergedImagePixels.GetPixel(x, y);
-                                Bitmap.Color comparisonColour = FlattenColours(sourcePixel);
-                                if (!(comparisonColour.R == 0 && comparisonColour.G == 0 && comparisonColour.B == 0)) {
-                                    if (sourcePixel.A > 20) {
-                                        Bitmap.Color col = Bitmap.Color.FromArgb(255 - sourcePixel.A, sourcePixel.R, sourcePixel.G, sourcePixel.B);
-                                        destination.SetPixel(x, y, col);
-                                    } else if (sourcePixel.A > 10) {
-                                        Bitmap.Color col = Bitmap.Color.FromArgb(255 - sourcePixel.A, mergedPixel.R, mergedPixel.G, mergedPixel.B);
-                                        destination.SetPixel(x, y, col);
-                                    } else if (sourcePixel.A > 0) {
-                                        Bitmap.Color col = Bitmap.Color.FromArgb(mergedPixel.A, mergedPixel.R, mergedPixel.G, mergedPixel.B);
-                                        destination.SetPixel(x, y, col);
+                        byte[] srcPixels = source.Pixels;
+                        byte[] dstPixels = destination.Pixels;
+                        byte[] mergedPixels = mergedImagePixels.Pixels;
+                        int srcStep = source.Depth / 8;
+                        int dstStep = destination.Depth / 8;
+                        int mergedStep = mergedImagePixels.Depth / 8;
+                        int width = image.Width;
+                        int height = image.Height;
+
+                        System.Threading.Tasks.Parallel.For(0, height, y => {
+                            int rowStartSrc = y * width * srcStep;
+                            int rowStartDst = y * width * dstStep;
+                            int rowStartMerged = y * width * mergedStep;
+
+                            for (int x = 0; x < width; x++) {
+                                int srcIndex = rowStartSrc + (x * srcStep);
+                                int dstIndex = rowStartDst + (x * dstStep);
+                                int mergedIndex = rowStartMerged + (x * mergedStep);
+
+                                byte srcB = srcPixels[srcIndex];
+                                byte srcG = srcPixels[srcIndex + 1];
+                                byte srcR = srcPixels[srcIndex + 2];
+                                byte srcA = srcStep == 4 ? srcPixels[srcIndex + 3] : (byte)255;
+
+                                byte mergedB = mergedPixels[mergedIndex];
+                                byte mergedG = mergedPixels[mergedIndex + 1];
+                                byte mergedR = mergedPixels[mergedIndex + 2];
+                                byte mergedA = mergedStep == 4 ? mergedPixels[mergedIndex + 3] : (byte)255;
+
+                                byte compR = srcR > 90 ? srcR : (byte)0;
+                                byte compG = srcG > 90 ? srcG : (byte)0;
+                                byte compB = srcB > 90 ? srcB : (byte)0;
+
+                                if (!(compR == 0 && compG == 0 && compB == 0)) {
+                                    if (srcA > 20) {
+                                        dstPixels[dstIndex] = srcB;
+                                        dstPixels[dstIndex + 1] = srcG;
+                                        dstPixels[dstIndex + 2] = srcR;
+                                        if (dstStep == 4) dstPixels[dstIndex + 3] = (byte)(255 - srcA);
+                                    } else if (srcA > 10) {
+                                        dstPixels[dstIndex] = mergedB;
+                                        dstPixels[dstIndex + 1] = mergedG;
+                                        dstPixels[dstIndex + 2] = mergedR;
+                                        if (dstStep == 4) dstPixels[dstIndex + 3] = (byte)(255 - srcA);
+                                    } else if (srcA > 0) {
+                                        dstPixels[dstIndex] = mergedB;
+                                        dstPixels[dstIndex + 1] = mergedG;
+                                        dstPixels[dstIndex + 2] = mergedR;
+                                        if (dstStep == 4) dstPixels[dstIndex + 3] = mergedA;
                                     }
                                 } else {
-                                    Bitmap.Color col = Bitmap.Color.FromArgb(mergedPixel.A, mergedPixel.R, mergedPixel.G, mergedPixel.B);
-                                    destination.SetPixel(x, y, col);
+                                    dstPixels[dstIndex] = mergedB;
+                                    dstPixels[dstIndex + 1] = mergedG;
+                                    dstPixels[dstIndex + 2] = mergedR;
+                                    if (dstStep == 4) dstPixels[dstIndex + 3] = mergedA;
                                 }
                             }
                         });

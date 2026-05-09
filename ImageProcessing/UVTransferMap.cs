@@ -121,27 +121,60 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             destLock.LockBits();
             srcLock.LockBits();
 
+            byte[] srcPixels = srcLock.Pixels;
+            byte[] dstPixels = destLock.Pixels;
+            int srcStep = srcLock.Depth / 8;
+
             int __safe_width = destWidth;
             int __safe_height = destHeight;
             System.Threading.Tasks.Parallel.For(0, __safe_height, y => {
                 int rowOffset = y * __safe_width;
+                int dstRowStart = y * __safe_width * 4;
                 for (int x = 0; x < __safe_width; x++) {
                     int idx = rowOffset + x;
+                    int dstIdx = dstRowStart + x * 4;
                     if (!mapValid[idx]) continue;
 
                     float srcXf = mapX[idx] * (srcWidth - 1);
                     float srcYf = mapY[idx] * (srcHeight - 1);
 
-                    Color sampledColor;
                     if (useBilinear) {
-                        sampledColor = BilinearSample(srcLock, srcXf, srcYf, srcWidth, srcHeight);
+                        int x1 = Math.Clamp((int)Math.Floor(srcXf), 0, srcWidth - 1);
+                        int y1 = Math.Clamp((int)Math.Floor(srcYf), 0, srcHeight - 1);
+                        int x2 = Math.Min(x1 + 1, srcWidth - 1);
+                        int y2 = Math.Min(y1 + 1, srcHeight - 1);
+
+                        float xDiff = srcXf - x1;
+                        float yDiff = srcYf - y1;
+                        float w11 = (1f - xDiff) * (1f - yDiff);
+                        float w21 = xDiff * (1f - yDiff);
+                        float w12 = (1f - xDiff) * yDiff;
+                        float w22 = xDiff * yDiff;
+
+                        int i11 = (y1 * srcWidth + x1) * srcStep;
+                        int i21 = (y1 * srcWidth + x2) * srcStep;
+                        int i12 = (y2 * srcWidth + x1) * srcStep;
+                        int i22 = (y2 * srcWidth + x2) * srcStep;
+
+                        byte b11 = srcPixels[i11], g11 = srcPixels[i11 + 1], r11 = srcPixels[i11 + 2];
+                        byte b21 = srcPixels[i21], g21 = srcPixels[i21 + 1], r21 = srcPixels[i21 + 2];
+                        byte b12 = srcPixels[i12], g12 = srcPixels[i12 + 1], r12 = srcPixels[i12 + 2];
+                        byte b22 = srcPixels[i22], g22 = srcPixels[i22 + 1], r22 = srcPixels[i22 + 2];
+
+                        dstPixels[dstIdx] = (byte)Math.Clamp((int)(b11 * w11 + b21 * w21 + b12 * w12 + b22 * w22 + 0.5f), 0, 255);
+                        dstPixels[dstIdx + 1] = (byte)Math.Clamp((int)(g11 * w11 + g21 * w21 + g12 * w12 + g22 * w22 + 0.5f), 0, 255);
+                        dstPixels[dstIdx + 2] = (byte)Math.Clamp((int)(r11 * w11 + r21 * w21 + r12 * w12 + r22 * w22 + 0.5f), 0, 255);
+                        dstPixels[dstIdx + 3] = 255;
                     } else {
                         int srcXi = Math.Clamp((int)Math.Round(srcXf), 0, srcWidth - 1);
                         int srcYi = Math.Clamp((int)Math.Round(srcYf), 0, srcHeight - 1);
-                        sampledColor = srcLock.GetPixel(srcXi, srcYi);
+                        int srcIdx = (srcYi * srcWidth + srcXi) * srcStep;
+                        
+                        dstPixels[dstIdx] = srcPixels[srcIdx];
+                        dstPixels[dstIdx + 1] = srcPixels[srcIdx + 1];
+                        dstPixels[dstIdx + 2] = srcPixels[srcIdx + 2];
+                        dstPixels[dstIdx + 3] = 255;
                     }
-
-                    destLock.SetPixel(x, y, Color.FromArgb(255, sampledColor.R, sampledColor.G, sampledColor.B));
                 }
             });
 
@@ -256,21 +289,20 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int width = image.Width;
             int height = image.Height;
 
-            for (int iter = 0; iter < iterations; iter++) {
-                LockBitmap lockBmp = new LockBitmap(image);
-                lockBmp.LockBits();
+            LockBitmap lockBmp = new LockBitmap(image);
+            lockBmp.LockBits();
+            byte[] pixels = lockBmp.Pixels;
 
-                bool[] filled = new bool[width * height];
-                Color[] colors = new Color[width * height];
-                for (int y = 0; y < height; y++) {
-                    int row = y * width;
-                    for (int x = 0; x < width; x++) {
-                        Color c = lockBmp.GetPixel(x, y);
-                        int idx = row + x;
-                        filled[idx] = c.A > 0;
-                        colors[idx] = c;
-                    }
-                }
+            bool[] filled = new bool[width * height];
+            for (int i = 0; i < width * height; i++) {
+                filled[i] = pixels[i * 4 + 3] > 0;
+            }
+
+            for (int iter = 0; iter < iterations; iter++) {
+                byte[] tempPixels = new byte[pixels.Length];
+                Buffer.BlockCopy(pixels, 0, tempPixels, 0, pixels.Length);
+                bool[] newFilled = new bool[width * height];
+                Array.Copy(filled, newFilled, filled.Length);
 
                 int __safe_width = width;
                 int __safe_height = height;
@@ -279,54 +311,39 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         int idx = y * __safe_width + x;
                         if (filled[idx]) continue;
 
-                        int sumR = 0, sumG = 0, sumB = 0, count = 0;
+                        int sumB = 0, sumG = 0, sumR = 0, count = 0;
                         for (int dy = -1; dy <= 1; dy++) {
+                            int ny = y + dy;
+                            if (ny < 0 || ny >= __safe_height) continue;
                             for (int dx = -1; dx <= 1; dx++) {
                                 if (dx == 0 && dy == 0) continue;
-                                int nx = x + dx, ny = y + dy;
-                                if (nx < 0 || nx >= __safe_width || ny < 0 || ny >= __safe_height) continue;
+                                int nx = x + dx;
+                                if (nx < 0 || nx >= __safe_width) continue;
+
                                 int nIdx = ny * __safe_width + nx;
                                 if (!filled[nIdx]) continue;
-                                sumR += colors[nIdx].R;
-                                sumG += colors[nIdx].G;
-                                sumB += colors[nIdx].B;
+                                
+                                int pxIdx = nIdx * 4;
+                                sumB += tempPixels[pxIdx];
+                                sumG += tempPixels[pxIdx + 1];
+                                sumR += tempPixels[pxIdx + 2];
                                 count++;
                             }
                         }
                         if (count > 0) {
-                            lockBmp.SetPixel(x, y, Color.FromArgb(255, sumR / count, sumG / count, sumB / count));
+                            int pxIdx = idx * 4;
+                            pixels[pxIdx] = (byte)(sumB / count);
+                            pixels[pxIdx + 1] = (byte)(sumG / count);
+                            pixels[pxIdx + 2] = (byte)(sumR / count);
+                            pixels[pxIdx + 3] = 255;
+                            newFilled[idx] = true;
                         }
                     }
                 });
-
-                lockBmp.UnlockBits();
+                filled = newFilled;
             }
-        }
 
-        private static Color BilinearSample(LockBitmap srcLock, float x, float y, int width, int height) {
-            int x1 = Math.Clamp((int)Math.Floor(x), 0, width - 1);
-            int y1 = Math.Clamp((int)Math.Floor(y), 0, height - 1);
-            int x2 = Math.Min(x1 + 1, width - 1);
-            int y2 = Math.Min(y1 + 1, height - 1);
-
-            float xDiff = x - x1;
-            float yDiff = y - y1;
-            float w11 = (1f - xDiff) * (1f - yDiff);
-            float w21 = xDiff * (1f - yDiff);
-            float w12 = (1f - xDiff) * yDiff;
-            float w22 = xDiff * yDiff;
-
-            Color c11 = srcLock.GetPixel(x1, y1);
-            Color c21 = srcLock.GetPixel(x2, y1);
-            Color c12 = srcLock.GetPixel(x1, y2);
-            Color c22 = srcLock.GetPixel(x2, y2);
-
-            return Color.FromArgb(
-                Math.Clamp((int)(c11.A * w11 + c21.A * w21 + c12.A * w12 + c22.A * w22 + 0.5f), 0, 255),
-                Math.Clamp((int)(c11.R * w11 + c21.R * w21 + c12.R * w12 + c22.R * w22 + 0.5f), 0, 255),
-                Math.Clamp((int)(c11.G * w11 + c21.G * w21 + c12.G * w12 + c22.G * w22 + 0.5f), 0, 255),
-                Math.Clamp((int)(c11.B * w11 + c21.B * w21 + c12.B * w12 + c22.B * w22 + 0.5f), 0, 255)
-            );
+            lockBmp.UnlockBits();
         }
     }
 }

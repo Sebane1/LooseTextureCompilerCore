@@ -1,4 +1,4 @@
-﻿using Lumina.Data.Files;
+using Lumina.Data.Files;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace Penumbra.LTCImport.Dds;
@@ -61,6 +61,18 @@ public static class PenumbraTextureImporter {
             image.CopyPixelDataTo(span);
 
             texData = buffer;
+            return true;
+        }
+    }
+
+    public static bool BitmapToTex(System.Drawing.Bitmap file, out byte[] texData) {
+        using (var lockBmp = new FFXIVLooseTextureCompiler.ImageProcessing.LockBitmap(file)) {
+            lockBmp.LockBits();
+            int width = file.Width;
+            int height = file.Height;
+            texData = new byte[80 + width * height * 4];
+            WriteHeader(texData, width, height);
+            System.Buffer.BlockCopy(lockBmp.Pixels, 0, texData, 80, lockBmp.Pixels.Length);
             return true;
         }
     }

@@ -6,32 +6,70 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public static Bitmap Calculate(string file) {
             using (Bitmap image = (Bitmap)Bitmap.FromFile(file)) {
-                int w = image.Width - 1;
-                int h = image.Height - 1;
-                float sample_l;
-                float sample_r;
-                float sample_u;
-                float sample_d;
-                float x_vector;
-                float y_vector;
-                Bitmap normal = new Bitmap(image.Width, image.Height);
+                int width = image.Width;
+                int height = image.Height;
+                Bitmap normal = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
                 LockBitmap source = new LockBitmap(image);
                 LockBitmap destination = new LockBitmap(normal);
                 source.LockBits();
                 destination.LockBits();
-                float brightness_difference = 255 * 0.5f;
-                System.Threading.Tasks.Parallel.For(0, h, y => {
-                    for (int x = 0; x < w; x++) {
-                        float l = x > 0 ? source.GetPixel(x - 1, y).GetBrightness() : source.GetPixel(x, y).GetBrightness();
-                        float r = x < w ? source.GetPixel(x + 1, y).GetBrightness() : source.GetPixel(x, y).GetBrightness();
-                        float u = y > 0 ? source.GetPixel(x, y - 1).GetBrightness() : source.GetPixel(x, y).GetBrightness();
-                        float d = y < h ? source.GetPixel(x, y + 1).GetBrightness() : source.GetPixel(x, y).GetBrightness();
-                        float x_v = (((l - r) + 1) * brightness_difference);
-                        float y_v = (((u - d) + 1) * brightness_difference);
-                        Color col = Color.FromArgb(255, (int)x_v, (int)y_v, 255);
-                        destination.SetPixel(x, y, col);
+
+                float[] brightnessMap = new float[width * height];
+                byte[] srcPixels = source.Pixels;
+                int srcStep = source.Depth / 8;
+
+                System.Threading.Tasks.Parallel.For(0, height, y => {
+                    int rowStart = y * width;
+                    int pixelIndex = rowStart * srcStep;
+                    for (int x = 0; x < width; x++) {
+                        byte b = srcPixels[pixelIndex];
+                        byte g = srcPixels[pixelIndex + 1];
+                        byte r = srcPixels[pixelIndex + 2];
+                        pixelIndex += srcStep;
+
+                        float fr = r / 255f;
+                        float fg = g / 255f;
+                        float fb = b / 255f;
+
+                        float max = fr;
+                        if (fg > max) max = fg;
+                        if (fb > max) max = fb;
+
+                        float min = fr;
+                        if (fg < min) min = fg;
+                        if (fb < min) min = fb;
+
+                        brightnessMap[rowStart + x] = (max + min) * 0.5f;
                     }
                 });
+
+                byte[] dstPixels = destination.Pixels;
+
+                System.Threading.Tasks.Parallel.For(0, height, y => {
+                    int rowStart = y * width;
+                    int dstPixelIndex = rowStart * 4;
+
+                    for (int x = 0; x < width; x++) {
+                        float l = x > 0 ? brightnessMap[rowStart + x - 1] : brightnessMap[rowStart + x];
+                        float r = x < width - 1 ? brightnessMap[rowStart + x + 1] : brightnessMap[rowStart + x];
+                        float u = y > 0 ? brightnessMap[(y - 1) * width + x] : brightnessMap[rowStart + x];
+                        float d = y < height - 1 ? brightnessMap[(y + 1) * width + x] : brightnessMap[rowStart + x];
+
+                        float x_v = (((l - r) + 1f) * 0.5f) * 255f;
+                        float y_v = (((u - d) + 1f) * 0.5f) * 255f;
+
+                        int ix_v = (int)x_v;
+                        int iy_v = (int)y_v;
+                        ix_v = ix_v > 255 ? 255 : (ix_v < 0 ? 0 : ix_v);
+                        iy_v = iy_v > 255 ? 255 : (iy_v < 0 ? 0 : iy_v);
+
+                        dstPixels[dstPixelIndex++] = 255;
+                        dstPixels[dstPixelIndex++] = (byte)iy_v;
+                        dstPixels[dstPixelIndex++] = (byte)ix_v;
+                        dstPixels[dstPixelIndex++] = 255;
+                    }
+                });
+
                 destination.UnlockBits();
                 source.UnlockBits();
                 return normal;
@@ -42,39 +80,100 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public static Bitmap Calculate(Bitmap file, Bitmap normalMask = null) {
             Bitmap image = file;
             #region Global Variables
-            int w = image.Width - 1;
-            int h = image.Height - 1;
+            int width = image.Width;
+            int height = image.Height;
             image.RotateFlip(RotateFlipType.RotateNoneFlipX);
-            Bitmap normal = new Bitmap(image.Width, image.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            Bitmap normal = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             LockBitmap source = new LockBitmap(image);
             LockBitmap destination = new LockBitmap(normal);
             LockBitmap maskReference = null;
             Bitmap scaledMask = null;
             if (normalMask != null) {
                 normalMask.RotateFlip(RotateFlipType.RotateNoneFlipX);
-                scaledMask = new Bitmap(normalMask, image.Width, image.Height);
+                scaledMask = new Bitmap(normalMask, width, height);
                 maskReference = new LockBitmap(scaledMask);
                 maskReference.LockBits();
             }
             source.LockBits();
             destination.LockBits();
             #endregion
-            System.Threading.Tasks.Parallel.For(0, h + 1, y => {
-                for (int x = 0; x < w + 1; x++) {
-                    if (normalMask == null || maskReference?.GetPixel(x, y).A == 0) {
-                        float l = x > 0 ? source.GetPixel(x - 1, y).GetBrightness() : source.GetPixel(x, y).GetBrightness();
-                        float r = x < w ? source.GetPixel(x + 1, y).GetBrightness() : source.GetPixel(x, y).GetBrightness();
-                        float u = y > 0 ? source.GetPixel(x, y - 1).GetBrightness() : source.GetPixel(x, y).GetBrightness();
-                        float d = y < h ? source.GetPixel(x, y + 1).GetBrightness() : source.GetPixel(x, y).GetBrightness();
-                        float x_v = (((l - r) + 1) * .5f) * 255;
-                        float y_v = (((u - d) + 1) * .5f) * 255;
-                        Color col = Color.FromArgb(255, (int)x_v, (int)y_v, 255);
-                        destination.SetPixel(x, y, col);
+
+            float[] brightnessMap = new float[width * height];
+            byte[] srcPixels = source.Pixels;
+            int srcStep = source.Depth / 8;
+
+            System.Threading.Tasks.Parallel.For(0, height, y => {
+                int rowStart = y * width;
+                int pixelIndex = rowStart * srcStep;
+                for (int x = 0; x < width; x++) {
+                    byte b = srcPixels[pixelIndex];
+                    byte g = srcPixels[pixelIndex + 1];
+                    byte r = srcPixels[pixelIndex + 2];
+                    pixelIndex += srcStep;
+
+                    float fr = r / 255f;
+                    float fg = g / 255f;
+                    float fb = b / 255f;
+
+                    float max = fr;
+                    if (fg > max) max = fg;
+                    if (fb > max) max = fb;
+
+                    float min = fr;
+                    if (fg < min) min = fg;
+                    if (fb < min) min = fb;
+
+                    brightnessMap[rowStart + x] = (max + min) * 0.5f;
+                }
+            });
+
+            byte[] dstPixels = destination.Pixels;
+            byte[] maskPixels = maskReference?.Pixels;
+            int maskStep = maskReference != null ? maskReference.Depth / 8 : 0;
+
+            System.Threading.Tasks.Parallel.For(0, height, y => {
+                int rowStart = y * width;
+                int dstPixelIndex = rowStart * 4;
+                int maskPixelIndex = rowStart * maskStep;
+
+                for (int x = 0; x < width; x++) {
+                    bool masked = false;
+                    if (maskPixels != null) {
+                        if (maskStep == 4) {
+                            masked = maskPixels[maskPixelIndex + 3] == 0;
+                        } else {
+                            masked = false;
+                        }
+                        maskPixelIndex += maskStep;
+                    }
+
+                    if (normalMask == null || masked) {
+                        float l = x > 0 ? brightnessMap[rowStart + x - 1] : brightnessMap[rowStart + x];
+                        float r = x < width - 1 ? brightnessMap[rowStart + x + 1] : brightnessMap[rowStart + x];
+                        float u = y > 0 ? brightnessMap[(y - 1) * width + x] : brightnessMap[rowStart + x];
+                        float d = y < height - 1 ? brightnessMap[(y + 1) * width + x] : brightnessMap[rowStart + x];
+
+                        float x_v = (((l - r) + 1f) * 0.5f) * 255f;
+                        float y_v = (((u - d) + 1f) * 0.5f) * 255f;
+
+                        int ix_v = (int)x_v;
+                        int iy_v = (int)y_v;
+                        ix_v = ix_v > 255 ? 255 : (ix_v < 0 ? 0 : ix_v);
+                        iy_v = iy_v > 255 ? 255 : (iy_v < 0 ? 0 : iy_v);
+
+                        dstPixels[dstPixelIndex++] = 255;
+                        dstPixels[dstPixelIndex++] = (byte)iy_v;
+                        dstPixels[dstPixelIndex++] = (byte)ix_v;
+                        dstPixels[dstPixelIndex++] = 255;
                     } else {
-                        destination.SetPixel(x, y, Color.FromArgb(255, 128, 127, 255));
+                        dstPixels[dstPixelIndex++] = 255;
+                        dstPixels[dstPixelIndex++] = 127;
+                        dstPixels[dstPixelIndex++] = 128;
+                        dstPixels[dstPixelIndex++] = 255;
                     }
                 }
             });
+
             destination.UnlockBits();
             source.UnlockBits();
             maskReference?.UnlockBits();
