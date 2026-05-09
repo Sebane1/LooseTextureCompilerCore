@@ -1,4 +1,4 @@
-﻿// © Anamnesis.
+// © Anamnesis.
 // Licensed under the MIT license.
 
 namespace Anamnesis.Penumbra;
@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 internal static class PenumbraApi {
     private const string Url = "http://localhost:42069/api";
-    private const int TimeoutMs = 500;
+    private const int TimeoutMs = 10000;
     private static bool calledWarningOnce = false;
     public static async Task Post(string route, object content) {
         await PostRequest(route, content);
@@ -42,7 +42,7 @@ internal static class PenumbraApi {
             var byteContent = new ByteArrayContent(buffer);
             byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-            using var response = await client.PostAsync(Url + route, byteContent);
+            var response = await client.PostAsync(Url + route, byteContent);
 
             return response;
         } catch (Exception ex) {

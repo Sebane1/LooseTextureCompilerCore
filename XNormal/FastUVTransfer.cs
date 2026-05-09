@@ -2,11 +2,74 @@ using FFXIVLooseTextureCompiler.ImageProcessing;
 using LooseTextureCompilerCore;
 using System.Drawing;
 using System.IO;
+using System.Collections.Generic;
+using System;
 
 namespace FFXIVLooseTextureCompiler
 {
     public class FastUVTransfer
     {
+        public static List<Tuple<string, string>> biboToGen2Batch = new List<Tuple<string, string>>();
+        public static List<Tuple<string, string>> biboToGen3Batch = new List<Tuple<string, string>>();
+        public static List<Tuple<string, string>> gen3ToGen2Batch = new List<Tuple<string, string>>();
+        public static List<Tuple<string, string>> gen3ToBiboBatch = new List<Tuple<string, string>>();
+        public static List<Tuple<string, string>> gen2ToBiboBatch = new List<Tuple<string, string>>();
+        public static List<Tuple<string, string>> gen2ToGen3Batch = new List<Tuple<string, string>>();
+        public static List<Tuple<string, string>> otopopToVanillaLalaBatch = new List<Tuple<string, string>>();
+        public static List<Tuple<string, string>> vanillaLalaToOtopopBatch = new List<Tuple<string, string>>();
+        public static List<Tuple<string, string>> vanillaLalaToAsymLalaBatch = new List<Tuple<string, string>>();
+        public static List<Tuple<string, string>> asymLalaToVanillaLalaBatch = new List<Tuple<string, string>>();
+        public static List<Tuple<string, string>> asymLalaToOtopopBatch = new List<Tuple<string, string>>();
+        public static List<Tuple<string, string>> otopopToAsymLalaBatch = new List<Tuple<string, string>>();
+
+        public class ModularTransferJob
+        {
+            public string SourceMesh { get; set; }
+            public string TargetMesh { get; set; }
+            public string Input { get; set; }
+            public string Output { get; set; }
+        }
+        public static List<ModularTransferJob> modularBatch = new List<ModularTransferJob>();
+
+        public static void ProcessBatches()
+        {
+            foreach (var item in gen3ToBiboBatch) Gen3ToBibo(item.Item1, item.Item2);
+            foreach (var item in biboToGen3Batch) BiboToGen3(item.Item1, item.Item2);
+            foreach (var item in gen2ToBiboBatch) Gen2ToBibo(item.Item1, item.Item2);
+            foreach (var item in gen2ToGen3Batch) Gen2ToGen3(item.Item1, item.Item2);
+
+            foreach (var item in otopopToVanillaLalaBatch) OtopopToVanillaLala(item.Item1, item.Item2);
+            foreach (var item in vanillaLalaToOtopopBatch) VanillaLalaToOtopop(item.Item1, item.Item2);
+            foreach (var item in vanillaLalaToAsymLalaBatch) VanillaLalaToAsymLala(item.Item1, item.Item2);
+            foreach (var item in asymLalaToVanillaLalaBatch) AsymLalaToVanillaLala(item.Item1, item.Item2);
+            foreach (var item in asymLalaToOtopopBatch) AsymLalaToOtopop(item.Item1, item.Item2);
+            foreach (var item in otopopToAsymLalaBatch) OtopopToAsymLala(item.Item1, item.Item2);
+
+            foreach (var item in modularBatch) PerformModularTransfer(item.SourceMesh, item.TargetMesh, item.Input, item.Output);
+
+            foreach (var item in biboToGen2Batch) BiboToGen2(item.Item1, item.Item2);
+            foreach (var item in gen3ToGen2Batch) Gen3ToGen2(item.Item1, item.Item2);
+
+            ClearBatches();
+        }
+
+        public static void ClearBatches()
+        {
+            biboToGen2Batch.Clear();
+            biboToGen3Batch.Clear();
+            gen3ToGen2Batch.Clear();
+            gen3ToBiboBatch.Clear();
+            gen2ToBiboBatch.Clear();
+            gen2ToGen3Batch.Clear();
+            otopopToVanillaLalaBatch.Clear();
+            vanillaLalaToOtopopBatch.Clear();
+            vanillaLalaToAsymLalaBatch.Clear();
+            asymLalaToVanillaLalaBatch.Clear();
+            asymLalaToOtopopBatch.Clear();
+            otopopToAsymLalaBatch.Clear();
+            modularBatch.Clear();
+        }
+
         private static void PerformTransfer(string inputImage, string outputImage, string transferMapFilename, System.Action<string, string> xnormalFallback)
         {
             // If it's a normal map, we must use XNormal for proper tangent space re-calculation.
@@ -36,7 +99,20 @@ namespace FFXIVLooseTextureCompiler
 
         public static void BiboToGen2(string inputImage, string outputImage)
         {
-            PerformTransfer(inputImage, outputImage, "bibo_to_gen2_transfer.tif", XNormal.BiboToGen2);
+            if (File.Exists(inputImage))
+            {
+                using (Bitmap sourceTexture = TexIO.ResolveBitmap(inputImage))
+                {
+                    using (Bitmap result = ImageManipulation.CutInHalf(sourceTexture))
+                    {
+                        TexIO.SaveBitmap(result, outputImage);
+                    }
+                }
+            }
+            else
+            {
+                PerformTransfer(inputImage, outputImage, "bibo_to_gen2_transfer.tif", XNormal.BiboToGen3);
+            }
         }
 
         public static void BiboToGen3(string inputImage, string outputImage)
@@ -46,7 +122,29 @@ namespace FFXIVLooseTextureCompiler
 
         public static void Gen3ToGen2(string inputImage, string outputImage)
         {
-            PerformTransfer(inputImage, outputImage, "gen3_to_gen2_transfer.tif", XNormal.Gen3ToGen2);
+            string siblingBibo = outputImage.Replace("gen2", "bibo");
+            bool cleanup = false;
+            string targetBibo = siblingBibo;
+
+            if (!File.Exists(siblingBibo))
+            {
+                targetBibo = ImageManipulation.AddSuffix(outputImage, "_temp_bibo");
+                Gen3ToBibo(inputImage, targetBibo);
+                cleanup = true;
+            }
+
+            using (Bitmap sourceTexture = TexIO.ResolveBitmap(targetBibo))
+            {
+                using (Bitmap result = ImageManipulation.CutInHalf(sourceTexture))
+                {
+                    TexIO.SaveBitmap(result, outputImage);
+                }
+            }
+
+            if (cleanup && File.Exists(targetBibo))
+            {
+                File.Delete(targetBibo);
+            }
         }
 
         public static void Gen3ToBibo(string inputImage, string outputImage)
@@ -100,36 +198,36 @@ namespace FFXIVLooseTextureCompiler
 
             if (internalPath.Contains("bibo"))
             {
-                if (outputPath.Contains("gen2")) BiboToGen2(inputPath, outputPath);
-                else if (outputPath.Contains("gen3")) BiboToGen3(inputPath, outputPath);
+                if (outputPath.Contains("gen2")) biboToGen2Batch.Add(new Tuple<string, string>(inputPath, outputPath));
+                else if (outputPath.Contains("gen3")) biboToGen3Batch.Add(new Tuple<string, string>(inputPath, outputPath));
                 else wasHandled = false;
             }
             else if (internalPath.Contains("eve") || internalPath.Contains("gen3"))
             {
-                if (outputPath.Contains("gen2")) Gen3ToGen2(inputPath, outputPath);
-                else if (outputPath.Contains("bibo")) Gen3ToBibo(inputPath, outputPath);
+                if (outputPath.Contains("gen2")) gen3ToGen2Batch.Add(new Tuple<string, string>(inputPath, outputPath));
+                else if (outputPath.Contains("bibo")) gen3ToBiboBatch.Add(new Tuple<string, string>(inputPath, outputPath));
                 else wasHandled = false;
             }
             else if (internalPath.Contains("body"))
             {
-                if (outputPath.Contains("bibo")) Gen2ToBibo(inputPath, outputPath);
-                else if (outputPath.Contains("gen3")) Gen2ToGen3(inputPath, outputPath);
+                if (outputPath.Contains("bibo")) gen2ToBiboBatch.Add(new Tuple<string, string>(inputPath, outputPath));
+                else if (outputPath.Contains("gen3")) gen2ToGen3Batch.Add(new Tuple<string, string>(inputPath, outputPath));
                 else wasHandled = false;
             }
             else if (internalPath.Contains("skin_otopop") || internalPath.Contains("v01_c1101b0001_g"))
             {
-                if (outputPath.Contains("vanilla_lala")) OtopopToVanillaLala(inputPath, outputPath);
+                if (outputPath.Contains("vanilla_lala")) otopopToVanillaLalaBatch.Add(new Tuple<string, string>(inputPath, outputPath));
                 else wasHandled = false;
             }
             else if (internalPath.Contains("--c1101b0001"))
             {
-                if (outputPath.Contains("otopop")) VanillaLalaToOtopop(inputPath, outputPath);
+                if (outputPath.Contains("otopop")) vanillaLalaToOtopopBatch.Add(new Tuple<string, string>(inputPath, outputPath));
                 else wasHandled = false;
             }
             else if (internalPath.Contains("v01_c1101b0001_b"))
             {
-                if (outputPath.Contains("otopop")) AsymLalaToOtopop(inputPath, outputPath);
-                else if (outputPath.Contains("vanilla_lala")) AsymLalaToVanillaLala(inputPath, outputPath);
+                if (outputPath.Contains("otopop")) asymLalaToOtopopBatch.Add(new Tuple<string, string>(inputPath, outputPath));
+                else if (outputPath.Contains("vanilla_lala")) asymLalaToVanillaLalaBatch.Add(new Tuple<string, string>(inputPath, outputPath));
                 else wasHandled = false;
             }
             else
@@ -138,12 +236,11 @@ namespace FFXIVLooseTextureCompiler
             }
 
             // --- ADDITIVE MODULAR FALLBACK FOR FACES/OTHER MESHES ---
-            // If the body path didn't explicitly handle it, but XNormal knows the mesh paths, we dynamically generate a transfer map!
             if (!wasHandled)
             {
                 if (XNormal.TryGetMeshes(internalPath, outputPath, false, out string sourceMesh, out string targetMesh))
                 {
-                    PerformModularTransfer(sourceMesh, targetMesh, inputPath, outputPath);
+                    modularBatch.Add(new ModularTransferJob() { SourceMesh = sourceMesh, TargetMesh = targetMesh, Input = inputPath, Output = outputPath });
                     return true;
                 }
                 else

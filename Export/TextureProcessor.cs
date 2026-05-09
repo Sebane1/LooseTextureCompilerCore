@@ -320,7 +320,16 @@ namespace FFXIVLooseTextureCompiler {
                     if (OnLaunchedXnormal != null) {
                         OnLaunchedXnormal.Invoke(this, EventArgs.Empty);
                     }
-                    _xnormal.ProcessBatches();
+                    try {
+                        FastUVTransfer.ProcessBatches();
+                    } catch (Exception ex) {
+                        OnError?.Invoke(this, "FastUVTransfer failed: " + ex.Message);
+                    }
+                    try {
+                        _xnormal.ProcessBatches();
+                    } catch (Exception ex) {
+                        OnError?.Invoke(this, "XNormal failed: " + ex.Message);
+                    }
                 }
                 if (OnStartedProcessing != null) {
                     OnStartedProcessing.Invoke(this, EventArgs.Empty);
