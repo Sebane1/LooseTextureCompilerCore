@@ -887,47 +887,72 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             alphaBits.UnlockBits();
         }
         public static Bitmap MergeNormals(string inputFile, Bitmap baseTexture, Bitmap canvasImage, Bitmap normalMask, string baseTextureNormal) {
-            Graphics g = Graphics.FromImage(canvasImage);
-            g.Clear(Color.Transparent);
-            canvasImage = ImageManipulation.DrawImage(canvasImage, baseTexture, 0, 0, baseTexture.Width, baseTexture.Height);
-            Bitmap normal = Normal.Calculate(canvasImage, normalMask);
-            using (Bitmap originalNormal = TexIO.ResolveBitmap(inputFile)) {
-                try {
-                    Bitmap resize = ImageManipulation.DrawImage(originalNormal, normal, 0, 0, originalNormal.Width, originalNormal.Height);
-                    return ImageManipulation.MergeAlphaToRGB(ImageManipulation.ExtractAlpha(originalNormal), resize);
-                } catch {
-                    return normal;
+            using (Graphics g = Graphics.FromImage(canvasImage)) {
+                g.Clear(Color.Transparent);
+            }
+            using (Bitmap drawnCanvas = ImageManipulation.DrawImage(canvasImage, baseTexture, 0, 0, baseTexture.Width, baseTexture.Height)) {
+                Bitmap normal = Normal.Calculate(drawnCanvas, normalMask);
+                using (Bitmap originalNormal = TexIO.ResolveBitmap(inputFile)) {
+                    try {
+                        using (Bitmap resize = ImageManipulation.DrawImage(originalNormal, normal, 0, 0, originalNormal.Width, originalNormal.Height)) {
+                            using (Bitmap extAlpha = ImageManipulation.ExtractAlpha(originalNormal)) {
+                                return ImageManipulation.MergeAlphaToRGB(extAlpha, resize);
+                            }
+                        }
+                    } catch {
+                        return normal;
+                    }
                 }
             }
         }
 
         public static Bitmap LayerImages(Bitmap bottomLayer, Bitmap topLayer, string alphaOverride = "", bool invertAlpha = false, bool dontInvertAlphaOverride = false) {
-            Bitmap rgb = ImageManipulation.ExtractRGB(bottomLayer);
-            Bitmap alpha = ImageManipulation.ExtractAlpha(bottomLayer);
-            Bitmap image = new Bitmap(bottomLayer.Width, bottomLayer.Height, PixelFormat.Format32bppArgb);
-            Graphics g = Graphics.FromImage(image);
-            g.Clear(Color.Transparent);
-            image = ImageManipulation.DrawImage(rgb, bottomLayer, 0, 0, bottomLayer.Width, bottomLayer.Height);
-            float widthRatio = (float)topLayer.Width / (float)topLayer.Height;
-            image = ImageManipulation.DrawImage(image, topLayer, 0, 0, (int)(bottomLayer.Height * widthRatio), bottomLayer.Height);
-            if (!string.IsNullOrEmpty(alphaOverride)) {
-                var value = Grayscale.MakeGrayscale(TexIO.ResolveBitmap(alphaOverride));
-                alpha = LayerImages(invertAlpha ? ImageManipulation.InvertImage(alpha) : alpha, dontInvertAlphaOverride ? value : ImageManipulation.InvertImage(value));
+            using (Bitmap rgb = ImageManipulation.ExtractRGB(bottomLayer)) {
+                Bitmap currentAlpha = ImageManipulation.ExtractAlpha(bottomLayer);
+                
+                using (Bitmap step1 = ImageManipulation.DrawImage(rgb, bottomLayer, 0, 0, bottomLayer.Width, bottomLayer.Height)) {
+                    float widthRatio = (float)topLayer.Width / (float)topLayer.Height;
+                    using (Bitmap image = ImageManipulation.DrawImage(step1, topLayer, 0, 0, (int)(bottomLayer.Height * widthRatio), bottomLayer.Height)) {
+                        if (!string.IsNullOrEmpty(alphaOverride)) {
+                            using (Bitmap overrideBmp = TexIO.ResolveBitmap(alphaOverride)) {
+                                using (Bitmap value = Grayscale.MakeGrayscale(overrideBmp)) {
+                                    using (Bitmap invAlpha = invertAlpha ? ImageManipulation.InvertImage(currentAlpha) : null) {
+                                        using (Bitmap invValue = dontInvertAlphaOverride ? null : ImageManipulation.InvertImage(value)) {
+                                            Bitmap newAlpha = LayerImages(invAlpha ?? currentAlpha, invValue ?? value);
+                                            currentAlpha.Dispose();
+                                            currentAlpha = newAlpha;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Bitmap final = ImageManipulation.MergeAlphaToRGB(currentAlpha, image);
+                        currentAlpha.Dispose();
+                        return final;
+                    }
+                }
             }
-            Bitmap final = ImageManipulation.MergeAlphaToRGB(alpha, image);
-            return final;
         }
 
         public static Bitmap MergeNormals(Bitmap inputFile, Bitmap baseTexture, Bitmap canvasImage, Bitmap normalMask, string baseTextureNormal, bool modifier) {
-            Graphics g = Graphics.FromImage(canvasImage);
-            g.Clear(Color.Transparent);
-            canvasImage = ImageManipulation.DrawImage(canvasImage, baseTexture, 0, 0, baseTexture.Width, baseTexture.Height);
-            Bitmap normal = Normal.Calculate(modifier ? ImageManipulation.InvertImage(canvasImage) : canvasImage, normalMask);
-            try {
-                Bitmap resize = ImageManipulation.LayerImages(inputFile, normal);
-                return ImageManipulation.MergeAlphaToRGB(ImageManipulation.ExtractAlpha(inputFile), resize);
-            } catch {
-                return normal;
+            using (Graphics g = Graphics.FromImage(canvasImage)) {
+                g.Clear(Color.Transparent);
+            }
+            using (Bitmap drawnCanvas = ImageManipulation.DrawImage(canvasImage, baseTexture, 0, 0, baseTexture.Width, baseTexture.Height)) {
+                using (Bitmap toCalculate = modifier ? ImageManipulation.InvertImage(drawnCanvas) : null) {
+                    Bitmap normal = Normal.Calculate(toCalculate ?? drawnCanvas, normalMask);
+                    try {
+                        using (Bitmap resize = ImageManipulation.LayerImages(inputFile, normal)) {
+                            using (Bitmap extAlpha = ImageManipulation.ExtractAlpha(inputFile)) {
+                                Bitmap finalBmp = ImageManipulation.MergeAlphaToRGB(extAlpha, resize);
+                                normal.Dispose();
+                                return finalBmp;
+                            }
+                        }
+                    } catch {
+                        return normal;
+                    }
+                }
             }
         }
 
@@ -1081,11 +1106,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 String.Concat(fName, suffix, fExt)) : "";
         }
         public static Bitmap DrawImage(Bitmap destinationImage, Bitmap sourceImage, int x, int y, int width, int height) {
-            var destination = TexIO.BitmapToImageSharp(destinationImage);
-            var source = TexIO.BitmapToImageSharp(sourceImage);
-            source.Mutate(ctx => ctx.Resize(width, height));
-            destination.Mutate(ctx => ctx.DrawImage(source, new SixLabors.ImageSharp.Rectangle(x, y, width, height), 1));
-            return TexIO.ImageSharpToBitmap(destination);
+            using (var destination = TexIO.BitmapToImageSharp(destinationImage)) {
+                using (var source = TexIO.BitmapToImageSharp(sourceImage)) {
+                    source.Mutate(ctx => ctx.Resize(width, height));
+                    destination.Mutate(ctx => ctx.DrawImage(source, new SixLabors.ImageSharp.Rectangle(x, y, width, height), 1));
+                    return TexIO.ImageSharpToBitmap(destination);
+                }
+            }
         }
         public static void EraseTeeth(Bitmap bitmap) {
             LockBitmap source = new LockBitmap(bitmap);

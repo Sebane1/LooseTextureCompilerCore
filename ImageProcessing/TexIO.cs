@@ -212,20 +212,27 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                 fileStream.CopyTo(memoryStream);
             }
             memoryStream.Position = 0;
-            var newImage = SixLabors.ImageSharp.Image.Load<Rgba32>(memoryStream);
-            return ImageSharpToBitmap(newImage, noAlpha);
+            using (var newImage = SixLabors.ImageSharp.Image.Load<Rgba32>(memoryStream)) {
+                return ImageSharpToBitmap(newImage, noAlpha);
+            }
         }
         public static Bitmap Clone(Bitmap bitmap, Rectangle rectangle)
         {
-            var newImage = BitmapToImageSharp(bitmap);
-            newImage.Mutate(i => i.Crop(new SixLabors.ImageSharp.Rectangle(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height)));
-            return ImageSharpToBitmap(newImage.Clone());
+            using (var newImage = BitmapToImageSharp(bitmap)) {
+                newImage.Mutate(i => i.Crop(new SixLabors.ImageSharp.Rectangle(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height)));
+                using (var cloned = newImage.Clone()) {
+                    return ImageSharpToBitmap(cloned);
+                }
+            }
         }
         public static Bitmap Resize(Bitmap bitmap, int width, int height)
         {
-            var newImage = BitmapToImageSharp(bitmap);
-            newImage.Mutate(i => i.Resize(width, height));
-            return ImageSharpToBitmap(newImage.Clone());
+            using (var newImage = BitmapToImageSharp(bitmap)) {
+                newImage.Mutate(i => i.Resize(width, height));
+                using (var cloned = newImage.Clone()) {
+                    return ImageSharpToBitmap(cloned);
+                }
+            }
         }
 
         public static Image<Rgba32> BitmapToImageSharp(Bitmap bitmap)
@@ -263,28 +270,30 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
         }
         public static void SaveBitmap(Bitmap bitmap, string path)
         {
-            var newImage = BitmapToImageSharp(bitmap);
-            var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder()
-            {
-                TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
-                ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
-            };
-            while (TexIO.IsFileLocked(path))
-            {
-                Thread.Sleep(100);
+            using (var newImage = BitmapToImageSharp(bitmap)) {
+                var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder()
+                {
+                    TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
+                    ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
+                };
+                while (TexIO.IsFileLocked(path))
+                {
+                    Thread.Sleep(100);
+                }
+                newImage.SaveAsPng(path, encoder);
             }
-            newImage.SaveAsPng(path, encoder);
         }
 
         public static void SaveBitmap(Bitmap bitmap, Stream stream)
         {
-            var newImage = BitmapToImageSharp(bitmap);
-            var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder()
-            {
-                TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
-                ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
-            };
-            newImage.SaveAsPng(stream, encoder);
+            using (var newImage = BitmapToImageSharp(bitmap)) {
+                var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder()
+                {
+                    TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
+                    ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
+                };
+                newImage.SaveAsPng(stream, encoder);
+            }
         }
         public static Bitmap NewBitmap(Bitmap bitmap, bool noAlpha = false)
         {
@@ -345,7 +354,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             byte[] file = File.ReadAllBytes(filename);
             ObfuscateOrDeobfuscate(file);
             MemoryStream memoryStream = new MemoryStream(file);
-            return ImageSharpToBitmap(SixLabors.ImageSharp.Image.Load<Rgba32>(memoryStream), noAlpha);
+            using (var image = SixLabors.ImageSharp.Image.Load<Rgba32>(memoryStream)) {
+                return ImageSharpToBitmap(image, noAlpha);
+            }
         }
 
         public static void ConvertToLtct(string rootDirectory)
