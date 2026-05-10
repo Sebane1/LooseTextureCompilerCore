@@ -930,6 +930,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return new Bitmap(tattoo.Width, tattoo.Height);
         }
         public static Bitmap SeperateByDifference(Bitmap tattoo, Bitmap underlay) {
+            try {
+                return ComputeSharpUnderlay.SeperateByDifferenceGpu(tattoo, underlay);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[ImageManipulation.SeperateByDifference] GPU failed, falling back to CPU: {ex.Message}");
+            }
             ImageBlender imageBlender = new ImageBlender();
             Bitmap canvas = Resize(underlay, tattoo.Width, tattoo.Height);
             imageBlender.BlendImages(canvas, tattoo, ImageBlender.BlendOperation.Blend_Difference);
@@ -975,31 +980,38 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap LayerImages(Bitmap bottomLayer, Bitmap topLayer, string alphaOverride = "", bool invertAlpha = false, bool dontInvertAlphaOverride = false) {
-            using (Bitmap rgb = ImageManipulation.ExtractRGB(bottomLayer)) {
-                Bitmap currentAlpha = ImageManipulation.ExtractAlpha(bottomLayer);
-                
-                using (Bitmap step1 = ImageManipulation.DrawImage(rgb, bottomLayer, 0, 0, bottomLayer.Width, bottomLayer.Height)) {
-                    float widthRatio = (float)topLayer.Width / (float)topLayer.Height;
-                    using (Bitmap image = ImageManipulation.DrawImage(step1, topLayer, 0, 0, (int)(bottomLayer.Height * widthRatio), bottomLayer.Height)) {
-                        if (!string.IsNullOrEmpty(alphaOverride)) {
-                            using (Bitmap overrideBmp = TexIO.ResolveBitmap(alphaOverride)) {
-                                using (Bitmap value = Grayscale.MakeGrayscale(overrideBmp)) {
-                                    using (Bitmap invAlpha = invertAlpha ? ImageManipulation.InvertImage(currentAlpha) : null) {
-                                        using (Bitmap invValue = dontInvertAlphaOverride ? null : ImageManipulation.InvertImage(value)) {
-                                            Bitmap newAlpha = LayerImages(invAlpha ?? currentAlpha, invValue ?? value);
-                                            currentAlpha.Dispose();
-                                            currentAlpha = newAlpha;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        Bitmap final = ImageManipulation.MergeAlphaToRGB(currentAlpha, image);
-                        currentAlpha.Dispose();
-                        return final;
+            Bitmap image;
+            try {
+                image = ComputeSharpLayering.LayerImagesGpu(bottomLayer, topLayer);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[ImageManipulation.LayerImages] GPU failed, falling back to CPU: {ex.Message}");
+                using (Bitmap rgb = ImageManipulation.ExtractRGB(bottomLayer)) {
+                    using (Bitmap step1 = ImageManipulation.DrawImage(rgb, bottomLayer, 0, 0, bottomLayer.Width, bottomLayer.Height)) {
+                        float widthRatio = (float)topLayer.Width / (float)topLayer.Height;
+                        image = ImageManipulation.DrawImage(step1, topLayer, 0, 0, (int)(bottomLayer.Height * widthRatio), bottomLayer.Height);
                     }
                 }
             }
+
+            if (!string.IsNullOrEmpty(alphaOverride)) {
+                Bitmap currentAlpha = ImageManipulation.ExtractAlpha(bottomLayer);
+                using (Bitmap overrideBmp = TexIO.ResolveBitmap(alphaOverride)) {
+                    using (Bitmap value = Grayscale.MakeGrayscale(overrideBmp)) {
+                        using (Bitmap invAlpha = invertAlpha ? ImageManipulation.InvertImage(currentAlpha) : null) {
+                            using (Bitmap invValue = dontInvertAlphaOverride ? null : ImageManipulation.InvertImage(value)) {
+                                Bitmap newAlpha = LayerImages(invAlpha ?? currentAlpha, invValue ?? value);
+                                Bitmap finalResult = ImageManipulation.MergeAlphaToRGB(newAlpha, image);
+                                currentAlpha.Dispose();
+                                newAlpha.Dispose();
+                                image.Dispose();
+                                return finalResult;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return image;
         }
 
         public static Bitmap MergeNormals(Bitmap inputFile, Bitmap baseTexture, Bitmap canvasImage, Bitmap normalMask, string baseTextureNormal, bool modifier) {
