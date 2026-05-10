@@ -10,6 +10,7 @@ using Image = SixLabors.ImageSharp.Image;
 
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
     public class UVTransferMap {
+        public static bool UseGPUAcceleration { get; set; } = true;
         
         /// <summary>
         /// Generates a perfect 16-bit Identity Map where Red = X and Green = Y.
@@ -124,6 +125,23 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             byte[] srcPixels = srcLock.Pixels;
             byte[] dstPixels = destLock.Pixels;
             int srcStep = srcLock.Depth / 8;
+
+            if (UseGPUAcceleration) {
+                try {
+                    srcLock.UnlockBits();
+                    destLock.UnlockBits();
+                    return ComputeSharpUVTransfer.ApplyTransferMap(sourceTexture, mapX, mapY, mapValid, destWidth, destHeight, useBilinear);
+                } catch {
+                    // Fallback to CPU if GPU acceleration fails or is unsupported
+                    destLock = new LockBitmap(result);
+                    srcLock = new LockBitmap(sourceTexture);
+                    destLock.LockBits();
+                    srcLock.LockBits();
+                    srcPixels = srcLock.Pixels;
+                    dstPixels = destLock.Pixels;
+                    srcStep = srcLock.Depth / 8;
+                }
+            }
 
             int __safe_width = destWidth;
             int __safe_height = destHeight;
