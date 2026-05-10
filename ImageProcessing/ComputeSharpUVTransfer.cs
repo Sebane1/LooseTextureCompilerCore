@@ -137,13 +137,28 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 float4 color12 = Source[new int2(x1, y2)];
                 float4 color22 = Source[new int2(x2, y2)];
 
+                // If any of the 4 bilinearly sampled pixels are completely empty, we're sampling the unpadded background.
+                // Reject this pixel to prevent it from locking in a dark/transparent crease, allowing Edge Padding to heal it.
+                if ((color11.X == 0.0f && color11.Y == 0.0f && color11.Z == 0.0f && color11.W == 0.0f) ||
+                    (color21.X == 0.0f && color21.Y == 0.0f && color21.Z == 0.0f && color21.W == 0.0f) ||
+                    (color12.X == 0.0f && color12.Y == 0.0f && color12.Z == 0.0f && color12.W == 0.0f) ||
+                    (color22.X == 0.0f && color22.Y == 0.0f && color22.Z == 0.0f && color22.W == 0.0f)) {
+                    return;
+                }
+
                 Destination[pos] = color11 * w11 + color21 * w21 + color12 * w12 + color22 * w22;
             } else {
                 int srcXi = (int)Hlsl.Round(srcXf);
                 int srcYi = (int)Hlsl.Round(srcYf);
                 srcXi = Hlsl.Clamp(srcXi, 0, SourceWidth - 1);
                 srcYi = Hlsl.Clamp(srcYi, 0, SourceHeight - 1);
-                Destination[pos] = Source[new int2(srcXi, srcYi)];
+                float4 resultColor = Source[new int2(srcXi, srcYi)];
+                
+                if (resultColor.X == 0.0f && resultColor.Y == 0.0f && resultColor.Z == 0.0f && resultColor.W == 0.0f) {
+                    return;
+                }
+                
+                Destination[pos] = resultColor;
             }
         }
     }
@@ -207,6 +222,15 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 float4 color12 = Source[new int2(x1, y2)];
                 float4 color22 = Source[new int2(x2, y2)];
 
+                // If any of the 4 bilinearly sampled pixels are completely empty, we're sampling the unpadded background.
+                // Reject this pixel to prevent it from locking in a dark/transparent crease, allowing Edge Padding to heal it.
+                if ((color11.X == 0.0f && color11.Y == 0.0f && color11.Z == 0.0f && color11.W == 0.0f) ||
+                    (color21.X == 0.0f && color21.Y == 0.0f && color21.Z == 0.0f && color21.W == 0.0f) ||
+                    (color12.X == 0.0f && color12.Y == 0.0f && color12.Z == 0.0f && color12.W == 0.0f) ||
+                    (color22.X == 0.0f && color22.Y == 0.0f && color22.Z == 0.0f && color22.W == 0.0f)) {
+                    return;
+                }
+
                 float w11 = (1.0f - dx) * (1.0f - dy);
                 float w21 = dx * (1.0f - dy);
                 float w12 = (1.0f - dx) * dy;
@@ -219,6 +243,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 srcXi = Hlsl.Clamp(srcXi, 0, SourceWidth - 1);
                 srcYi = Hlsl.Clamp(srcYi, 0, SourceHeight - 1);
                 resultColor = Source[new int2(srcXi, srcYi)];
+                
+                if (resultColor.X == 0.0f && resultColor.Y == 0.0f && resultColor.Z == 0.0f && resultColor.W == 0.0f) {
+                    return;
+                }
             }
 
             DestinationRgb[pos] = new float4(resultColor.X, resultColor.Y, resultColor.Z, 1.0f);
