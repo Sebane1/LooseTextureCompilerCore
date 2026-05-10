@@ -112,7 +112,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int2 pos = new int2(x, y);
             float4 mapPixel = Map[pos];
 
-            if (mapPixel.W < 0.999f) return;
+            if (mapPixel.W < 0.999f) {
+                Destination[pos] = float4.Zero;
+                return;
+            }
 
             float srcXf = mapPixel.X * (SourceWidth - 1);
             float srcYf = mapPixel.Y * (SourceHeight - 1);
@@ -143,6 +146,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     (color21.X == 0.0f && color21.Y == 0.0f && color21.Z == 0.0f && color21.W == 0.0f) ||
                     (color12.X == 0.0f && color12.Y == 0.0f && color12.Z == 0.0f && color12.W == 0.0f) ||
                     (color22.X == 0.0f && color22.Y == 0.0f && color22.Z == 0.0f && color22.W == 0.0f)) {
+                    Destination[pos] = float4.Zero;
                     return;
                 }
 
@@ -155,6 +159,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 float4 resultColor = Source[new int2(srcXi, srcYi)];
                 
                 if (resultColor.X == 0.0f && resultColor.Y == 0.0f && resultColor.Z == 0.0f && resultColor.W == 0.0f) {
+                    Destination[pos] = float4.Zero;
                     return;
                 }
                 
@@ -199,7 +204,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int2 pos = new int2(x, y);
             float4 mapPixel = Map[pos];
 
-            if (mapPixel.W < 0.999f) return;
+            if (mapPixel.W < 0.999f) {
+                DestinationRgb[pos] = float4.Zero;
+                DestinationAlpha[pos] = float4.Zero;
+                return;
+            }
 
             float srcXf = mapPixel.X * (SourceWidth - 1);
             float srcYf = mapPixel.Y * (SourceHeight - 1);
@@ -228,6 +237,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     (color21.X == 0.0f && color21.Y == 0.0f && color21.Z == 0.0f && color21.W == 0.0f) ||
                     (color12.X == 0.0f && color12.Y == 0.0f && color12.Z == 0.0f && color12.W == 0.0f) ||
                     (color22.X == 0.0f && color22.Y == 0.0f && color22.Z == 0.0f && color22.W == 0.0f)) {
+                    DestinationRgb[pos] = float4.Zero;
+                    DestinationAlpha[pos] = float4.Zero;
                     return;
                 }
 
@@ -245,6 +256,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 resultColor = Source[new int2(srcXi, srcYi)];
                 
                 if (resultColor.X == 0.0f && resultColor.Y == 0.0f && resultColor.Z == 0.0f && resultColor.W == 0.0f) {
+                    DestinationRgb[pos] = float4.Zero;
+                    DestinationAlpha[pos] = float4.Zero;
                     return;
                 }
             }
