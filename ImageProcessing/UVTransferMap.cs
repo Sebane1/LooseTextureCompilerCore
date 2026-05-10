@@ -80,7 +80,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         for (int x = 0; x < accessor.Width; x++) {
                             Rgba64 pixel = rowSpan[x];
                             int idx = rowOffset + x;
-                            bool valid = pixel.A >= 65000; // Trim antialiased edges to prevent seam bleeding
+                            bool valid = pixel.A >= 65535;
                             mapValid[idx] = valid;
 
                             if (valid) {

@@ -112,7 +112,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int2 pos = new int2(x, y);
             float4 mapPixel = Map[pos];
 
-            if (mapPixel.W < 0.99f) return; // Trim antialiased edges to prevent seam bleeding
+            if (mapPixel.W < 0.999f) return;
 
             float srcXf = mapPixel.X * (SourceWidth - 1);
             float srcYf = mapPixel.Y * (SourceHeight - 1);
@@ -184,7 +184,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int2 pos = new int2(x, y);
             float4 mapPixel = Map[pos];
 
-            if (mapPixel.W < 0.99f) return; // Trim antialiased edges to prevent seam bleeding
+            if (mapPixel.W < 0.999f) return;
 
             float srcXf = mapPixel.X * (SourceWidth - 1);
             float srcYf = mapPixel.Y * (SourceHeight - 1);
