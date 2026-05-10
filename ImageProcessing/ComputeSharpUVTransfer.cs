@@ -458,7 +458,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     useBilinear ? 1 : 0
                 ));
 
-                for (int i = 0; i < 8; i++) {
+                for (int i = 0; i < UVTransferMap.EdgePadding; i++) {
                     if (i % 2 == 0) {
                         device.For(totalPixels, new DilateEdgesShader(gpuDestRgb, gpuPingRgb, destWidth, destHeight));
                         device.For(totalPixels, new DilateEdgesShader(gpuDestAlpha, gpuPingAlpha, destWidth, destHeight));
@@ -567,7 +567,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 useBilinear ? 1 : 0
             ));
 
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < UVTransferMap.EdgePadding; i++) {
                 if (i % 2 == 0) {
                     device.For(totalPixels, new DilateEdgesShader(gpuDestRgb, gpuPingRgb, destWidth, destHeight));
                     device.For(totalPixels, new DilateEdgesShader(gpuDestAlpha, gpuPingAlpha, destWidth, destHeight));

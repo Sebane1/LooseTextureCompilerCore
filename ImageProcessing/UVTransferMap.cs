@@ -11,6 +11,7 @@ using Image = SixLabors.ImageSharp.Image;
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
     public class UVTransferMap {
         public static bool UseGPUAcceleration { get; set; } = true;
+        public static int EdgePadding { get; set; } = 16;
         
         /// <summary>
         /// Generates a perfect 16-bit Identity Map where Red = X and Green = Y.
@@ -107,8 +108,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap rgbResult = ApplyTransferMapInternal(rgbSource, mapX, mapY, mapValid, destWidth, destHeight, useBilinear);
             Bitmap alphaResult = ApplyTransferMapInternal(alphaSource, mapX, mapY, mapValid, destWidth, destHeight, useBilinear);
 
-            DilateEdges(rgbResult, 8);
-            DilateEdges(alphaResult, 8);
+            DilateEdges(rgbResult, EdgePadding);
+            DilateEdges(alphaResult, EdgePadding);
 
             Bitmap finalResult = ImageManipulation.MergeAlphaToRGB(alphaResult, rgbResult);
 
