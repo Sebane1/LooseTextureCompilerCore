@@ -32,7 +32,13 @@ namespace FFXIVLooseTextureCompiler.Export
             _path = Path.GetDirectoryName(hardPath);
             string fileName = Path.GetFileName(hardPath);
             _baseTexture = "\\" + fileName;
-            _normal = fileName.Replace("_base", "_norm");
+            _normal = fileName.Replace("_base", "_norm").Replace("_d", "_n").Replace("_diff", "_norm");
+        }
+        public BackupTexturePaths(string basePath, string normalPath)
+        {
+            _path = Path.GetDirectoryName(basePath);
+            _baseTexture = "\\" + Path.GetFileName(basePath);
+            _normal = !string.IsNullOrEmpty(normalPath) ? "\\" + Path.GetFileName(normalPath) : "";
         }
         static bool _overrideMode;
 
@@ -273,12 +279,12 @@ namespace FFXIVLooseTextureCompiler.Export
         public static List<SkinType> RelalaSkinTypes { get => _relalaSkinTypes; set => _relalaSkinTypes = value; }
         public bool IsFace { get => _isFace; set => _isFace = value; }
         public static bool OverrideMode { get => _overrideMode; set => _overrideMode = value; }
-        public static BackupTexturePaths BiboOverride { get; internal set; } = new BackupTexturePaths("nada/nada.ltct");
-        public static BackupTexturePaths Gen3Override { get; internal set; } = new BackupTexturePaths("nada/nada.ltct");
-        public static BackupTexturePaths Gen2Override { get; internal set; } = new BackupTexturePaths("nada/nada.ltct");
-        public static BackupTexturePaths TbseOverride { get; internal set; } = new BackupTexturePaths("nada/nada.ltct");
-        public static BackupTexturePaths OtopopOverride { get; internal set; } = new BackupTexturePaths("nada/nada.ltct");
-        public static BackupTexturePaths RelalaOverride { get; internal set; } = new BackupTexturePaths("nada/nada.ltct");
-        public static BackupTexturePaths VanillaLalaOverride { get; internal set; } = new BackupTexturePaths("nada/nada.ltct");
+        public static BackupTexturePaths BiboOverride { get; set; } = new BackupTexturePaths("nada/nada.ltct");
+        public static BackupTexturePaths Gen3Override { get; set; } = new BackupTexturePaths("nada/nada.ltct");
+        public static BackupTexturePaths Gen2Override { get; set; } = new BackupTexturePaths("nada/nada.ltct");
+        public static BackupTexturePaths TbseOverride { get; set; } = new BackupTexturePaths("nada/nada.ltct");
+        public static BackupTexturePaths OtopopOverride { get; set; } = new BackupTexturePaths("nada/nada.ltct");
+        public static BackupTexturePaths RelalaOverride { get; set; } = new BackupTexturePaths("nada/nada.ltct");
+        public static BackupTexturePaths VanillaLalaOverride { get; set; } = new BackupTexturePaths("nada/nada.ltct");
     }
 }

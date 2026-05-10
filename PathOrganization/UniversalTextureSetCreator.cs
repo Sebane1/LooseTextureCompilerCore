@@ -269,12 +269,13 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
         private static void ConfigureTBSECrossCompatibility(TextureSet textureSet, int race, bool omniExport)
         {
             ConfigureTextureSet(textureSet.TextureSetName, "", race, 1, 3, null, textureSet);
+            textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.TbseOverride : BackupTexturePaths.TbseSkinTypes[textureSet.SkinType].BackupTextures[0];
             TextureSet tbseVanilla = new TextureSet();
 
             if (omniExport)
             {
                 ConfigureTextureSet("Vanilla [IsChild]", "tbse_vanilla", race, 0, 0, tbseVanilla, textureSet);
-                tbseVanilla.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.TbseOverride : BackupTexturePaths.TbseSkinTypes[textureSet.SkinType].BackupTextures[3];
+                tbseVanilla.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : BackupTexturePaths.TbseSkinTypes[textureSet.SkinType].BackupTextures[3];
 
                 Directory.CreateDirectory(
                     Path.GetDirectoryName(
@@ -338,7 +339,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
         private static void ConfigureLalafellVanillaCrossCompatibility(TextureSet textureSet, int race, bool omniExport)
         {
             ConfigureTextureSet(textureSet.TextureSetName, "", race, 1, 0, null, textureSet);
-            textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.VanillaLalaOverride : BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[2];
+            textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[2];
 
             if (omniExport)
             {
@@ -368,7 +369,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
 
                 TextureSet vanilla = new TextureSet();
                 ConfigureTextureSet("Vanilla [IsChild]", "vanilla_lala", race, 0, 0, vanilla, textureSet);
-                vanilla.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.VanillaLalaOverride : BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
+                vanilla.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
 
                 textureSet.ChildSets.Add(vanilla);
                 textureSet.ChildSets.Add(otopop);
@@ -384,7 +385,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
             {
                 TextureSet vanilla = new TextureSet();
                 ConfigureTextureSet("Vanilla [IsChild]", "vanilla_lala", race, 0, 0, vanilla, textureSet);
-                vanilla.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.VanillaLalaOverride : BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
+                vanilla.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
 
                 TextureSet asymLalafell = new TextureSet();
                 ConfigureTextureSet("Asym Lala [IsChild]", "asym_lala", race, 0, 6, asymLalafell, textureSet);
@@ -404,7 +405,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
             {
                 TextureSet vanilla = new TextureSet();
                 ConfigureTextureSet("Vanilla [IsChild]", "vanilla_lala", race, 0, 0, vanilla, textureSet);
-                vanilla.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.VanillaLalaOverride : BackupTexturePaths.RelalaSkinTypes[textureSet.SkinType].BackupTextures[2];
+                vanilla.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : BackupTexturePaths.RelalaSkinTypes[textureSet.SkinType].BackupTextures[2];
 
                 TextureSet otopop = new TextureSet();
                 ConfigureTextureSet("Otopop [IsChild]", "otopop", race, 0, 5, otopop, textureSet);
