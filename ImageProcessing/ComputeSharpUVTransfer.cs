@@ -140,12 +140,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 float4 color12 = Source[new int2(x1, y2)];
                 float4 color22 = Source[new int2(x2, y2)];
 
-                // If any of the 4 bilinearly sampled pixels are completely empty, we're sampling the unpadded background.
-                // Reject this pixel to prevent it from locking in a dark/transparent crease, allowing Edge Padding to heal it.
-                if ((color11.X == 0.0f && color11.Y == 0.0f && color11.Z == 0.0f && color11.W == 0.0f) ||
-                    (color21.X == 0.0f && color21.Y == 0.0f && color21.Z == 0.0f && color21.W == 0.0f) ||
-                    (color12.X == 0.0f && color12.Y == 0.0f && color12.Z == 0.0f && color12.W == 0.0f) ||
-                    (color22.X == 0.0f && color22.Y == 0.0f && color22.Z == 0.0f && color22.W == 0.0f)) {
+                // If any of the 4 bilinearly sampled pixels are completely transparent, we're sampling the unpadded background.
+                // Reject this pixel to prevent it from locking in a dark/white/transparent crease, allowing Edge Padding to heal it.
+                if (color11.W == 0.0f || color21.W == 0.0f || color12.W == 0.0f || color22.W == 0.0f) {
                     Destination[pos] = float4.Zero;
                     return;
                 }
@@ -158,7 +155,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 srcYi = Hlsl.Clamp(srcYi, 0, SourceHeight - 1);
                 float4 resultColor = Source[new int2(srcXi, srcYi)];
                 
-                if (resultColor.X == 0.0f && resultColor.Y == 0.0f && resultColor.Z == 0.0f && resultColor.W == 0.0f) {
+                if (resultColor.W == 0.0f) {
                     Destination[pos] = float4.Zero;
                     return;
                 }
@@ -231,12 +228,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 float4 color12 = Source[new int2(x1, y2)];
                 float4 color22 = Source[new int2(x2, y2)];
 
-                // If any of the 4 bilinearly sampled pixels are completely empty, we're sampling the unpadded background.
-                // Reject this pixel to prevent it from locking in a dark/transparent crease, allowing Edge Padding to heal it.
-                if ((color11.X == 0.0f && color11.Y == 0.0f && color11.Z == 0.0f && color11.W == 0.0f) ||
-                    (color21.X == 0.0f && color21.Y == 0.0f && color21.Z == 0.0f && color21.W == 0.0f) ||
-                    (color12.X == 0.0f && color12.Y == 0.0f && color12.Z == 0.0f && color12.W == 0.0f) ||
-                    (color22.X == 0.0f && color22.Y == 0.0f && color22.Z == 0.0f && color22.W == 0.0f)) {
+                // If any of the 4 bilinearly sampled pixels are completely transparent, we're sampling the unpadded background.
+                // Reject this pixel to prevent it from locking in a dark/white/transparent crease, allowing Edge Padding to heal it.
+                if (color11.W == 0.0f || color21.W == 0.0f || color12.W == 0.0f || color22.W == 0.0f) {
                     DestinationRgb[pos] = float4.Zero;
                     DestinationAlpha[pos] = float4.Zero;
                     return;
@@ -489,8 +483,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 ReadOnlySpan<Bgra32> srcSpan = MemoryMarshal.Cast<byte, Bgra32>(new ReadOnlySpan<byte>(srcLock.Pixels));
                 gpuSourceRw.CopyFrom(srcSpan);
 
-                // Pre-pad the source texture by 8 pixels to prevent bilinear bleeding at island boundaries
-                for (int i = 0; i < 8; i++) {
+                // Pre-pad the source texture by 16 pixels to prevent bilinear bleeding at island boundaries
+                for (int i = 0; i < 16; i++) {
                     if (i % 2 == 0) {
                         device.For(sourceTexture.Width * sourceTexture.Height, new DilateEdgesShader(gpuSourceRw, gpuSourcePing, sourceTexture.Width, sourceTexture.Height));
                     } else {
@@ -608,8 +602,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             ReadOnlySpan<Bgra32> srcSpan = MemoryMarshal.Cast<byte, Bgra32>(srcPixels);
             gpuSourceRw.CopyFrom(srcSpan);
 
-            // Pre-pad the source texture by 8 pixels to prevent bilinear bleeding at island boundaries
-            for (int i = 0; i < 8; i++) {
+            // Pre-pad the source texture by 16 pixels to prevent bilinear bleeding at island boundaries
+            for (int i = 0; i < 16; i++) {
                 if (i % 2 == 0) {
                     device.For(srcWidth * srcHeight, new DilateEdgesShader(gpuSourceRw, gpuSourcePing, srcWidth, srcHeight));
                 } else {
