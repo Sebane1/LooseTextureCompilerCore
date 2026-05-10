@@ -243,6 +243,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap InvertImage(Bitmap file) {
+            try {
+                return ComputeSharpImageManipulation.InvertImageGpu(file);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[ImageManipulation.InvertImage] GPU failed, falling back to CPU: {ex.Message}");
+            }
             Bitmap invertedImage = TexIO.NewBitmap(file);
             using (LockBitmap invertedBits = new LockBitmap(invertedImage)) {
                  int __safe_width_invertedBits = invertedBits.Width;
@@ -304,6 +309,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return image;
         }
         public static Bitmap ExtractRGB(Bitmap file, bool isNormal = false) {
+            if (!isNormal) {
+                try {
+                    return ComputeSharpImageManipulation.ExtractRGBGpu(file);
+                } catch (Exception ex) {
+                    System.Diagnostics.Debug.WriteLine($"[ImageManipulation.ExtractRGB] GPU failed, falling back to CPU: {ex.Message}");
+                }
+            }
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
@@ -556,6 +568,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap ExtractAlpha(Bitmap file) {
+            try {
+                return ComputeSharpImageManipulation.ExtractAlphaGpu(file);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[ImageManipulation.ExtractAlpha] GPU failed, falling back to CPU: {ex.Message}");
+            }
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
@@ -786,6 +803,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             clothingMultiConversion.Save(ImageManipulation.ReplaceExtension(ImageManipulation.AddSuffix(filename, "_mask"), ".png"), ImageFormat.Png);
         }
         public static Bitmap MergeAlphaToRGB(Bitmap alpha, Bitmap rgb) {
+            try {
+                return ComputeSharpImageManipulation.MergeAlphaToRGBGpu(alpha, rgb);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[ImageManipulation.MergeAlphaToRGB] GPU failed, falling back to CPU: {ex.Message}");
+            }
             Bitmap image = TexIO.NewBitmap(rgb.Width, rgb.Height);
             Graphics.FromImage(image).Clear(Color.Transparent);
             LockBitmap destination = new LockBitmap(image);
