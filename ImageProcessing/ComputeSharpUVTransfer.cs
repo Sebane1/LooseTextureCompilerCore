@@ -82,7 +82,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct ApplyTransferMapTextureShader : IComputeShader
     {
-        public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Source;
         public readonly ReadOnlyTexture2D<Rgba64, float4> Map;
         public readonly ReadWriteTexture2D<Bgra32, float4> Destination;
         public readonly int DestWidth;
@@ -90,7 +90,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public readonly int SourceHeight;
         public readonly int UseBilinear;
 
-        public ApplyTransferMapTextureShader(ReadOnlyTexture2D<Bgra32, float4> source, ReadOnlyTexture2D<Rgba64, float4> map, ReadWriteTexture2D<Bgra32, float4> destination, int destWidth, int sourceWidth, int sourceHeight, int useBilinear)
+        public ApplyTransferMapTextureShader(ReadWriteTexture2D<Bgra32, float4> source, ReadOnlyTexture2D<Rgba64, float4> map, ReadWriteTexture2D<Bgra32, float4> destination, int destWidth, int sourceWidth, int sourceHeight, int useBilinear)
         {
             Source = source;
             Map = map;
@@ -167,7 +167,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct ApplyTransferMapCombinedShader : IComputeShader
     {
-        public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Source;
         public readonly ReadOnlyTexture2D<Rgba64, float4> Map;
         public readonly ReadWriteTexture2D<Bgra32, float4> DestinationRgb;
         public readonly ReadWriteTexture2D<Bgra32, float4> DestinationAlpha;
@@ -176,7 +176,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public readonly int SourceHeight;
         public readonly int UseBilinear;
 
-        public ApplyTransferMapCombinedShader(ReadOnlyTexture2D<Bgra32, float4> source, ReadOnlyTexture2D<Rgba64, float4> map, ReadWriteTexture2D<Bgra32, float4> destRgb, ReadWriteTexture2D<Bgra32, float4> destAlpha, int destWidth, int sourceWidth, int sourceHeight, int useBilinear)
+        public ApplyTransferMapCombinedShader(ReadWriteTexture2D<Bgra32, float4> source, ReadOnlyTexture2D<Rgba64, float4> map, ReadWriteTexture2D<Bgra32, float4> destRgb, ReadWriteTexture2D<Bgra32, float4> destAlpha, int destWidth, int sourceWidth, int sourceHeight, int useBilinear)
         {
             Source = source;
             Map = map;
@@ -465,7 +465,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     _gpuResidentMapCache[transferMapPath] = gpuMap;
                 }
 
-                using ReadOnlyTexture2D<Bgra32, float4> gpuSource = device.AllocateReadOnlyTexture2D<Bgra32, float4>(sourceTexture.Width, sourceTexture.Height);
+                using ReadWriteTexture2D<Bgra32, float4> gpuSourceRw = device.AllocateReadWriteTexture2D<Bgra32, float4>(sourceTexture.Width, sourceTexture.Height);
+                using ReadWriteTexture2D<Bgra32, float4> gpuSourcePing = device.AllocateReadWriteTexture2D<Bgra32, float4>(sourceTexture.Width, sourceTexture.Height);
                 var pooled = GetPooledBuffers(destWidth, destHeight);
                 var gpuDestRgb = pooled.DestRgb;
                 var gpuDestAlpha = pooled.DestAlpha;
@@ -473,10 +474,19 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 var gpuPingAlpha = pooled.PingAlpha;
                 
                 ReadOnlySpan<Bgra32> srcSpan = MemoryMarshal.Cast<byte, Bgra32>(new ReadOnlySpan<byte>(srcLock.Pixels));
-                gpuSource.CopyFrom(srcSpan);
+                gpuSourceRw.CopyFrom(srcSpan);
+
+                // Pre-pad the source texture by 8 pixels to prevent bilinear bleeding at island boundaries
+                for (int i = 0; i < 8; i++) {
+                    if (i % 2 == 0) {
+                        device.For(sourceTexture.Width * sourceTexture.Height, new DilateEdgesShader(gpuSourceRw, gpuSourcePing, sourceTexture.Width, sourceTexture.Height));
+                    } else {
+                        device.For(sourceTexture.Width * sourceTexture.Height, new DilateEdgesShader(gpuSourcePing, gpuSourceRw, sourceTexture.Width, sourceTexture.Height));
+                    }
+                }
 
                 device.For(totalPixels, new ApplyTransferMapCombinedShader(
-                    gpuSource,
+                    gpuSourceRw,
                     gpuMap,
                     gpuDestRgb,
                     gpuDestAlpha,
@@ -574,7 +584,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 _gpuResidentMapCache[transferMapPath] = gpuMap;
             }
 
-            using ReadOnlyTexture2D<Bgra32, float4> gpuSource = device.AllocateReadOnlyTexture2D<Bgra32, float4>(srcWidth, srcHeight);
+            using ReadWriteTexture2D<Bgra32, float4> gpuSourceRw = device.AllocateReadWriteTexture2D<Bgra32, float4>(srcWidth, srcHeight);
+            using ReadWriteTexture2D<Bgra32, float4> gpuSourcePing = device.AllocateReadWriteTexture2D<Bgra32, float4>(srcWidth, srcHeight);
             var pooled = GetPooledBuffers(destWidth, destHeight);
             var gpuDestRgb = pooled.DestRgb;
             var gpuDestAlpha = pooled.DestAlpha;
@@ -582,10 +593,19 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             var gpuPingAlpha = pooled.PingAlpha;
             
             ReadOnlySpan<Bgra32> srcSpan = MemoryMarshal.Cast<byte, Bgra32>(srcPixels);
-            gpuSource.CopyFrom(srcSpan);
+            gpuSourceRw.CopyFrom(srcSpan);
+
+            // Pre-pad the source texture by 8 pixels to prevent bilinear bleeding at island boundaries
+            for (int i = 0; i < 8; i++) {
+                if (i % 2 == 0) {
+                    device.For(srcWidth * srcHeight, new DilateEdgesShader(gpuSourceRw, gpuSourcePing, srcWidth, srcHeight));
+                } else {
+                    device.For(srcWidth * srcHeight, new DilateEdgesShader(gpuSourcePing, gpuSourceRw, srcWidth, srcHeight));
+                }
+            }
 
             device.For(totalPixels, new ApplyTransferMapCombinedShader(
-                gpuSource,
+                gpuSourceRw,
                 gpuMap,
                 gpuDestRgb,
                 gpuDestAlpha,
