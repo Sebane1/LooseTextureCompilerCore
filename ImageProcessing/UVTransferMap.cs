@@ -45,6 +45,15 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         /// For best quality, use 16-bit TIFF transfer maps (.tif).
         /// </summary>
         public static Bitmap ApplyTransferMap(Bitmap sourceTexture, string transferMapPath, bool useBilinear = true) {
+            if (UseGPUAcceleration && !transferMapPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) {
+                try {
+                    Bitmap finalFast = ComputeSharpUVTransfer.ApplyTransferMapFast(sourceTexture, transferMapPath, useBilinear);
+                    return finalFast;
+                } catch {
+                    // Fallback to CPU processing
+                }
+            }
+
             Bitmap rgbSource = ImageManipulation.ExtractRGB(sourceTexture);
             Bitmap alphaSource = ImageManipulation.ExtractAlpha(sourceTexture);
 
