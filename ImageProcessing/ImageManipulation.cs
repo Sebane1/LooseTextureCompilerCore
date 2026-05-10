@@ -75,6 +75,16 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Gen3,
         }
 
+        public static bool HasTextIdentifiers(string file) {
+            if (string.IsNullOrEmpty(file)) return false;
+            string fileName = Path.GetFileNameWithoutExtension(file).ToLower();
+            if (fileName.Contains("bibo") || fileName.Contains("b+")) return true;
+            if (fileName.Contains("gen3") || fileName.Contains("eve")) return true;
+            if (fileName.Contains("tbse")) return true;
+            if (fileName.Contains("gen2") || fileName.Contains("body") || fileName.Contains("mata")) return true;
+            return false;
+        }
+
         public static string IdentifyUV(string file) {
             if (string.IsNullOrEmpty(file)) return "";
             string fileName = Path.GetFileNameWithoutExtension(file).ToLower();
@@ -101,6 +111,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             if (lowerPath.Contains("v01_c1101b0001_g") || lowerPath.Contains("skin_otopop")) targetUV = "otopop";
             else if (lowerPath.Contains("v01_c1101b0001_b") || lowerPath.Contains("asymlala")) targetUV = "asymlala";
             else if (lowerPath.Contains("--c1101b0001") || lowerPath.Contains("vanilla_lala")) targetUV = "vanillalala";
+            else if (lowerPath.Contains("relala")) targetUV = "relala";
             else if (lowerPath.Contains("_b_d") || lowerPath.Contains("_b_base") || lowerPath.Contains("tbse")) targetUV = "tbse";
             else if (lowerPath.Contains("bibo") || lowerPath.Contains("b+")) targetUV = "bibo";
             else if (lowerPath.Contains("gen3") || lowerPath.Contains("eve")) targetUV = "gen3";
@@ -998,6 +1009,12 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             canvas.RotateFlip(RotateFlipType.RotateNoneFlipX);
             graphics = Graphics.FromImage(canvas);
             graphics.DrawImage(file, new Point(file.Width, 0));
+            return canvas;
+        }
+
+        public static Bitmap MirrorX(Bitmap file) {
+            Bitmap canvas = TexIO.NewBitmap(file);
+            canvas.RotateFlip(RotateFlipType.RotateNoneFlipX);
             return canvas;
         }
 

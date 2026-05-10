@@ -100,8 +100,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 LockBitmap destination = new LockBitmap(multi);
                 source.LockBits();
                 destination.LockBits();
-                System.Threading.Tasks.Parallel.For(0, image.Height, y => {
-                    for (int x = 0; x < image.Width; x++) {
+                int __safe_width_image = image.Width;
+                int __safe_height_image = image.Height;
+                System.Threading.Tasks.Parallel.For(0, __safe_height_image, y => {
+                    for (int x = 0; x < __safe_width_image; x++) {
                         Bitmap.Color sourcePixel = source.GetPixel(x, y);
                         Bitmap.Color destinationPixel = destination.GetPixel(x, y);
                         if (sourcePixel.A > 0) {
@@ -124,8 +126,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 LockBitmap destination = new LockBitmap(multi);
                 source.LockBits();
                 destination.LockBits();
-                System.Threading.Tasks.Parallel.For(0, image.Height, y => {
-                    for (int x = 0; x < image.Width; x++) {
+                int __safe_width_image = image.Width;
+                int __safe_height_image = image.Height;
+                System.Threading.Tasks.Parallel.For(0, __safe_height_image, y => {
+                    for (int x = 0; x < __safe_width_image; x++) {
                         Bitmap.Color sourcePixel = source.GetPixel(x, y);
                         Bitmap.Color destinationPixel = destination.GetPixel(x, y);
                         if (sourcePixel.A > 20) {
@@ -149,8 +153,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 LockBitmap destination = new LockBitmap(multi);
                 source.LockBits();
                 destination.LockBits();
-                System.Threading.Tasks.Parallel.For(0, image.Height, y => {
-                    for (int x = 0; x < image.Width; x++) {
+                int __safe_width_image = image.Width;
+                int __safe_height_image = image.Height;
+                System.Threading.Tasks.Parallel.For(0, __safe_height_image, y => {
+                    for (int x = 0; x < __safe_width_image; x++) {
                         Bitmap.Color sourcePixel = source.GetPixel(x, y);
                         Bitmap.Color destinationPixel = destination.GetPixel(x, y);
                         Bitmap.Color comparisonColour = FlattenColours(sourcePixel, 90);
@@ -189,8 +195,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     destination.LockBits();
                     mergedImagePixels.LockBits();
                     if (file.Width == glow.Width && file.Height == glow.Height) {
-                        System.Threading.Tasks.Parallel.For(0, image.Height, y => {
-                            for (int x = 0; x < image.Width; x++) {
+                        int __safe_width_image = image.Width;
+                        int __safe_height_image = image.Height;
+                        System.Threading.Tasks.Parallel.For(0, __safe_height_image, y => {
+                            for (int x = 0; x < __safe_width_image; x++) {
                                 Bitmap.Color sourcePixel = source.GetPixel(x, y);
                                 Bitmap.Color mergedPixel = mergedImagePixels.GetPixel(x, y);
                                 if (sourcePixel.A > 0) {
@@ -212,8 +220,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Bitmap.Bitmap image = new Bitmap.Bitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
-            System.Threading.Tasks.Parallel.For(0, image.Height, y => {
-                for (int x = 0; x < image.Width; x++) {
+            int __safe_width_image = image.Width;
+            int __safe_height_image = image.Height;
+            System.Threading.Tasks.Parallel.For(0, __safe_height_image, y => {
+                for (int x = 0; x < __safe_width_image; x++) {
                     Bitmap.Color sourcePixel = source.GetPixel(x, y);
                     Bitmap.Color col = Bitmap.Color.FromArgb(255 - sourcePixel.A, sourcePixel.R, sourcePixel.G, sourcePixel.B);
                     source.SetPixel(x, y, col);

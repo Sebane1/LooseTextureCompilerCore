@@ -57,6 +57,7 @@ namespace FFXIVLooseTextureCompiler
         private const string vanillaLala = "res\\model\\vanillap.sbm";
         private const string otopop = "res\\model\\genp.sbm";
         private const string asymLala = "res\\model\\asymp.sbm";
+        private const string relala = "res\\model\\relala.sbm";
         private static int outputSize = 4096;
         int count = 0;
 
@@ -350,6 +351,20 @@ namespace FFXIVLooseTextureCompiler
             ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
         }
 
+        public static void RelalaToAsymLala(string inputImage, string outputImage)
+        {
+            CallXNormal(Path.Combine(GlobalPathStorage.OriginalBaseDirectory, relala),
+            Path.Combine(GlobalPathStorage.OriginalBaseDirectory, asymLala), inputImage, outputImage.Replace("_baseTexBaked", null),
+            ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
+        }
+
+        public static void AsymLalaToRelala(string inputImage, string outputImage)
+        {
+            CallXNormal(Path.Combine(GlobalPathStorage.OriginalBaseDirectory, asymLala),
+            Path.Combine(GlobalPathStorage.OriginalBaseDirectory, relala), inputImage, outputImage.Replace("_baseTexBaked", null),
+            ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal);
+        }
+
         public static void OpenXNormal()
         {
             string executable = !string.IsNullOrEmpty(xNormalPathOverride) ? xNormalPathOverride
@@ -367,7 +382,7 @@ namespace FFXIVLooseTextureCompiler
             // Generate a temporary 16-bit coordinate map
             string tempDir = Path.Combine(Path.GetTempPath(), "FFXIVLooseTextureCompiler_TransferMapBake");
             Directory.CreateDirectory(tempDir);
-            string coordMapPath = Path.Combine(tempDir, "coordinate_map.png");
+            string coordMapPath = Path.Combine(tempDir, "coordinate_map.tif");
 
             FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.GenerateCoordinateMap(4096, 4096, coordMapPath);
 
@@ -454,6 +469,26 @@ namespace FFXIVLooseTextureCompiler
         public static void BakeTransferMapAsymLalaToOtopop(string outputTifPath)
         {
             BakeTransferMap(asymLala, otopop, outputTifPath);
+        }
+
+        public static void BakeTransferMapOtopopToRelala(string outputTifPath)
+        {
+            BakeTransferMap(otopop, relala, outputTifPath);
+        }
+
+        public static void BakeTransferMapRelalaToOtopop(string outputTifPath)
+        {
+            BakeTransferMap(relala, otopop, outputTifPath);
+        }
+
+        public static void BakeTransferMapRelalaToAsymLala(string outputTifPath)
+        {
+            BakeTransferMap(relala, asymLala, outputTifPath);
+        }
+
+        public static void BakeTransferMapAsymLalaToRelala(string outputTifPath)
+        {
+            BakeTransferMap(asymLala, relala, outputTifPath);
         }
 
         public static void CallXNormal(string inputFBX, string outputFBX, string inputImage, string outputImage, bool isNormalMap = false, int width = 4096, int height = 4096, bool skipRgbSplit = false)

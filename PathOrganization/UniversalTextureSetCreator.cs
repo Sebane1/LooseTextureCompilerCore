@@ -1,4 +1,4 @@
-﻿using FFXIVLooseTextureCompiler.Export;
+using FFXIVLooseTextureCompiler.Export;
 using FFXIVLooseTextureCompiler.ImageProcessing;
 using FFXIVLooseTextureCompiler.Racial;
 using LooseTextureCompilerCore;
@@ -38,6 +38,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             } else if (textureSet.InternalBasePath.Contains("_b_d")
                 && !textureSet.InternalBasePath.Contains("fac")) {
                 ConfigureTBSECrossCompatibility(textureSet, race, textureSet.OmniExportMode);
+            } else if (textureSet.InternalBasePath.Contains("relala")) {
+                ConfigureRelalaCrossCompatibility(textureSet, race, textureSet.OmniExportMode);
             }
         }
         public static List<string> GetSkinTypeNames(TextureSet textureSet) {
@@ -65,6 +67,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             } else if (textureSet.InternalBasePath.Contains("_b_base")
                 && !textureSet.InternalBasePath.Contains("fac")) {
                 return GetSkinNames(BackupTexturePaths.TbseSkinTypes);
+            } else if (textureSet.InternalBasePath.Contains("relala")) {
+                return GetSkinNames(BackupTexturePaths.RelalaSkinTypes);
             }
             return null;
         }
@@ -301,6 +305,24 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 asymLalafell.BackupTexturePaths = BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
 
                 textureSet.ChildSets.Add(asymLalafell);
+                textureSet.ChildSets.Add(vanilla);
+            }
+        }
+
+        private static void ConfigureRelalaCrossCompatibility(TextureSet textureSet, int race, bool omniExport) {
+            ConfigureTextureSet(textureSet.TextureSetName, "", race, 1, 7, null, textureSet);
+            textureSet.BackupTexturePaths = BackupTexturePaths.RelalaSkinTypes[textureSet.SkinType].BackupTextures[0];
+
+            if (omniExport) {
+                TextureSet vanilla = new TextureSet();
+                ConfigureTextureSet("Vanilla [IsChild]", "vanilla_lala", race, 0, 0, vanilla, textureSet);
+                vanilla.BackupTexturePaths = BackupTexturePaths.RelalaSkinTypes[textureSet.SkinType].BackupTextures[2];
+
+                TextureSet otopop = new TextureSet();
+                ConfigureTextureSet("Otopop [IsChild]", "otopop", race, 0, 5, otopop, textureSet);
+                otopop.BackupTexturePaths = BackupTexturePaths.RelalaSkinTypes[textureSet.SkinType].BackupTextures[1];
+
+                textureSet.ChildSets.Add(otopop);
                 textureSet.ChildSets.Add(vanilla);
             }
         }

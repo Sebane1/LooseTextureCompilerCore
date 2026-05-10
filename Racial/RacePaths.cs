@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -237,7 +237,19 @@ namespace FFXIVLooseTextureCompiler.Racial {
                     if (race == 3) {
                         result = @"chara/human/c1101/obj/body/b0001/texture/v01_c1101b0001_b" + GetTextureType(texture, baseBody) + ".tex";
                     } else {
-                        result = "Asymmetrical Vanilla Lalafell is only compatible with lalafells";
+                        result = "Asym Lalafell is only compatible with lalafells";
+                    }
+                    break;
+                case 7:
+                    // Relala
+                    if (race == 3) {
+                        string texType = "";
+                        if (texture == 0) texType = "_diff";
+                        else if (texture == 1) texType = "_norm";
+                        else if (texture == 2) texType = "_mask";
+                        result = @"chara/relala" + texType + ".tex";
+                    } else {
+                        result = "Relala is only compatible with lalafells";
                     }
                     break;
             }

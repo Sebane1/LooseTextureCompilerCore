@@ -1,4 +1,4 @@
-﻿using FFXIVLooseTextureCompiler.ImageProcessing;
+using FFXIVLooseTextureCompiler.ImageProcessing;
 using FFXIVLooseTextureCompiler.PathOrganization;
 using FFXIVLooseTextureCompiler.Racial;
 using LooseTextureCompilerCore;
@@ -119,6 +119,22 @@ namespace FFXIVLooseTextureCompiler.Export {
                          new BackupTexturePaths(@"res\textures\otopop\asym\"),
                          new BackupTexturePaths(@"res\textures\otopop\vanilla\")),
         };
+
+        private static List<SkinType> _relalaSkinTypes = new List<SkinType>() {
+            new SkinType("Default",
+                         new BackupTexturePaths(@"res\textures\relala\relala\"),
+                         new BackupTexturePaths(@"res\textures\relala\otopop\"),
+                         new BackupTexturePaths(@"res\textures\relala\vanilla\")),
+            new SkinType("Smooth",
+                         new BackupTexturePaths(@"res\textures\relalaSmooth\relala\"),
+                         new BackupTexturePaths(@"res\textures\relalaSmooth\otopop\"),
+                         new BackupTexturePaths(@"res\textures\relalaSmooth\vanilla\")),
+            new SkinType("Detailed",
+                         new BackupTexturePaths(@"res\textures\relalaDetailed\relala\"),
+                         new BackupTexturePaths(@"res\textures\relalaDetailed\otopop\"),
+                         new BackupTexturePaths(@"res\textures\relalaDetailed\vanilla\")),
+        };
+
         private bool _isFace;
 
         public static void AddFaceBackupPaths(int gender, int subRace, int face, TextureSet textureSet) {
@@ -136,6 +152,8 @@ namespace FFXIVLooseTextureCompiler.Export {
                         textureSet.BackupTexturePaths = Gen3SkinTypes[textureSet.SkinType].BackupTextures[1];
                     } else if (textureSet.InternalBasePath.Contains("v01_c1101b0001_g")) {
                         textureSet.BackupTexturePaths = OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
+                    } else if (textureSet.InternalBasePath.Contains("relala")) {
+                        textureSet.BackupTexturePaths = RelalaSkinTypes[textureSet.SkinType].BackupTextures[0];
                     } else {
                         textureSet.BackupTexturePaths = race == 5 ?
                          OtopopSkinTypes[textureSet.SkinType].BackupTextures[2] : Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
@@ -187,6 +205,7 @@ namespace FFXIVLooseTextureCompiler.Export {
         public static List<SkinType> Gen3SkinTypes { get => _gen3SkinTypes; set => _gen3SkinTypes = value; }
         public static List<SkinType> TbseSkinTypes { get => _tbseSkinTypes; set => _tbseSkinTypes = value; }
         public static List<SkinType> OtopopSkinTypes { get => _otopopSkinTypes; set => _otopopSkinTypes = value; }
+        public static List<SkinType> RelalaSkinTypes { get => _relalaSkinTypes; set => _relalaSkinTypes = value; }
         public bool IsFace { get => _isFace; set => _isFace = value; }
     }
 }

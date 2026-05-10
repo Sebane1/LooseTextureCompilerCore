@@ -21,6 +21,8 @@ namespace FFXIVLooseTextureCompiler
         public static List<Tuple<string, string>> asymLalaToVanillaLalaBatch = new List<Tuple<string, string>>();
         public static List<Tuple<string, string>> asymLalaToOtopopBatch = new List<Tuple<string, string>>();
         public static List<Tuple<string, string>> otopopToAsymLalaBatch = new List<Tuple<string, string>>();
+        public static List<Tuple<string, string>> relalaToAsymLalaBatch = new List<Tuple<string, string>>();
+        public static List<Tuple<string, string>> asymLalaToRelalaBatch = new List<Tuple<string, string>>();
 
         public class ModularTransferJob
         {
@@ -44,6 +46,8 @@ namespace FFXIVLooseTextureCompiler
             foreach (var item in asymLalaToVanillaLalaBatch) AsymLalaToVanillaLala(item.Item1, item.Item2);
             foreach (var item in asymLalaToOtopopBatch) AsymLalaToOtopop(item.Item1, item.Item2);
             foreach (var item in otopopToAsymLalaBatch) OtopopToAsymLala(item.Item1, item.Item2);
+            foreach (var item in relalaToAsymLalaBatch) RelalaToAsymLala(item.Item1, item.Item2);
+            foreach (var item in asymLalaToRelalaBatch) AsymLalaToRelala(item.Item1, item.Item2);
 
             foreach (var item in modularBatch) PerformModularTransfer(item.SourceMesh, item.TargetMesh, item.Input, item.Output);
 
@@ -82,6 +86,8 @@ namespace FFXIVLooseTextureCompiler
             asymLalaToVanillaLalaBatch.Clear();
             asymLalaToOtopopBatch.Clear();
             otopopToAsymLalaBatch.Clear();
+            relalaToAsymLalaBatch.Clear();
+            asymLalaToRelalaBatch.Clear();
             modularBatch.Clear();
         }
 
@@ -184,6 +190,16 @@ namespace FFXIVLooseTextureCompiler
             PerformTransfer(inputImage, outputImage, "otopop_to_asymlala_transfer.tif", XNormal.OtopopToAsymLala);
         }
 
+        public static void RelalaToAsymLala(string inputImage, string outputImage)
+        {
+            PerformTransfer(inputImage, outputImage, "relala_to_asymlala_transfer.tif", XNormal.RelalaToAsymLala);
+        }
+
+        public static void AsymLalaToRelala(string inputImage, string outputImage)
+        {
+            PerformTransfer(inputImage, outputImage, "asymlala_to_relala_transfer.tif", XNormal.AsymLalaToRelala);
+        }
+
         public static bool GenerateBasedOnSourceBody(string internalPath, string inputPath, string outputPath)
         {
             bool wasHandled = true;
@@ -220,6 +236,12 @@ namespace FFXIVLooseTextureCompiler
             {
                 if (outputPath.Contains("otopop")) asymLalaToOtopopBatch.Add(new Tuple<string, string>(inputPath, outputPath));
                 else if (outputPath.Contains("vanilla_lala")) asymLalaToVanillaLalaBatch.Add(new Tuple<string, string>(inputPath, outputPath));
+                else if (outputPath.Contains("relala")) asymLalaToRelalaBatch.Add(new Tuple<string, string>(inputPath, outputPath));
+                else wasHandled = false;
+            }
+            else if (internalPath.Contains("relala"))
+            {
+                if (outputPath.Contains("v01_c1101b0001_b")) relalaToAsymLalaBatch.Add(new Tuple<string, string>(inputPath, outputPath));
                 else wasHandled = false;
             }
             else
