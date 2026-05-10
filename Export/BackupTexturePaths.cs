@@ -174,24 +174,24 @@ namespace FFXIVLooseTextureCompiler.Export
                 {
                     if (textureSet.InternalBasePath.Contains("bibo"))
                     {
-                        textureSet.BackupTexturePaths = BiboSkinTypes[textureSet.SkinType].BackupTextures[0];
+                        textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.BiboOverride : BiboSkinTypes[textureSet.SkinType].BackupTextures[0];
                     }
                     else if (textureSet.InternalBasePath.Contains("gen3") || textureSet.InternalBasePath.Contains("eve"))
                     {
-                        textureSet.BackupTexturePaths = Gen3SkinTypes[textureSet.SkinType].BackupTextures[1];
+                        textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen3Override : Gen3SkinTypes[textureSet.SkinType].BackupTextures[1];
                     }
                     else if (textureSet.InternalBasePath.Contains("v01_c1101b0001_g"))
                     {
-                        textureSet.BackupTexturePaths = OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
+                        textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.OtopopOverride : OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
                     }
                     else if (textureSet.InternalBasePath.Contains("relala"))
                     {
-                        textureSet.BackupTexturePaths = RelalaSkinTypes[textureSet.SkinType].BackupTextures[0];
+                        textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.RelalaOverride : RelalaSkinTypes[textureSet.SkinType].BackupTextures[0];
                     }
                     else
                     {
                         textureSet.BackupTexturePaths = race == 5 ?
-                         OtopopSkinTypes[textureSet.SkinType].BackupTextures[2] : Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
+                         BackupTexturePaths.OverrideMode ? BackupTexturePaths.OtopopOverride : OtopopSkinTypes[textureSet.SkinType].BackupTextures[2] : BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
                     }
                 }
             }
