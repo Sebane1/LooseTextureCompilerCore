@@ -271,7 +271,7 @@ namespace FFXIVLooseTextureCompiler
                             string childRGB = childTexturePath.Replace("baseTexBaked", "rgb");
 
                             bool useLegacy = true;
-                            if (_finalizeResults && UseFastUVTransfer && xNormalTextureType != XNormalTextureType.Normal)
+                            if (_finalizeResults && UseFastUVTransfer)
                             {
                                 if (FastUVTransfer.GenerateBasedOnSourceBody(internalPath, parentTexturePath, childTexturePath))
                                 {

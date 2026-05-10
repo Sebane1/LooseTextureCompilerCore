@@ -93,18 +93,7 @@ namespace FFXIVLooseTextureCompiler
 
         private static void PerformTransfer(string inputImage, string outputImage, string transferMapFilename, System.Action<string, string> xnormalFallback)
         {
-            // If it's a normal map, we must use XNormal for proper tangent space re-calculation.
-            if (ImageManipulation.UVMapTypeClassifier(inputImage) == ImageManipulation.UVMapType.Normal)
-            {
-                xnormalFallback(inputImage, outputImage);
-                string xnormalOutput = ImageManipulation.AddSuffix(outputImage, "_normals");
-                if (File.Exists(xnormalOutput))
-                {
-                    if (File.Exists(outputImage)) File.Delete(outputImage);
-                    File.Move(xnormalOutput, outputImage);
-                }
-                return;
-            }
+
 
             string transferMapPath = Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "res", "fastuvtransfer", "body", transferMapFilename);
 
