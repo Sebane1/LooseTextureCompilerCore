@@ -6,21 +6,35 @@ using LooseTextureCompilerCore.Export;
 using Newtonsoft.Json;
 using System.Diagnostics;
 
-namespace FFXIVLooseTextureCompiler.Export {
-    public class BackupTexturePaths {
-        public BackupTexturePaths(string path, bool isFace = false, int gender = 0, int subRace = 0, int face = 0) {
+namespace FFXIVLooseTextureCompiler.Export
+{
+    public class BackupTexturePaths
+    {
+        public BackupTexturePaths(string path, bool isFace = false, int gender = 0, int subRace = 0, int face = 0)
+        {
             _path = path;
-            if (!isFace) {
+            if (!isFace)
+            {
                 _baseTexture = "diffuse.ltct";
                 _baseTextureSecondary = "diffuseRaen.ltct";
                 _normal = "normal.ltct";
-            } else {
+            }
+            else
+            {
                 string fileName = (((subRace == 5 && gender == 1) || subRace == 11 ? 101 : 1) + face) + ".png";
                 _baseTexture = "\\" + fileName;
                 _normal = "\\" + (face + 1) + "n.png";
             }
             _isFace = isFace;
         }
+        public BackupTexturePaths(string hardPath)
+        {
+            _path = Path.GetDirectoryName(hardPath);
+            string fileName = Path.GetFileName(hardPath);
+            _baseTexture = "\\" + fileName;
+            _normal = fileName.Replace("_base", "_norm");
+        }
+        static bool _overrideMode;
 
         [JsonProperty]
         string _baseTexture = "";
@@ -38,8 +52,10 @@ namespace FFXIVLooseTextureCompiler.Export {
         [JsonIgnore]
         public string Normal { get => _path + _normal; }
         [JsonIgnore]
-        public string InternalPath {
-            get => _path; set {
+        public string InternalPath
+        {
+            get => _path; set
+            {
                 _path = value;
             }
         }
@@ -137,51 +153,78 @@ namespace FFXIVLooseTextureCompiler.Export {
 
         private bool _isFace;
 
-        public static void AddFaceBackupPaths(int gender, int subRace, int face, TextureSet textureSet) {
+        public static void AddFaceBackupPaths(int gender, int subRace, int face, TextureSet textureSet)
+        {
             string outputTexture = @"res\textures\face\" + (gender == 1 ? "feminine" : "masculine") + @"\" +
             RaceInfo.ModelRaces[RaceInfo.SubRaceToModelRace(subRace)].ToLower() + (textureSet.UsesScales ? "Alternate" : "");
             textureSet.BackupTexturePaths = new BackupTexturePaths(outputTexture, true, gender, subRace, face);
         }
 
-        public static void AddBodyBackupPaths(int gender, int race, TextureSet textureSet) {
-            if (gender != 0) {
-                if (textureSet.SkinType > -1) {
-                    if (textureSet.InternalBasePath.Contains("bibo")) {
+        public static void AddBodyBackupPaths(int gender, int race, TextureSet textureSet)
+        {
+            if (gender != 0)
+            {
+                if (textureSet.SkinType > -1)
+                {
+                    if (textureSet.InternalBasePath.Contains("bibo"))
+                    {
                         textureSet.BackupTexturePaths = BiboSkinTypes[textureSet.SkinType].BackupTextures[0];
-                    } else if (textureSet.InternalBasePath.Contains("gen3") || textureSet.InternalBasePath.Contains("eve")) {
+                    }
+                    else if (textureSet.InternalBasePath.Contains("gen3") || textureSet.InternalBasePath.Contains("eve"))
+                    {
                         textureSet.BackupTexturePaths = Gen3SkinTypes[textureSet.SkinType].BackupTextures[1];
-                    } else if (textureSet.InternalBasePath.Contains("v01_c1101b0001_g")) {
+                    }
+                    else if (textureSet.InternalBasePath.Contains("v01_c1101b0001_g"))
+                    {
                         textureSet.BackupTexturePaths = OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
-                    } else if (textureSet.InternalBasePath.Contains("relala")) {
+                    }
+                    else if (textureSet.InternalBasePath.Contains("relala"))
+                    {
                         textureSet.BackupTexturePaths = RelalaSkinTypes[textureSet.SkinType].BackupTextures[0];
-                    } else {
+                    }
+                    else
+                    {
                         textureSet.BackupTexturePaths = race == 5 ?
                          OtopopSkinTypes[textureSet.SkinType].BackupTextures[2] : Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
                     }
                 }
-            } else {
-                if (race == 5) {
+            }
+            else
+            {
+                if (race == 5)
+                {
                     textureSet.BackupTexturePaths = OtopopSkinTypes[textureSet.SkinType].BackupTextures[2];
-                } else {
+                }
+                else
+                {
                     // Midlander, Elezen, Miqo'te
-                    if (textureSet.InternalBasePath.Contains("--c0101b0001_b_d")) {
-                        textureSet.BackupTexturePaths = TbseSkinTypes[textureSet.SkinType].BackupTextures[0];
-                    } else
-                    // Highlander
-                    if (textureSet.InternalBasePath.Contains("--c0301b0001_b_d")) {
-                        textureSet.BackupTexturePaths = TbseSkinTypes[textureSet.SkinType].BackupTextures[1];
-                    } else
-                    // Viera
-                    if (textureSet.InternalBasePath.Contains("--c1701b0001_b_d")) {
-                        textureSet.BackupTexturePaths = TbseSkinTypes[textureSet.SkinType].BackupTextures[2];
-                    } else if (textureSet.InternalBasePath.Contains("1_b_d")) {
+                    if (textureSet.InternalBasePath.Contains("--c0101b0001_b_d"))
+                    {
                         textureSet.BackupTexturePaths = TbseSkinTypes[textureSet.SkinType].BackupTextures[0];
                     }
+                    else
+                        // Highlander
+                        if (textureSet.InternalBasePath.Contains("--c0301b0001_b_d"))
+                        {
+                            textureSet.BackupTexturePaths = TbseSkinTypes[textureSet.SkinType].BackupTextures[1];
+                        }
+                        else
+                            // Viera
+                            if (textureSet.InternalBasePath.Contains("--c1701b0001_b_d"))
+                            {
+                                textureSet.BackupTexturePaths = TbseSkinTypes[textureSet.SkinType].BackupTextures[2];
+                            }
+                            else if (textureSet.InternalBasePath.Contains("1_b_d"))
+                            {
+                                textureSet.BackupTexturePaths = TbseSkinTypes[textureSet.SkinType].BackupTextures[0];
+                            }
                 }
             }
         }
-        public static BackupTexturePaths AsymLalaPath(int skinType) {
-            if (!File.Exists(_otopopSkinTypes[skinType].BackupTextures[1].Base)) {
+        public static BackupTexturePaths AsymLalaPath(int skinType)
+        {
+            if (!File.Exists(_otopopSkinTypes[skinType].BackupTextures[1].Base))
+            {
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(
                 GlobalPathStorage.OriginalBaseDirectory,
                 _otopopSkinTypes[skinType].BackupTextures[1].Base)));
@@ -200,6 +243,28 @@ namespace FFXIVLooseTextureCompiler.Export {
             }
             return _otopopSkinTypes[skinType].BackupTextures[1];
         }
+        public static BackupTexturePaths AsymOverridePath()
+        {
+            if (!File.Exists(OtopopOverride.Base))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(
+                GlobalPathStorage.OriginalBaseDirectory,
+                OtopopOverride.Base)));
+
+                TexIO.WriteImageToXOR(ImageManipulation.MirrorAndDuplicate(
+                TexIO.ResolveBitmap(Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
+                    OtopopOverride.Base))),
+                    Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
+                    OtopopOverride.Base));
+
+                TexIO.WriteImageToXOR(ImageManipulation.MirrorAndDuplicate(
+                    TexIO.ResolveBitmap(Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
+                   OtopopOverride.Normal))),
+                    Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
+                   OtopopOverride.Normal));
+            }
+            return OtopopOverride;
+        }
 
         public static List<SkinType> BiboSkinTypes { get => _biboSkinTypes; set => _biboSkinTypes = value; }
         public static List<SkinType> Gen3SkinTypes { get => _gen3SkinTypes; set => _gen3SkinTypes = value; }
@@ -207,5 +272,13 @@ namespace FFXIVLooseTextureCompiler.Export {
         public static List<SkinType> OtopopSkinTypes { get => _otopopSkinTypes; set => _otopopSkinTypes = value; }
         public static List<SkinType> RelalaSkinTypes { get => _relalaSkinTypes; set => _relalaSkinTypes = value; }
         public bool IsFace { get => _isFace; set => _isFace = value; }
+        public static bool OverrideMode { get => _overrideMode; set => _overrideMode = value; }
+        public static BackupTexturePaths BiboOverride { get; internal set; } = new BackupTexturePaths("nada/nada.ltct");
+        public static BackupTexturePaths Gen3Override { get; internal set; } = new BackupTexturePaths("nada/nada.ltct");
+        public static BackupTexturePaths Gen2Override { get; internal set; } = new BackupTexturePaths("nada/nada.ltct");
+        public static BackupTexturePaths TbseOverride { get; internal set; } = new BackupTexturePaths("nada/nada.ltct");
+        public static BackupTexturePaths OtopopOverride { get; internal set; } = new BackupTexturePaths("nada/nada.ltct");
+        public static BackupTexturePaths RelalaOverride { get; internal set; } = new BackupTexturePaths("nada/nada.ltct");
+        public static BackupTexturePaths VanillaLalaOverride { get; internal set; } = new BackupTexturePaths("nada/nada.ltct");
     }
 }
