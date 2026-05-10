@@ -128,8 +128,9 @@ namespace FFXIVLooseTextureCompiler
                     if (ComputeSharpUVTransfer.TransferFile(inputImage, outputImage, transferMapPath))
                         return;
                 }
-                catch
+                catch (Exception e)
                 {
+                    System.IO.File.WriteAllText(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "gpu_fast_transfer_error.txt"), e.ToString());
                     // Fallback to Bitmap path
                 }
             }
@@ -305,8 +306,9 @@ namespace FFXIVLooseTextureCompiler
                     if (ComputeSharpUVTransfer.TransferFile(inputImage, outputImage, transferMapPath))
                         return;
                 }
-                catch
+                catch (Exception e)
                 {
+                    System.IO.File.WriteAllText(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "gpu_fast_transfer_error2.txt"), e.ToString());
                     // Fallback to Bitmap path
                 }
             }

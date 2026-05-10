@@ -50,7 +50,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 try {
                     Bitmap finalFast = ComputeSharpUVTransfer.ApplyTransferMapFast(sourceTexture, transferMapPath, useBilinear);
                     return finalFast;
-                } catch {
+                } catch (Exception e) {
+                    System.IO.File.WriteAllText(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "gpu_transfer_error.txt"), e.ToString());
                     // Fallback to CPU processing
                 }
             }

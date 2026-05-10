@@ -78,7 +78,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(DefaultThreadGroupSizes.XY)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct ApplyTransferMapTextureShader : IComputeShader
     {
@@ -103,11 +103,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public void Execute()
         {
-            int idx = ThreadIds.X;
-            if (idx >= DestWidth * Destination.Height) return;
-
-            int y = idx / DestWidth;
-            int x = idx % DestWidth;
+            int x = ThreadIds.X;
+            int y = ThreadIds.Y;
+            if (x >= DestWidth || y >= Destination.Height) return;
 
             int2 pos = new int2(x, y);
             float4 mapPixel = Map[pos];
@@ -140,13 +138,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 float4 color12 = Source[new int2(x1, y2)];
                 float4 color22 = Source[new int2(x2, y2)];
 
-                // If any of the 4 bilinearly sampled pixels are completely transparent, we're sampling the unpadded background.
-                // Reject this pixel to prevent it from locking in a dark/white/transparent crease, allowing Edge Padding to heal it.
-                if (color11.W == 0.0f || color21.W == 0.0f || color12.W == 0.0f || color22.W == 0.0f) {
-                    Destination[pos] = float4.Zero;
-                    return;
-                }
-
                 Destination[pos] = color11 * w11 + color21 * w21 + color12 * w12 + color22 * w22;
             } else {
                 int srcXi = (int)Hlsl.Round(srcXf);
@@ -155,17 +146,12 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 srcYi = Hlsl.Clamp(srcYi, 0, SourceHeight - 1);
                 float4 resultColor = Source[new int2(srcXi, srcYi)];
                 
-                if (resultColor.W == 0.0f) {
-                    Destination[pos] = float4.Zero;
-                    return;
-                }
-                
                 Destination[pos] = resultColor;
             }
         }
     }
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(DefaultThreadGroupSizes.XY)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct ApplyTransferMapCombinedShader : IComputeShader
     {
@@ -192,11 +178,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public void Execute()
         {
-            int idx = ThreadIds.X;
-            if (idx >= DestWidth * DestinationRgb.Height) return;
-
-            int y = idx / DestWidth;
-            int x = idx % DestWidth;
+            int x = ThreadIds.X;
+            int y = ThreadIds.Y;
+            if (x >= DestWidth || y >= DestinationRgb.Height) return;
 
             int2 pos = new int2(x, y);
             float4 mapPixel = Map[pos];
@@ -228,14 +212,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 float4 color12 = Source[new int2(x1, y2)];
                 float4 color22 = Source[new int2(x2, y2)];
 
-                // If any of the 4 bilinearly sampled pixels are completely transparent, we're sampling the unpadded background.
-                // Reject this pixel to prevent it from locking in a dark/white/transparent crease, allowing Edge Padding to heal it.
-                if (color11.W == 0.0f || color21.W == 0.0f || color12.W == 0.0f || color22.W == 0.0f) {
-                    DestinationRgb[pos] = float4.Zero;
-                    DestinationAlpha[pos] = float4.Zero;
-                    return;
-                }
-
                 float w11 = (1.0f - dx) * (1.0f - dy);
                 float w21 = dx * (1.0f - dy);
                 float w12 = (1.0f - dx) * dy;
@@ -248,12 +224,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 srcXi = Hlsl.Clamp(srcXi, 0, SourceWidth - 1);
                 srcYi = Hlsl.Clamp(srcYi, 0, SourceHeight - 1);
                 resultColor = Source[new int2(srcXi, srcYi)];
-                
-                if (resultColor.X == 0.0f && resultColor.Y == 0.0f && resultColor.Z == 0.0f && resultColor.W == 0.0f) {
-                    DestinationRgb[pos] = float4.Zero;
-                    DestinationAlpha[pos] = float4.Zero;
-                    return;
-                }
             }
 
             DestinationRgb[pos] = new float4(resultColor.X, resultColor.Y, resultColor.Z, 1.0f);
@@ -261,7 +231,85 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(DefaultThreadGroupSizes.XY)]
+    [GeneratedComputeShaderDescriptor]
+    public readonly partial struct HealUvSeamsShader : IComputeShader
+    {
+        public readonly ReadOnlyTexture2D<Rgba64, float4> Map;
+        public readonly ReadWriteTexture2D<Bgra32, float4> DestinationRgb;
+        public readonly ReadWriteTexture2D<Bgra32, float4> DestinationAlpha;
+        public readonly int DestWidth;
+        public readonly int DestHeight;
+        public readonly int SourceWidth;
+        public readonly int SourceHeight;
+
+        public HealUvSeamsShader(ReadOnlyTexture2D<Rgba64, float4> map, ReadWriteTexture2D<Bgra32, float4> destinationRgb, ReadWriteTexture2D<Bgra32, float4> destinationAlpha, int destWidth, int destHeight, int sourceWidth, int sourceHeight)
+        {
+            Map = map;
+            DestinationRgb = destinationRgb;
+            DestinationAlpha = destinationAlpha;
+            DestWidth = destWidth;
+            DestHeight = destHeight;
+            SourceWidth = sourceWidth;
+            SourceHeight = sourceHeight;
+        }
+
+        public void Execute()
+        {
+            int x = ThreadIds.X;
+            int y = ThreadIds.Y;
+            if (x >= DestWidth || y >= DestHeight) return;
+
+            int2 pos = new int2(x, y);
+            float4 mapPixel = Map[pos];
+            if (mapPixel.W < 0.999f) return;
+
+            float srcX = mapPixel.X * SourceWidth;
+            float srcY = mapPixel.Y * SourceHeight;
+
+            bool isSeam = false;
+            
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    if (dx == 0 && dy == 0) continue;
+                    int nx = x + dx;
+                    int ny = y + dy;
+                    
+                    if (nx >= 0 && nx < DestWidth && ny >= 0 && ny < DestHeight) {
+                        float4 nMap = Map[new int2(nx, ny)];
+                        if (nMap.W < 0.999f) {
+                            // Exterior boundary (touches empty space)
+                            isSeam = true;
+                            break;
+                        } else {
+                            float nSrcX = nMap.X * SourceWidth;
+                            float nSrcY = nMap.Y * SourceHeight;
+                            float distSq = (srcX - nSrcX) * (srcX - nSrcX) + (srcY - nSrcY) * (srcY - nSrcY);
+                            
+                            // Interior stitch boundary (Source coordinates jump by more than 4 pixels)
+                            if (distSq > 16.0f) {
+                                isSeam = true;
+                                break;
+                            }
+                        }
+                    } else {
+                        // Edge of the texture is an exterior boundary
+                        isSeam = true;
+                        break;
+                    }
+                }
+                if (isSeam) break;
+            }
+
+            // Carve out the seam pixel so Dilation can heal it with pure colors
+            if (isSeam) {
+                DestinationRgb[pos] = float4.Zero;
+                DestinationAlpha[pos] = float4.Zero;
+            }
+        }
+    }
+
+    [ThreadGroupSize(DefaultThreadGroupSizes.XY)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct MergeRgbAndAlphaShader : IComputeShader
     {
@@ -280,11 +328,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public void Execute()
         {
-            int idx = ThreadIds.X;
-            if (idx >= Width * Destination.Height) return;
+            int x = ThreadIds.X;
+            int y = ThreadIds.Y;
+            if (x >= Width || y >= Destination.Height) return;
 
-            int y = idx / Width;
-            int x = idx % Width;
             int2 pos = new int2(x, y);
 
             float4 rgb = SourceRgb[pos];
@@ -294,7 +341,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(DefaultThreadGroupSizes.XY)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct DilateEdgesShader : IComputeShader
     {
@@ -313,11 +360,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public void Execute()
         {
-            int idx = ThreadIds.X;
-            if (idx >= Width * Height) return;
+            int x = ThreadIds.X;
+            int y = ThreadIds.Y;
+            if (x >= Width || y >= Height) return;
 
-            int y = idx / Width;
-            int x = idx % Width;
             int2 pos = new int2(x, y);
 
             float4 center = Source[pos];
@@ -482,17 +528,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 
                 ReadOnlySpan<Bgra32> srcSpan = MemoryMarshal.Cast<byte, Bgra32>(new ReadOnlySpan<byte>(srcLock.Pixels));
                 gpuSourceRw.CopyFrom(srcSpan);
-
-                // Pre-pad the source texture by 16 pixels to prevent bilinear bleeding at island boundaries
-                for (int i = 0; i < 16; i++) {
-                    if (i % 2 == 0) {
-                        device.For(sourceTexture.Width * sourceTexture.Height, new DilateEdgesShader(gpuSourceRw, gpuSourcePing, sourceTexture.Width, sourceTexture.Height));
-                    } else {
-                        device.For(sourceTexture.Width * sourceTexture.Height, new DilateEdgesShader(gpuSourcePing, gpuSourceRw, sourceTexture.Width, sourceTexture.Height));
-                    }
-                }
-
-                device.For(totalPixels, new ApplyTransferMapCombinedShader(
+                device.For(destWidth, destHeight, new ApplyTransferMapCombinedShader(
                     gpuSourceRw,
                     gpuMap,
                     gpuDestRgb,
@@ -503,18 +539,21 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     useBilinear ? 1 : 0
                 ));
 
+                // Mathematically detect both exterior boundaries and interior UV stitches, and carve them out
+                device.For(destWidth, destHeight, new HealUvSeamsShader(gpuMap, gpuDestRgb, gpuDestAlpha, destWidth, destHeight, sourceTexture.Width, sourceTexture.Height));
+
                 for (int i = 0; i < UVTransferMap.EdgePadding; i++) {
                     if (i % 2 == 0) {
-                        device.For(totalPixels, new DilateEdgesShader(gpuDestRgb, gpuPingRgb, destWidth, destHeight));
-                        device.For(totalPixels, new DilateEdgesShader(gpuDestAlpha, gpuPingAlpha, destWidth, destHeight));
+                        device.For(destWidth, destHeight, new DilateEdgesShader(gpuDestRgb, gpuPingRgb, destWidth, destHeight));
+                        device.For(destWidth, destHeight, new DilateEdgesShader(gpuDestAlpha, gpuPingAlpha, destWidth, destHeight));
                     } else {
-                        device.For(totalPixels, new DilateEdgesShader(gpuPingRgb, gpuDestRgb, destWidth, destHeight));
-                        device.For(totalPixels, new DilateEdgesShader(gpuPingAlpha, gpuDestAlpha, destWidth, destHeight));
+                        device.For(destWidth, destHeight, new DilateEdgesShader(gpuPingRgb, gpuDestRgb, destWidth, destHeight));
+                        device.For(destWidth, destHeight, new DilateEdgesShader(gpuPingAlpha, gpuDestAlpha, destWidth, destHeight));
                     }
                 }
 
                 // Merge back into gpuDestRgb (reuse — no extra allocation)
-                device.For(totalPixels, new MergeRgbAndAlphaShader(gpuDestRgb, gpuDestAlpha, gpuPingRgb, destWidth));
+                device.For(destWidth, destHeight, new MergeRgbAndAlphaShader(gpuDestRgb, gpuDestAlpha, gpuPingRgb, destWidth));
 
                 Span<Bgra32> destSpan = MemoryMarshal.Cast<byte, Bgra32>(new Span<byte>(destLock.Pixels));
                 gpuPingRgb.CopyTo(destSpan);
@@ -602,16 +641,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             ReadOnlySpan<Bgra32> srcSpan = MemoryMarshal.Cast<byte, Bgra32>(srcPixels);
             gpuSourceRw.CopyFrom(srcSpan);
 
-            // Pre-pad the source texture by 16 pixels to prevent bilinear bleeding at island boundaries
-            for (int i = 0; i < 16; i++) {
-                if (i % 2 == 0) {
-                    device.For(srcWidth * srcHeight, new DilateEdgesShader(gpuSourceRw, gpuSourcePing, srcWidth, srcHeight));
-                } else {
-                    device.For(srcWidth * srcHeight, new DilateEdgesShader(gpuSourcePing, gpuSourceRw, srcWidth, srcHeight));
-                }
-            }
-
-            device.For(totalPixels, new ApplyTransferMapCombinedShader(
+            device.For(destWidth, destHeight, new ApplyTransferMapCombinedShader(
                 gpuSourceRw,
                 gpuMap,
                 gpuDestRgb,
@@ -622,17 +652,20 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 useBilinear ? 1 : 0
             ));
 
+            // Mathematically detect both exterior boundaries and interior UV stitches, and carve them out
+            device.For(destWidth, destHeight, new HealUvSeamsShader(gpuMap, gpuDestRgb, gpuDestAlpha, destWidth, destHeight, srcWidth, srcHeight));
+
             for (int i = 0; i < UVTransferMap.EdgePadding; i++) {
                 if (i % 2 == 0) {
-                    device.For(totalPixels, new DilateEdgesShader(gpuDestRgb, gpuPingRgb, destWidth, destHeight));
-                    device.For(totalPixels, new DilateEdgesShader(gpuDestAlpha, gpuPingAlpha, destWidth, destHeight));
+                    device.For(destWidth, destHeight, new DilateEdgesShader(gpuDestRgb, gpuPingRgb, destWidth, destHeight));
+                    device.For(destWidth, destHeight, new DilateEdgesShader(gpuDestAlpha, gpuPingAlpha, destWidth, destHeight));
                 } else {
-                    device.For(totalPixels, new DilateEdgesShader(gpuPingRgb, gpuDestRgb, destWidth, destHeight));
-                    device.For(totalPixels, new DilateEdgesShader(gpuPingAlpha, gpuDestAlpha, destWidth, destHeight));
+                    device.For(destWidth, destHeight, new DilateEdgesShader(gpuPingRgb, gpuDestRgb, destWidth, destHeight));
+                    device.For(destWidth, destHeight, new DilateEdgesShader(gpuPingAlpha, gpuDestAlpha, destWidth, destHeight));
                 }
             }
 
-            device.For(totalPixels, new MergeRgbAndAlphaShader(gpuDestRgb, gpuDestAlpha, gpuPingRgb, destWidth));
+            device.For(destWidth, destHeight, new MergeRgbAndAlphaShader(gpuDestRgb, gpuDestAlpha, gpuPingRgb, destWidth));
 
             Span<Bgra32> destSpan = MemoryMarshal.Cast<byte, Bgra32>(resultPixels);
             gpuPingRgb.CopyTo(destSpan);
