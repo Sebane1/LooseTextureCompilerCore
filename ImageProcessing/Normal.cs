@@ -78,6 +78,14 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         //Optimized
 
         public static Bitmap Calculate(Bitmap file, Bitmap normalMask = null) {
+            // Try GPU-accelerated path first
+            try {
+                return ComputeSharpNormal.CalculateGpu(file, normalMask);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[Normal.Calculate] GPU path failed, falling back to CPU: {ex.Message}");
+            }
+
+            // CPU fallback
             Bitmap image = file;
             #region Global Variables
             int width = image.Width;

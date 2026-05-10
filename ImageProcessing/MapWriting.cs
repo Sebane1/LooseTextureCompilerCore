@@ -1,9 +1,16 @@
+using System;
 using System.Drawing;
 using Bitmap = System.Drawing;
 
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
     public class MapWriting {
         public static Bitmap.Bitmap CalculateBase(Bitmap.Bitmap file, Bitmap.Bitmap glow) {
+            // Try GPU-accelerated path first
+            try {
+                return ComputeSharpMapWriting.CalculateBaseGpu(file, glow);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[MapWriting.CalculateBase] GPU failed, falling back to CPU: {ex.Message}");
+            }
             Bitmap.Bitmap baseTexture = new Bitmap.Bitmap(file);
             using (Bitmap.Bitmap image = new Bitmap.Bitmap(glow, file.Width, file.Height)) {
                 using (Bitmap.Bitmap mergedImage = new Bitmap.Bitmap(baseTexture)) {
@@ -94,6 +101,12 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 colour.B > minBrightness ? colour.B : 0);
         }
         public static Bitmap.Bitmap CalculateEyeMulti(Bitmap.Bitmap file, Bitmap.Bitmap glow) {
+            // Try GPU-accelerated path first
+            try {
+                return ComputeSharpMapWriting.CalculateEyeMultiGpu(file, glow);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[MapWriting.CalculateEyeMulti] GPU failed, falling back to CPU: {ex.Message}");
+            }
             Bitmap.Bitmap multi = new Bitmap.Bitmap(file);
             using (Bitmap.Bitmap image = new Bitmap.Bitmap(glow, file.Width, file.Height)) {
                 LockBitmap source = new LockBitmap(image);
@@ -120,6 +133,12 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap.Bitmap CalculateMulti(Bitmap.Bitmap file, Bitmap.Bitmap glow) {
+            // Try GPU-accelerated path first
+            try {
+                return ComputeSharpMapWriting.CalculateMultiGpu(file, glow);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[MapWriting.CalculateMulti] GPU failed, falling back to CPU: {ex.Message}");
+            }
             Bitmap.Bitmap multi = new Bitmap.Bitmap(file);
             using (Bitmap.Bitmap image = new Bitmap.Bitmap(glow, file.Width, file.Height)) {
                 LockBitmap source = new LockBitmap(image);
@@ -178,6 +197,12 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap.Bitmap TransplantData(Bitmap.Bitmap file, Bitmap.Bitmap glow) {
+            // Try GPU-accelerated path first
+            try {
+                return ComputeSharpMapWriting.TransplantDataGpu(file, glow);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[MapWriting.TransplantData] GPU failed, falling back to CPU: {ex.Message}");
+            }
             Bitmap.Bitmap image = glow;
             Bitmap.Bitmap baseTexture = new Bitmap.Bitmap(file);
             using (Bitmap.Bitmap mergedImage = new Bitmap.Bitmap(baseTexture)) {
