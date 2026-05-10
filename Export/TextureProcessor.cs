@@ -1140,10 +1140,8 @@ namespace FFXIVLooseTextureCompiler
             try
             {
                 byte[] data = new byte[0];
-                bool skipPngTexConversion = false;
                 try
                 {
-                    using (MemoryStream stream = new MemoryStream())
                     {
                         switch (exportType)
                         {
@@ -1152,58 +1150,56 @@ namespace FFXIVLooseTextureCompiler
                                 {
                                     if (resultBitmap != null)
                                     {
-                                        if (!skipPngTexConversion)
-                                        {
-                                            PenumbraTextureImporter.BitmapToTex(resultBitmap, out data);
-                                        }
-                                        else
-                                        {
-                                            using (MemoryStream ms = new MemoryStream())
-                                            {
-                                                TexIO.SaveBitmap(resultBitmap, ms);
-                                                data = ms.ToArray();
-                                            }
-                                        }
+                                        PenumbraTextureImporter.BitmapToTex(resultBitmap, out data);
                                     }
                                 }
-                                skipPngTexConversion = true; // We already populated 'data'
                                 break;
                             case ExportType.DontManipulate:
                                 data = TexIO.GetTexBytes(inputFile);
-                                skipPngTexConversion = true;
                                 break;
                             case ExportType.Glow:
-                                ExportTypeGlow(inputFile, modifierMap, layeringImage, stream);
+                                using (Bitmap glowResult = ExportTypeGlowAsBitmap(inputFile, modifierMap, layeringImage))
+                                {
+                                    if (glowResult != null) PenumbraTextureImporter.BitmapToTex(glowResult, out data);
+                                }
                                 break;
                             case ExportType.GlowEyeMask:
-                                ExportTypeGlowEyeMask(inputFile, modifierMap, stream);
+                                using (Bitmap eyeResult = ExportTypeGlowEyeMaskAsBitmap(inputFile, modifierMap))
+                                {
+                                    if (eyeResult != null) PenumbraTextureImporter.BitmapToTex(eyeResult, out data);
+                                }
                                 break;
                             case ExportType.DTMask:
-                                ExportTypeDTMask(inputFile, modifierMap, stream);
+                                using (Bitmap dtResult = ExportTypeDTMaskAsBitmap(inputFile, modifierMap))
+                                {
+                                    if (dtResult != null) PenumbraTextureImporter.BitmapToTex(dtResult, out data);
+                                }
                                 break;
                             case ExportType.Normal:
-                                ExportTypeNormal(inputFile, outputFile, modifierMap, normalCorrection, modifier, stream, alphaOverride, invertAlpha);
+                                using (Bitmap normalResult = ExportTypeNormalAsBitmap(inputFile, outputFile, modifierMap, normalCorrection, modifier, alphaOverride, invertAlpha))
+                                {
+                                    if (normalResult != null) PenumbraTextureImporter.BitmapToTex(normalResult, out data);
+                                }
                                 break;
                             case ExportType.Mask:
-                                ExportTypeMask(inputFile, layeringImage, exportType, modifierMap, stream);
+                                using (Bitmap maskResult = ExportTypeMaskAsBitmap(inputFile, layeringImage, exportType, modifierMap))
+                                {
+                                    if (maskResult != null) PenumbraTextureImporter.BitmapToTex(maskResult, out data);
+                                }
                                 break;
                             case ExportType.MergeNormal:
-                                ExportTypeMergeNormal(inputFile, outputFile, layeringImage, baseTextureNormal, modifierMap,
-                                normalCorrection, stream, modifier, alphaOverride, invertAlpha);
+                                using (Bitmap mergeResult = ExportTypeMergeNormalAsBitmap(inputFile, outputFile, layeringImage, baseTextureNormal, modifierMap,
+                                normalCorrection, modifier, alphaOverride, invertAlpha))
+                                {
+                                    if (mergeResult != null) PenumbraTextureImporter.BitmapToTex(mergeResult, out data);
+                                }
                                 break;
                             case ExportType.XNormalImport:
-                                ExportTypeXNormalImport(inputFile, baseTextureNormal, stream);
+                                using (Bitmap xnResult = ExportTypeXNormalImportAsBitmap(inputFile, baseTextureNormal))
+                                {
+                                    if (xnResult != null) PenumbraTextureImporter.BitmapToTex(xnResult, out data);
+                                }
                                 break;
-                        }
-                        if (!skipPngTexConversion)
-                        {
-                            stream.Flush();
-                            stream.Position = 0;
-                            if (stream.Length > 0)
-                            {
-                                PenumbraTextureImporter.PngToTex(stream, out data);
-                                stream.Position = 0;
-                            }
                         }
                     }
                     if (data.Length > 0)
@@ -1235,6 +1231,372 @@ namespace FFXIVLooseTextureCompiler
                 _exportSemaphore.Release();
                 Interlocked.Decrement(ref _activeExportThreads);
             }
+        }
+
+        // ── Bitmap-returning variants: skip the PNG compress→decompress round-trip ──
+
+        private Bitmap ExportTypeXNormalImportAsBitmap(string inputFile, string baseTextureNormal)
+        {
+            using (Bitmap bitmap = TexIO.ResolveBitmap(inputFile))
+            {
+                if (bitmap != null)
+                {
+                    using (Bitmap underlay = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb))
+                    {
+                        using (Graphics g = Graphics.FromImage(underlay))
+                        {
+                            g.Clear(Color.FromArgb(255, 160, 113, 94));
+                            if (!string.IsNullOrEmpty(baseTextureNormal))
+                            {
+                                using (Bitmap baseTex = TexIO.ResolveBitmap(baseTextureNormal))
+                                {
+                                    g.DrawImage(baseTex, 0, 0, bitmap.Width, bitmap.Height);
+                                }
+                            }
+                        }
+                        return MapWriting.TransplantData(underlay, bitmap);
+                    }
+                }
+            }
+            return null;
+        }
+
+        private Bitmap ExportTypeGlowAsBitmap(string inputFile, string glowMap, string layeringImage)
+        {
+            string descriminator = inputFile + glowMap + "glow";
+            lock (_glowCache)
+            {
+                if (_glowCache.ContainsKey(descriminator))
+                {
+                    return TexIO.NewBitmap(_glowCache[descriminator]);
+                }
+                else
+                {
+                    using (Bitmap bitmap = TexIO.ResolveBitmap(inputFile))
+                    {
+                        if (bitmap != null)
+                        {
+                            if (!string.IsNullOrEmpty(layeringImage))
+                            {
+                                using (Bitmap image = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb))
+                                {
+                                    using (Bitmap layer = TexIO.ResolveBitmap(Path.Combine(_basePath, layeringImage)))
+                                    {
+                                        using (Graphics g = Graphics.FromImage(image))
+                                        {
+                                            g.Clear(Color.Transparent);
+                                            g.DrawImage(layer, 0, 0, bitmap.Width, bitmap.Height);
+                                            using (Bitmap merged = GetMergedBitmap(inputFile))
+                                            {
+                                                g.DrawImage(merged, 0, 0, bitmap.Width, bitmap.Height);
+                                            }
+                                        }
+                                    }
+                                    using (Bitmap glowMapBitmap = GetMergedBitmap(glowMap))
+                                    {
+                                        using (Bitmap resizedGlowMap = ImageManipulation.Resize(glowMapBitmap, bitmap.Width, bitmap.Height))
+                                        {
+                                            Bitmap glowBitmap = MapWriting.CalculateBase(image, resizedGlowMap);
+                                            AddToBitmapCache(_glowCache, descriminator, glowBitmap);
+                                            return TexIO.NewBitmap(glowBitmap);
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                using (Bitmap glowMapBitmap = TexIO.ResolveBitmap(glowMap))
+                                {
+                                    Bitmap glowBitmap = MapWriting.CalculateBase(bitmap, glowMapBitmap);
+                                    AddToBitmapCache(_glowCache, descriminator, glowBitmap);
+                                    return TexIO.NewBitmap(glowBitmap);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        private Bitmap ExportTypeGlowEyeMaskAsBitmap(string inputFile, string mask)
+        {
+            string descriminator = inputFile + mask + "glowEyeMulti";
+            lock (_glowCache)
+            {
+                if (_glowCache.ContainsKey(descriminator))
+                {
+                    return TexIO.NewBitmap(_glowCache[descriminator]);
+                }
+                else
+                {
+                    using (Bitmap bitmap = TexIO.ResolveBitmap(inputFile))
+                    {
+                        if (bitmap != null)
+                        {
+                            using (Bitmap maskBitmap = TexIO.ResolveBitmap(mask))
+                            {
+                                Bitmap glowBitmap = MapWriting.CalculateEyeMulti(bitmap, maskBitmap);
+                                AddToBitmapCache(_glowCache, descriminator, glowBitmap);
+                                return TexIO.NewBitmap(glowBitmap);
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        private Bitmap ExportTypeDTMaskAsBitmap(string inputFile, string mask)
+        {
+            string descriminator = inputFile + mask + "glowMulti";
+            lock (_glowCache)
+            {
+                if (_glowCache.ContainsKey(descriminator))
+                {
+                    return TexIO.NewBitmap(_glowCache[descriminator]);
+                }
+                else
+                {
+                    using (Bitmap bitmap = TexIO.ResolveBitmap(inputFile))
+                    {
+                        if (bitmap != null)
+                        {
+                            using (Bitmap maskBitmap = TexIO.ResolveBitmap(mask))
+                            {
+                                Bitmap maskChannelMap = MapWriting.CalculateMulti(bitmap, maskBitmap);
+                                AddToBitmapCache(_glowCache, descriminator, maskChannelMap);
+                                return TexIO.NewBitmap(maskChannelMap);
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        private Bitmap ExportTypeNormalAsBitmap(string inputFile, string outputFile, string modifierMap,
+            string normalCorrection, bool modifier, string alphaOverride, bool invertAlpha)
+        {
+            Bitmap output;
+            lock (_normalCache)
+            {
+                if (_normalCache.ContainsKey(inputFile))
+                {
+                    output = _normalCache[inputFile];
+                }
+                else
+                {
+                    using (Bitmap bitmap = TexIO.ResolveBitmap(inputFile))
+                    {
+                        using (Bitmap target = new Bitmap(bitmap.Size.Width, bitmap.Size.Height, PixelFormat.Format32bppArgb))
+                        {
+                            using (Graphics g = Graphics.FromImage(target))
+                            {
+                                g.Clear(Color.Transparent);
+                                ImageManipulation.DrawImage(target, bitmap, 0, 0, bitmap.Width, bitmap.Height);
+                            }
+
+                            Bitmap toCalculate = modifier ? ImageManipulation.InvertImage(target) : target;
+                            if (File.Exists(modifierMap))
+                            {
+                                using (Bitmap normalMaskBitmap = TexIO.ResolveBitmap(modifierMap))
+                                {
+                                    output = Normal.Calculate(toCalculate, normalMaskBitmap);
+                                }
+                            }
+                            else
+                            {
+                                output = Normal.Calculate(toCalculate);
+                            }
+                            if (modifier) toCalculate.Dispose();
+
+                            if (!string.IsNullOrEmpty(alphaOverride))
+                            {
+                                Bitmap layered = ImageManipulation.LayerImages(output, output, alphaOverride, invertAlpha);
+                                output.Dispose();
+                                output = layered;
+                            }
+                            AddToBitmapCache(_normalCache, inputFile, output);
+                        }
+                    }
+                }
+            }
+            Bitmap finalOutput = output;
+            if (!string.IsNullOrEmpty(normalCorrection))
+            {
+                using (Bitmap correction = TexIO.ResolveBitmap(normalCorrection))
+                {
+                    finalOutput = ImageManipulation.ResizeAndMerge(output, correction);
+                }
+            }
+            // Return a copy if it's the cached version, or the finalOutput directly if it was freshly created
+            Bitmap result = (finalOutput == output) ? TexIO.NewBitmap(finalOutput) : finalOutput;
+            return result;
+        }
+
+        private Bitmap ExportTypeMaskAsBitmap(string inputFile, string layeringImage, ExportType exportType, string modifierMap)
+        {
+            lock (_maskCache)
+            {
+                if (_maskCache.ContainsKey(inputFile))
+                {
+                    return TexIO.NewBitmap(_maskCache[inputFile]);
+                }
+                else
+                {
+                    using (Bitmap bitmap = TexIO.ResolveBitmap(inputFile))
+                    {
+                        if (bitmap != null)
+                        {
+                            Bitmap image = null;
+                            if (layeringImage != null)
+                            {
+                                image = new Bitmap(bitmap.Width, bitmap.Height, PixelFormat.Format32bppArgb);
+                                using (Bitmap layer = TexIO.ResolveBitmap(Path.Combine(_basePath, layeringImage)))
+                                {
+                                    using (Graphics g = Graphics.FromImage(image))
+                                    {
+                                        g.Clear(Color.Transparent);
+                                        g.DrawImage(layer, 0, 0, bitmap.Width, bitmap.Height);
+                                        using (Bitmap merged = GetMergedBitmap(inputFile))
+                                        {
+                                            g.DrawImage(merged, 0, 0, bitmap.Width, bitmap.Height);
+                                        }
+                                    }
+                                }
+                            }
+
+                            Bitmap toProcess = image ?? bitmap;
+                            Bitmap generatedMulti = ImageManipulation.ConvertBaseToDawntrailSkinMulti(toProcess);
+                            if (image != null) image.Dispose();
+
+                            Bitmap mask = generatedMulti;
+                            if (!string.IsNullOrEmpty(modifierMap))
+                            {
+                                using (Bitmap modifierTex = TexIO.ResolveBitmap(modifierMap))
+                                {
+                                    mask = MapWriting.CalculateMulti(generatedMulti, modifierTex);
+                                }
+                                generatedMulti.Dispose();
+                            }
+                            AddToBitmapCache(_maskCache, inputFile, mask);
+                            return TexIO.NewBitmap(mask);
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        private Bitmap ExportTypeMergeNormalAsBitmap(string inputFile, string outputFile, string layeringImage,
+            string baseTextureNormal, string modifierMap, string normalCorrection, bool modifier, string alphaOverride, bool invertAlpha)
+        {
+            Bitmap output = null;
+            if (!string.IsNullOrEmpty(baseTextureNormal))
+            {
+                lock (_normalCache)
+                {
+                    if (!_normalCache.ContainsKey(baseTextureNormal))
+                    {
+                        using (Bitmap baseTexture = TexIO.ResolveBitmap(baseTextureNormal))
+                        {
+                            if (baseTexture != null)
+                            {
+                                using (Bitmap canvasImage = new Bitmap(baseTexture.Size.Width, baseTexture.Size.Height, PixelFormat.Format32bppArgb))
+                                {
+                                    if (File.Exists(modifierMap))
+                                    {
+                                        using (Bitmap normalMaskBitmap = TexIO.ResolveBitmap(modifierMap))
+                                        {
+                                            using (Bitmap inputTex = TexIO.ResolveBitmap(inputFile))
+                                            {
+                                                output = ImageManipulation.MergeNormals(inputTex, baseTexture,
+                                                    canvasImage, normalMaskBitmap, baseTextureNormal, modifier);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        using (Bitmap bitmap = TexIO.ResolveBitmap(inputFile))
+                                        {
+                                            if (bitmap != null)
+                                            {
+                                                if (!string.IsNullOrEmpty(layeringImage))
+                                                {
+                                                    using (Bitmap bottomLayer = TexIO.ResolveBitmap(Path.Combine(_basePath, layeringImage)))
+                                                    {
+                                                        using (Bitmap topLayer = GetMergedBitmap(inputFile))
+                                                        {
+                                                            using (Bitmap layered = ImageManipulation.LayerImages(bottomLayer, topLayer))
+                                                            {
+                                                                output = ImageManipulation.MergeNormals(layered, baseTexture, canvasImage, null, baseTextureNormal, modifier);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    output = ImageManipulation.MergeNormals(bitmap, baseTexture, canvasImage, null, baseTextureNormal, modifier);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (!string.IsNullOrEmpty(normalCorrection))
+                                    {
+                                        using (Bitmap correction = TexIO.ResolveBitmap(normalCorrection))
+                                        {
+                                            Bitmap newOutput = ImageManipulation.ResizeAndMerge(output, correction);
+                                            output.Dispose();
+                                            output = newOutput;
+                                        }
+                                    }
+                                    if (!string.IsNullOrEmpty(alphaOverride))
+                                    {
+                                        using (Bitmap alphaOverrideBitmap = TexIO.ResolveBitmap(alphaOverride))
+                                        {
+                                            using (Bitmap alphaGray = Grayscale.MakeGrayscale(alphaOverrideBitmap))
+                                            {
+                                                using (Bitmap rgb = ImageManipulation.ExtractRGB(output))
+                                                {
+                                                    Bitmap finalRgb = rgb;
+                                                    Bitmap finalAlpha = alphaGray;
+                                                    bool rgbDisposed = false, alphaDisposed = false;
+                                                    if (output.Size.Height < alphaGray.Size.Height)
+                                                    {
+                                                        finalRgb = ImageManipulation.Resize(rgb, alphaGray.Size.Width, alphaGray.Size.Height);
+                                                        rgbDisposed = true;
+                                                    }
+                                                    else
+                                                    {
+                                                        finalAlpha = ImageManipulation.Resize(alphaGray, output.Size.Width, output.Size.Height);
+                                                        alphaDisposed = true;
+                                                    }
+                                                    Bitmap newOutput = ImageManipulation.MergeAlphaToRGB(finalAlpha, finalRgb);
+                                                    if (rgbDisposed) finalRgb.Dispose();
+                                                    if (alphaDisposed) finalAlpha.Dispose();
+                                                    output.Dispose();
+                                                    output = newOutput;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (output != null)
+                                    {
+                                        AddToBitmapCache(_normalCache, baseTextureNormal, output);
+                                        return TexIO.NewBitmap(output);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        return TexIO.NewBitmap(_normalCache[baseTextureNormal]);
+                    }
+                }
+            }
+            return null;
         }
 
         private void ExportTypeXNormalImport(string inputFile, string baseTextureNormal, Stream stream)

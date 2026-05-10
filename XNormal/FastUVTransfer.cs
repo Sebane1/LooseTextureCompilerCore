@@ -120,6 +120,19 @@ namespace FFXIVLooseTextureCompiler
                 }
                 return;
             }
+            // GPU fast path: file → GPU → file, zero Bitmap overhead
+            if (UVTransferMap.UseGPUAcceleration && !transferMapPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    if (ComputeSharpUVTransfer.TransferFile(inputImage, outputImage, transferMapPath))
+                        return;
+                }
+                catch
+                {
+                    // Fallback to Bitmap path
+                }
+            }
 
             using (Bitmap sourceTexture = TexIO.ResolveBitmap(inputImage))
             {
@@ -283,6 +296,19 @@ namespace FFXIVLooseTextureCompiler
             if (!File.Exists(transferMapPath))
             {
                 XNormal.BakeTransferMap(sourceMeshRelPath, targetMeshRelPath, transferMapPath);
+            }
+            // GPU fast path: file → GPU → file, zero Bitmap overhead
+            if (UVTransferMap.UseGPUAcceleration && !transferMapPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    if (ComputeSharpUVTransfer.TransferFile(inputImage, outputImage, transferMapPath))
+                        return;
+                }
+                catch
+                {
+                    // Fallback to Bitmap path
+                }
             }
 
             using (Bitmap sourceTexture = TexIO.ResolveBitmap(inputImage))

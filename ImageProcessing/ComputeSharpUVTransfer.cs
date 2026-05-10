@@ -458,5 +458,129 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             return result;
         }
+
+        /// <summary>
+        /// Fully Bitmap-free file-to-file transfer. Loads source with ImageSharp, processes on GPU,
+        /// saves result with ImageSharp. Zero System.Drawing.Bitmap overhead.
+        /// Returns true on success, false if the input format isn't supported (caller should fall back).
+        /// </summary>
+        public static bool TransferFile(string inputPath, string outputPath, string transferMapPath, bool useBilinear = true) {
+            string ext = System.IO.Path.GetExtension(inputPath).ToLowerInvariant();
+            // Only handle formats ImageSharp can load natively
+            if (ext == ".tex" || ext == ".dds" || ext == ".ltct") return false;
+
+            var totalSw = System.Diagnostics.Stopwatch.StartNew();
+            var phaseSw = System.Diagnostics.Stopwatch.StartNew();
+
+            // Load and cache transfer map data (same as ApplyTransferMapFast)
+            if (!_gpuMapCache.TryGetValue(transferMapPath, out var cachedMap)) {
+                using (var transferMapImage = SixLabors.ImageSharp.Image.Load<SixLabors.ImageSharp.PixelFormats.Rgba64>(transferMapPath)) {
+                    int w = transferMapImage.Width;
+                    int h = transferMapImage.Height;
+                    ComputeSharp.Rgba64[] mapArray = new ComputeSharp.Rgba64[w * h];
+                    
+                    transferMapImage.ProcessPixelRows(accessor => {
+                        for (int y = 0; y < accessor.Height; y++) {
+                            var rowSpan = accessor.GetRowSpan(y);
+                            var targetSpan = new Span<ComputeSharp.Rgba64>(mapArray, y * w, w);
+                            MemoryMarshal.Cast<SixLabors.ImageSharp.PixelFormats.Rgba64, ComputeSharp.Rgba64>(rowSpan).CopyTo(targetSpan);
+                        }
+                    });
+                    
+                    cachedMap = (w, h, mapArray);
+                    _gpuMapCache[transferMapPath] = cachedMap;
+                }
+            }
+
+            var device = GraphicsDevice.GetDefault();
+            int destWidth = cachedMap.Width;
+            int destHeight = cachedMap.Height;
+            int totalPixels = destWidth * destHeight;
+
+            long mapCacheMs = phaseSw.ElapsedMilliseconds;
+            phaseSw.Restart();
+
+            // Load source directly as Bgra32 bytes — no Bitmap!
+            int srcWidth, srcHeight;
+            byte[] srcPixels;
+            using (var srcImage = SixLabors.ImageSharp.Image.Load<SixLabors.ImageSharp.PixelFormats.Bgra32>(inputPath)) {
+                srcWidth = srcImage.Width;
+                srcHeight = srcImage.Height;
+                srcPixels = new byte[srcWidth * srcHeight * 4];
+                srcImage.CopyPixelDataTo(srcPixels);
+            }
+
+            long loadMs = phaseSw.ElapsedMilliseconds;
+            phaseSw.Restart();
+
+            // Result buffer — no Bitmap!
+            byte[] resultPixels = new byte[totalPixels * 4];
+
+            // Cache the transfer map on the GPU
+            if (!_gpuResidentMapCache.TryGetValue(transferMapPath, out var gpuMap)) {
+                gpuMap = device.AllocateReadOnlyTexture2D<ComputeSharp.Rgba64, float4>(destWidth, destHeight);
+                gpuMap.CopyFrom(cachedMap.Data);
+                _gpuResidentMapCache[transferMapPath] = gpuMap;
+            }
+
+            using ReadOnlyTexture2D<Bgra32, float4> gpuSource = device.AllocateReadOnlyTexture2D<Bgra32, float4>(srcWidth, srcHeight);
+            using ReadWriteTexture2D<Bgra32, float4> gpuDestRgb = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
+            using ReadWriteTexture2D<Bgra32, float4> gpuDestAlpha = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
+            using ReadWriteTexture2D<Bgra32, float4> gpuPingRgb = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
+            using ReadWriteTexture2D<Bgra32, float4> gpuPingAlpha = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
+            
+            ReadOnlySpan<Bgra32> srcSpan = MemoryMarshal.Cast<byte, Bgra32>(srcPixels);
+            gpuSource.CopyFrom(srcSpan);
+
+            device.For(totalPixels, new ApplyTransferMapCombinedShader(
+                gpuSource,
+                gpuMap,
+                gpuDestRgb,
+                gpuDestAlpha,
+                destWidth,
+                srcWidth,
+                srcHeight,
+                useBilinear ? 1 : 0
+            ));
+
+            for (int i = 0; i < 8; i++) {
+                if (i % 2 == 0) {
+                    device.For(totalPixels, new DilateEdgesShader(gpuDestRgb, gpuPingRgb, destWidth, destHeight));
+                    device.For(totalPixels, new DilateEdgesShader(gpuDestAlpha, gpuPingAlpha, destWidth, destHeight));
+                } else {
+                    device.For(totalPixels, new DilateEdgesShader(gpuPingRgb, gpuDestRgb, destWidth, destHeight));
+                    device.For(totalPixels, new DilateEdgesShader(gpuPingAlpha, gpuDestAlpha, destWidth, destHeight));
+                }
+            }
+
+            device.For(totalPixels, new MergeRgbAndAlphaShader(gpuDestRgb, gpuDestAlpha, gpuPingRgb, destWidth));
+
+            Span<Bgra32> destSpan = MemoryMarshal.Cast<byte, Bgra32>(resultPixels);
+            gpuPingRgb.CopyTo(destSpan);
+
+            long gpuMs = phaseSw.ElapsedMilliseconds;
+            phaseSw.Restart();
+
+            // Save directly as PNG via ImageSharp — no Bitmap conversion!
+            // BestSpeed compression: these are intermediate files that get converted to .tex anyway
+            using (var bgraImage = SixLabors.ImageSharp.Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Bgra32>(resultPixels, destWidth, destHeight))
+            using (var resultImage = bgraImage.CloneAs<SixLabors.ImageSharp.PixelFormats.Rgba32>()) {
+                var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder() {
+                    TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
+                    ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
+                    CompressionLevel = SixLabors.ImageSharp.Formats.Png.PngCompressionLevel.BestSpeed,
+                };
+                using (var fs = new System.IO.FileStream(outputPath, System.IO.FileMode.Create, System.IO.FileAccess.Write)) {
+                    resultImage.Save(fs, encoder);
+                }
+            }
+
+            long saveMs = phaseSw.ElapsedMilliseconds;
+            totalSw.Stop();
+
+            System.Diagnostics.Debug.WriteLine($"[GPU TransferFile] Map:{mapCacheMs}ms | Load:{loadMs}ms | GPU:{gpuMs}ms | Save:{saveMs}ms | Total:{totalSw.ElapsedMilliseconds}ms — {System.IO.Path.GetFileName(inputPath)}");
+
+            return true;
+        }
     }
 }
