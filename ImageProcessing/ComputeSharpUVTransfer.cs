@@ -367,12 +367,34 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         private static System.Collections.Concurrent.ConcurrentDictionary<string, (int Width, int Height, ComputeSharp.Rgba64[] Data)> _gpuMapCache = new System.Collections.Concurrent.ConcurrentDictionary<string, (int, int, ComputeSharp.Rgba64[])>();
         private static System.Collections.Concurrent.ConcurrentDictionary<string, ReadOnlyTexture2D<ComputeSharp.Rgba64, float4>> _gpuResidentMapCache = new System.Collections.Concurrent.ConcurrentDictionary<string, ReadOnlyTexture2D<ComputeSharp.Rgba64, float4>>();
 
+        // Pool intermediate buffers per resolution to avoid 64MB VRAM allocations on every call
+        [ThreadStatic]
+        private static System.Collections.Generic.Dictionary<(int, int), (ReadWriteTexture2D<Bgra32, float4> DestRgb, ReadWriteTexture2D<Bgra32, float4> DestAlpha, ReadWriteTexture2D<Bgra32, float4> PingRgb, ReadWriteTexture2D<Bgra32, float4> PingAlpha)> _gpuBufferPool;
+
+        private static (ReadWriteTexture2D<Bgra32, float4> DestRgb, ReadWriteTexture2D<Bgra32, float4> DestAlpha, ReadWriteTexture2D<Bgra32, float4> PingRgb, ReadWriteTexture2D<Bgra32, float4> PingAlpha) GetPooledBuffers(int width, int height) {
+            if (_gpuBufferPool == null) _gpuBufferPool = new System.Collections.Generic.Dictionary<(int, int), (ReadWriteTexture2D<Bgra32, float4>, ReadWriteTexture2D<Bgra32, float4>, ReadWriteTexture2D<Bgra32, float4>, ReadWriteTexture2D<Bgra32, float4>)>();
+            
+            var key = (width, height);
+            if (!_gpuBufferPool.TryGetValue(key, out var buffers)) {
+                var device = GraphicsDevice.GetDefault();
+                buffers = (
+                    device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height),
+                    device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height),
+                    device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height),
+                    device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height)
+                );
+                _gpuBufferPool[key] = buffers;
+            }
+            return buffers;
+        }
+
         public static void ClearCache() {
             _gpuMapCache.Clear();
             foreach (var kvp in _gpuResidentMapCache) {
                 try { kvp.Value.Dispose(); } catch { }
             }
             _gpuResidentMapCache.Clear();
+            // Note: ThreadStatic pool cannot be cleared globally from here, but it's bound to thread lifetime
         }
 
         public static Bitmap ApplyTransferMapFast(Bitmap sourceTexture, string transferMapPath, bool useBilinear) {
@@ -416,10 +438,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 }
 
                 using ReadOnlyTexture2D<Bgra32, float4> gpuSource = device.AllocateReadOnlyTexture2D<Bgra32, float4>(sourceTexture.Width, sourceTexture.Height);
-                using ReadWriteTexture2D<Bgra32, float4> gpuDestRgb = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
-                using ReadWriteTexture2D<Bgra32, float4> gpuDestAlpha = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
-                using ReadWriteTexture2D<Bgra32, float4> gpuPingRgb = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
-                using ReadWriteTexture2D<Bgra32, float4> gpuPingAlpha = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
+                var pooled = GetPooledBuffers(destWidth, destHeight);
+                var gpuDestRgb = pooled.DestRgb;
+                var gpuDestAlpha = pooled.DestAlpha;
+                var gpuPingRgb = pooled.PingRgb;
+                var gpuPingAlpha = pooled.PingAlpha;
                 
                 ReadOnlySpan<Bgra32> srcSpan = MemoryMarshal.Cast<byte, Bgra32>(new ReadOnlySpan<byte>(srcLock.Pixels));
                 gpuSource.CopyFrom(srcSpan);
@@ -524,10 +547,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
 
             using ReadOnlyTexture2D<Bgra32, float4> gpuSource = device.AllocateReadOnlyTexture2D<Bgra32, float4>(srcWidth, srcHeight);
-            using ReadWriteTexture2D<Bgra32, float4> gpuDestRgb = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
-            using ReadWriteTexture2D<Bgra32, float4> gpuDestAlpha = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
-            using ReadWriteTexture2D<Bgra32, float4> gpuPingRgb = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
-            using ReadWriteTexture2D<Bgra32, float4> gpuPingAlpha = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
+            var pooled = GetPooledBuffers(destWidth, destHeight);
+            var gpuDestRgb = pooled.DestRgb;
+            var gpuDestAlpha = pooled.DestAlpha;
+            var gpuPingRgb = pooled.PingRgb;
+            var gpuPingAlpha = pooled.PingAlpha;
             
             ReadOnlySpan<Bgra32> srcSpan = MemoryMarshal.Cast<byte, Bgra32>(srcPixels);
             gpuSource.CopyFrom(srcSpan);
