@@ -32,12 +32,14 @@ namespace FFXIVLooseTextureCompiler.Export
             _path = Path.GetDirectoryName(hardPath);
             string fileName = Path.GetFileName(hardPath);
             _baseTexture = "\\" + fileName;
+            _baseTextureSecondary = "\\" + fileName;
             _normal = fileName.Replace("_base", "_norm").Replace("_d", "_n").Replace("_diff", "_norm");
         }
         public BackupTexturePaths(string basePath, string normalPath)
         {
             _path = Path.GetDirectoryName(basePath);
             _baseTexture = "\\" + Path.GetFileName(basePath);
+            _baseTextureSecondary = _baseTexture;
             _normal = !string.IsNullOrEmpty(normalPath) ? "\\" + Path.GetFileName(normalPath) : "";
         }
         static bool _overrideMode;
@@ -54,9 +56,11 @@ namespace FFXIVLooseTextureCompiler.Export
         [JsonIgnore]
         public string Base { get => _path + _baseTexture; }
         [JsonIgnore]
-        public string BaseSecondary { get => _path + _baseTextureSecondary; }
+        public string BaseSecondary { get => !string.IsNullOrEmpty(_baseTextureSecondary) ? _path + _baseTextureSecondary : Base; }
         [JsonIgnore]
         public string Normal { get => _path + _normal; }
+        [JsonIgnore]
+        public string ModName { get; set; } = "";
         [JsonIgnore]
         public string InternalPath
         {
