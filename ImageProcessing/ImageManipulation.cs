@@ -144,7 +144,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
         }
         public static Color CalculateMajorityColour(Bitmap file) {
-            Dictionary<int, int> colours = new Dictionary<int, int>();
+            System.Collections.Concurrent.ConcurrentDictionary<int, int> colours = new System.Collections.Concurrent.ConcurrentDictionary<int, int>();
             LockBitmap source = new LockBitmap(file);
             source.LockBits();
              int __safe_width_file = file.Width;
@@ -154,11 +154,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     Color sourcePixel = source.GetPixel(x, y);
                     if (sourcePixel.A > 20 && (sourcePixel.R > 50 || sourcePixel.G > 50 || sourcePixel.B > 50)) {
                         int value = sourcePixel.ToArgb();
-                        if (!colours.ContainsKey(value)) {
-                            colours[value] = 1;
-                        } else {
-                            colours[value]++;
-                        }
+                        colours.AddOrUpdate(value, 1, (key, oldValue) => oldValue + 1);
                     }
                 }
             });
@@ -979,6 +975,56 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
         }
 
+        public static Bitmap MaxImages(Bitmap bottomLayer, Bitmap topLayer) {
+            Bitmap image;
+            try {
+                image = ComputeSharpLayering.MaxImagesGpu(bottomLayer, topLayer);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[ImageManipulation.MaxImages] GPU failed, falling back to CPU: {ex.Message}");
+                image = new Bitmap(bottomLayer.Width, bottomLayer.Height, PixelFormat.Format32bppArgb);
+                using (var lockBottom = new LockBitmap(bottomLayer))
+                using (var lockTop = new LockBitmap(topLayer))
+                using (var lockOutput = new LockBitmap(image)) {
+                    lockBottom.LockBits();
+                    lockTop.LockBits();
+                    lockOutput.LockBits();
+
+                    for (int y = 0; y < bottomLayer.Height; y++) {
+                        for (int x = 0; x < bottomLayer.Width; x++) {
+                            Color bottomPixel = lockBottom.GetPixel(x, y);
+                            
+                            int topX = x;
+                            int topY = y;
+                            if (topLayer.Width != bottomLayer.Width || topLayer.Height != bottomLayer.Height) {
+                                float widthRatio = (float)topLayer.Height / bottomLayer.Height;
+                                int scaledTopWidth = (int)(bottomLayer.Height * widthRatio);
+                                float srcXf = (float)x / scaledTopWidth * topLayer.Width;
+                                float srcYf = (float)y / bottomLayer.Height * topLayer.Height;
+                                
+                                topX = Math.Clamp((int)srcXf, 0, topLayer.Width - 1);
+                                topY = Math.Clamp((int)srcYf, 0, topLayer.Height - 1);
+                            }
+                            
+                            Color topPixel = lockTop.GetPixel(topX, topY);
+                            
+                            Color newPixel = Color.FromArgb(
+                                Math.Max(bottomPixel.A, topPixel.A),
+                                Math.Max(bottomPixel.R, topPixel.R),
+                                Math.Max(bottomPixel.G, topPixel.G),
+                                Math.Max(bottomPixel.B, topPixel.B)
+                            );
+                            lockOutput.SetPixel(x, y, newPixel);
+                        }
+                    }
+
+                    lockBottom.UnlockBits();
+                    lockTop.UnlockBits();
+                    lockOutput.UnlockBits();
+                }
+            }
+            return image;
+        }
+
         public static Bitmap LayerImages(Bitmap bottomLayer, Bitmap topLayer, string alphaOverride = "", bool invertAlpha = false, bool dontInvertAlphaOverride = false) {
             Bitmap image;
             try {
@@ -1437,3 +1483,4 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 }
+

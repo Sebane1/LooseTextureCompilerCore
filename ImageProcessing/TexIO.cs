@@ -41,10 +41,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
         public static KeyValuePair<Size, byte[]> PngToBytes(string inputFile)
         {
             byte[] output = new byte[0];
-            using (Bitmap bitmap = new Bitmap(inputFile))
+            using (FileStream fileStream = new FileStream(inputFile, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 MemoryStream stream = new MemoryStream();
-                bitmap.Save(stream, ImageFormat.Png);
+                fileStream.CopyTo(stream);
                 stream.Position = 0;
                 PenumbraTextureImporter.PngToTex(stream, out output);
                 return TexToBytes(new MemoryStream(output));
@@ -337,7 +337,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
         public static void WriteImageToXOR(Bitmap data, string filename)
         {
             MemoryStream memoryStream = new MemoryStream();
-            data.Save(memoryStream, ImageFormat.Png);
+            SaveBitmap(data, memoryStream);
             byte[] bytes = memoryStream.ToArray();
             ObfuscateOrDeobfuscate(bytes);
             File.WriteAllBytes(filename, bytes);
