@@ -191,7 +191,7 @@ namespace LooseTextureCompilerCore.ProjectCreation
         {
             textureSet.InternalBasePath = RacePaths.GetFaceTexturePath(faceExtra);
         }
-        public static void ExportProject(string path, string name, List<TextureSet> exportTextureSets, TextureProcessor textureProcessor, 
+        public static void ExportProject(string path, string name, List<TextureSet> exportTextureSets, TextureProcessor textureProcessor,
             string xNormalPath = "", int generationType = 3, bool generateNormals = false, bool generateMulti = false, bool finalize = true)
         {
             List<TextureSet> textureSets = new List<TextureSet>();
@@ -199,10 +199,7 @@ namespace LooseTextureCompilerCore.ProjectCreation
             string metaFilePath = Path.Combine(path, "meta.json");
             foreach (TextureSet item in exportTextureSets)
             {
-                if (item.OmniExportMode)
-                {
-                    UniversalTextureSetCreator.ConfigureTextureSet(item);
-                }
+                UniversalTextureSetCreator.ConfigureTextureSet(item);
                 textureSets.Add(item);
             }
             Directory.CreateDirectory(path);
