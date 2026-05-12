@@ -41,14 +41,15 @@ namespace FFXIVLooseTextureCompiler.Export
             _baseTexture = "\\" + Path.GetFileName(basePath);
             _baseTextureSecondary = "\\" + _baseTexture.Replace("xaela", "raen");
             _normal = !string.IsNullOrEmpty(normalPath) ? "\\" + Path.GetFileName(normalPath) : "";
+            _mask = "";
         }
-
-        public BackupTexturePaths(string basePath, string basePathSecondary, string normalPath)
+        public BackupTexturePaths(string basePath, string normalPath, string maskPath)
         {
             _path = Path.GetDirectoryName(basePath);
             _baseTexture = "\\" + Path.GetFileName(basePath);
-            _baseTextureSecondary = "\\" + Path.GetFileName(basePathSecondary).Replace("xaela", "raen");
+            _baseTextureSecondary = "\\" + _baseTexture.Replace("xaela", "raen");
             _normal = !string.IsNullOrEmpty(normalPath) ? "\\" + Path.GetFileName(normalPath) : "";
+            _mask = !string.IsNullOrEmpty(maskPath) ? "\\" + Path.GetFileName(maskPath) : "";
         }
         static bool _overrideMode;
 
@@ -59,6 +60,8 @@ namespace FFXIVLooseTextureCompiler.Export
         [JsonProperty]
         string _normal = "";
         [JsonProperty]
+        string _mask = "";
+        [JsonProperty]
         string _path;
 
         [JsonIgnore]
@@ -67,6 +70,35 @@ namespace FFXIVLooseTextureCompiler.Export
         public string BaseSecondary { get => !string.IsNullOrEmpty(_baseTextureSecondary) ? _path + _baseTextureSecondary : Base; }
         [JsonIgnore]
         public string Normal { get => _path + _normal; }
+        [JsonIgnore]
+        public string Mask { get => !string.IsNullOrEmpty(_mask) ? _path + _mask : ""; }
+        [JsonIgnore]
+        public bool NeedsNormal => string.IsNullOrEmpty(_normal);
+        [JsonIgnore]
+        public bool NeedsMask => string.IsNullOrEmpty(_mask);
+
+        /// <summary>
+        /// Fill in the normal texture from a lower-priority mod if not already set.
+        /// </summary>
+        public void FillNormal(string fullNormalPath)
+        {
+            if (string.IsNullOrEmpty(_normal) && !string.IsNullOrEmpty(fullNormalPath))
+            {
+                _normal = "\\" + Path.GetFileName(fullNormalPath);
+            }
+        }
+
+        /// <summary>
+        /// Fill in the mask texture from a lower-priority mod if not already set.
+        /// </summary>
+        public void FillMask(string fullMaskPath)
+        {
+            if (string.IsNullOrEmpty(_mask) && !string.IsNullOrEmpty(fullMaskPath))
+            {
+                _mask = "\\" + Path.GetFileName(fullMaskPath);
+            }
+        }
+
         [JsonIgnore]
         public string ModName { get; set; } = "";
         [JsonIgnore]
