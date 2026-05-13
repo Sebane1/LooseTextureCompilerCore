@@ -109,6 +109,204 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
+    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [GeneratedComputeShaderDescriptor]
+    public readonly partial struct ExtractRedShader : IComputeShader {
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+        public readonly int Width;
+
+        public ExtractRedShader(ReadOnlyTexture2D<Bgra32, float4> source, ReadWriteTexture2D<Bgra32, float4> output, int width) {
+            Source = source;
+            Output = output;
+            Width = width;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            int y = idx / Width;
+            int x = idx % Width;
+            int2 pos = new int2(x, y);
+
+            float4 pixel = Source[pos];
+            // Bgra32 maps to X=B, Y=G, Z=R, W=A
+            Output[pos] = new float4(pixel.Z, pixel.Z, pixel.Z, 1.0f);
+        }
+    }
+
+    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [GeneratedComputeShaderDescriptor]
+    public readonly partial struct ExtractGreenShader : IComputeShader {
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+        public readonly int Width;
+
+        public ExtractGreenShader(ReadOnlyTexture2D<Bgra32, float4> source, ReadWriteTexture2D<Bgra32, float4> output, int width) {
+            Source = source;
+            Output = output;
+            Width = width;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            int y = idx / Width;
+            int x = idx % Width;
+            int2 pos = new int2(x, y);
+
+            float4 pixel = Source[pos];
+            Output[pos] = new float4(pixel.Y, pixel.Y, pixel.Y, 1.0f);
+        }
+    }
+
+    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [GeneratedComputeShaderDescriptor]
+    public readonly partial struct ExtractBlueShader : IComputeShader {
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+        public readonly int Width;
+
+        public ExtractBlueShader(ReadOnlyTexture2D<Bgra32, float4> source, ReadWriteTexture2D<Bgra32, float4> output, int width) {
+            Source = source;
+            Output = output;
+            Width = width;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            int y = idx / Width;
+            int x = idx % Width;
+            int2 pos = new int2(x, y);
+
+            float4 pixel = Source[pos];
+            Output[pos] = new float4(pixel.X, pixel.X, pixel.X, 1.0f);
+        }
+    }
+
+    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [GeneratedComputeShaderDescriptor]
+    public readonly partial struct GrayscaleToAlphaShader : IComputeShader {
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+        public readonly int Width;
+
+        public GrayscaleToAlphaShader(ReadOnlyTexture2D<Bgra32, float4> source, ReadWriteTexture2D<Bgra32, float4> output, int width) {
+            Source = source;
+            Output = output;
+            Width = width;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            int y = idx / Width;
+            int x = idx % Width;
+            int2 pos = new int2(x, y);
+
+            float4 pixel = Source[pos];
+            // Since it's grayscale, we can use Z (R) for all channels including Alpha
+            Output[pos] = new float4(pixel.Z, pixel.Z, pixel.Z, pixel.Z);
+        }
+    }
+
+    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [GeneratedComputeShaderDescriptor]
+    public readonly partial struct MergeGrayscalesToRGBAShader : IComputeShader {
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Red;
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Green;
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Blue;
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Alpha;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+        public readonly int Width;
+
+        public MergeGrayscalesToRGBAShader(ReadOnlyTexture2D<Bgra32, float4> red, ReadOnlyTexture2D<Bgra32, float4> green, ReadOnlyTexture2D<Bgra32, float4> blue, ReadOnlyTexture2D<Bgra32, float4> alpha, ReadWriteTexture2D<Bgra32, float4> output, int width) {
+            Red = red;
+            Green = green;
+            Blue = blue;
+            Alpha = alpha;
+            Output = output;
+            Width = width;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            int y = idx / Width;
+            int x = idx % Width;
+            int2 pos = new int2(x, y);
+
+            // Since input textures are grayscale, their R, G, and B are identical. 
+            // Bgra32 maps to X=B, Y=G, Z=R, W=A. So we use Z (R channel) for consistency.
+            float r = Red[pos].Z;
+            float g = Green[pos].Z;
+            float b = Blue[pos].Z;
+            float a = Alpha[pos].Z;
+
+            Output[pos] = new float4(b, g, r, a);
+        }
+    }
+
+    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [GeneratedComputeShaderDescriptor]
+    public readonly partial struct SanitizeArtifactsShader : IComputeShader {
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+        public readonly int Width;
+
+        public SanitizeArtifactsShader(ReadOnlyTexture2D<Bgra32, float4> source, ReadWriteTexture2D<Bgra32, float4> output, int width) {
+            Source = source;
+            Output = output;
+            Width = width;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            int y = idx / Width;
+            int x = idx % Width;
+            int2 pos = new int2(x, y);
+
+            float4 pixel = Source[pos];
+            // If Alpha is less than 255 (0.999f to account for float inaccuracy), set to 0.
+            float alpha = pixel.W < 0.999f ? 0.0f : pixel.W;
+            Output[pos] = new float4(pixel.X, pixel.Y, pixel.Z, alpha);
+        }
+    }
+
+    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [GeneratedComputeShaderDescriptor]
+    public readonly partial struct BoostAboveThresholdShader : IComputeShader {
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+        public readonly int Width;
+        public readonly float Threshold;
+
+        public BoostAboveThresholdShader(ReadOnlyTexture2D<Bgra32, float4> source, ReadWriteTexture2D<Bgra32, float4> output, int width, float threshold) {
+            Source = source;
+            Output = output;
+            Width = width;
+            Threshold = threshold;
+        }
+
+        private float FlattenToThreshold(float colourValue) {
+            float nextPixel = (colourValue * (255.0f - Threshold)) + Threshold;
+            if (nextPixel > 255.0f) {
+                nextPixel = (nextPixel - 255.0f) + Threshold;
+            }
+            return nextPixel / 255.0f;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            int y = idx / Width;
+            int x = idx % Width;
+            int2 pos = new int2(x, y);
+
+            float4 pixel = Source[pos];
+            Output[pos] = new float4(
+                FlattenToThreshold(pixel.X),
+                FlattenToThreshold(pixel.Y),
+                FlattenToThreshold(pixel.Z),
+                pixel.W);
+        }
+    }
+
     public static class ComputeSharpImageManipulation {
 
         private static byte[] BitmapToBytes(Bitmap file) {
@@ -199,6 +397,127 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             gpuFile.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(filePixels));
 
             device.For(totalPixels, new InvertImageShader(gpuFile, gpuOutput, width));
+            return DownloadResult(gpuOutput, width, height);
+        }
+        public static Bitmap ExtractRedGpu(Bitmap file) {
+            var device = GraphicsDevice.GetDefault();
+            int width = file.Width;
+            int height = file.Height;
+            int totalPixels = width * height;
+
+            byte[] filePixels = BitmapToBytes(file);
+
+            using var gpuFile = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
+            using var gpuOutput = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
+            gpuFile.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(filePixels));
+
+            device.For(totalPixels, new ExtractRedShader(gpuFile, gpuOutput, width));
+            return DownloadResult(gpuOutput, width, height);
+        }
+
+        public static Bitmap ExtractGreenGpu(Bitmap file) {
+            var device = GraphicsDevice.GetDefault();
+            int width = file.Width;
+            int height = file.Height;
+            int totalPixels = width * height;
+
+            byte[] filePixels = BitmapToBytes(file);
+
+            using var gpuFile = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
+            using var gpuOutput = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
+            gpuFile.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(filePixels));
+
+            device.For(totalPixels, new ExtractGreenShader(gpuFile, gpuOutput, width));
+            return DownloadResult(gpuOutput, width, height);
+        }
+
+        public static Bitmap ExtractBlueGpu(Bitmap file) {
+            var device = GraphicsDevice.GetDefault();
+            int width = file.Width;
+            int height = file.Height;
+            int totalPixels = width * height;
+
+            byte[] filePixels = BitmapToBytes(file);
+
+            using var gpuFile = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
+            using var gpuOutput = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
+            gpuFile.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(filePixels));
+
+            device.For(totalPixels, new ExtractBlueShader(gpuFile, gpuOutput, width));
+            return DownloadResult(gpuOutput, width, height);
+        }
+
+        public static Bitmap GrayscaleToAlphaGpu(Bitmap file) {
+            var device = GraphicsDevice.GetDefault();
+            int width = file.Width;
+            int height = file.Height;
+            int totalPixels = width * height;
+
+            byte[] filePixels = BitmapToBytes(file);
+
+            using var gpuFile = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
+            using var gpuOutput = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
+            gpuFile.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(filePixels));
+
+            device.For(totalPixels, new GrayscaleToAlphaShader(gpuFile, gpuOutput, width));
+            return DownloadResult(gpuOutput, width, height);
+        }
+
+        public static Bitmap MergeGrayscalesToRGBAGpu(Bitmap red, Bitmap green, Bitmap blue, Bitmap alpha) {
+            var device = GraphicsDevice.GetDefault();
+            int width = red.Width;
+            int height = red.Height;
+            int totalPixels = width * height;
+
+            byte[] redPixels = BitmapToBytes(red);
+            byte[] greenPixels = BitmapToBytes(green);
+            byte[] bluePixels = BitmapToBytes(blue);
+            byte[] alphaPixels = BitmapToBytes(alpha);
+
+            using var gpuRed = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
+            using var gpuGreen = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
+            using var gpuBlue = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
+            using var gpuAlpha = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
+            using var gpuOutput = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
+            
+            gpuRed.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(redPixels));
+            gpuGreen.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(greenPixels));
+            gpuBlue.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(bluePixels));
+            gpuAlpha.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(alphaPixels));
+
+            device.For(totalPixels, new MergeGrayscalesToRGBAShader(gpuRed, gpuGreen, gpuBlue, gpuAlpha, gpuOutput, width));
+            return DownloadResult(gpuOutput, width, height);
+        }
+
+        public static Bitmap SanitizeArtifactsGpu(Bitmap file) {
+            var device = GraphicsDevice.GetDefault();
+            int width = file.Width;
+            int height = file.Height;
+            int totalPixels = width * height;
+
+            byte[] filePixels = BitmapToBytes(file);
+
+            using var gpuFile = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
+            using var gpuOutput = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
+            gpuFile.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(filePixels));
+
+            device.For(totalPixels, new SanitizeArtifactsShader(gpuFile, gpuOutput, width));
+            return DownloadResult(gpuOutput, width, height);
+        }
+
+        public static Bitmap BoostAboveThresholdGpu(Bitmap file, int threshold) {
+            var device = GraphicsDevice.GetDefault();
+            int width = file.Width;
+            int height = file.Height;
+            int totalPixels = width * height;
+
+            byte[] filePixels = BitmapToBytes(file);
+
+            using var gpuFile = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
+            using var gpuOutput = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
+            gpuFile.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(filePixels));
+
+            device.For(totalPixels, new BoostAboveThresholdShader(gpuFile, gpuOutput, width, (float)threshold));
             return DownloadResult(gpuOutput, width, height);
         }
     }

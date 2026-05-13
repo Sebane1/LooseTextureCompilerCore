@@ -13,31 +13,37 @@ namespace FFXIVLooseTextureCompiler.Export
         public BackupTexturePaths(string path, bool isFace = false, int gender = 0, int subRace = 0, int face = 0)
         {
             _path = path;
+            _normPath = path;
+            _maskPath = path;
             if (!isFace)
             {
                 _baseTexture = "diffuse.ltct";
                 _baseTextureSecondary = "diffuseRaen.ltct";
                 _normal = "normal.ltct";
+                _mask = "mask.ltct";
             }
             else
             {
                 string fileName = (((subRace == 5 && gender == 1) || subRace == 11 ? 101 : 1) + face) + ".png";
                 _baseTexture = "\\" + fileName;
                 _normal = "\\" + (face + 1) + "n.png";
+                _mask = "\\" + (face + 1) + "m.png";
             }
             _isFace = isFace;
         }
-        public BackupTexturePaths(string hardPath)
+        public BackupTexturePaths(string hardPath, bool yes)
         {
             _path = Path.GetDirectoryName(hardPath);
             string fileName = Path.GetFileName(hardPath);
             _baseTexture = "\\" + fileName;
             _baseTextureSecondary = "\\" + fileName.Replace("xaela", "raen");
             _normal = fileName.Replace("_base", "_norm").Replace("_d", "_n").Replace("_diff", "_norm");
+            _mask = fileName.Replace("_base", "_mask").Replace("_d", "_m").Replace("_diff", "_mask");
         }
         public BackupTexturePaths(string basePath, string normalPath)
         {
             _path = Path.GetDirectoryName(basePath);
+            _normPath = Path.GetDirectoryName(normalPath);
             _baseTexture = "\\" + Path.GetFileName(basePath);
             _baseTextureSecondary = "\\" + _baseTexture.Replace("xaela", "raen");
             _normal = !string.IsNullOrEmpty(normalPath) ? "\\" + Path.GetFileName(normalPath) : "";
@@ -46,6 +52,8 @@ namespace FFXIVLooseTextureCompiler.Export
         public BackupTexturePaths(string basePath, string normalPath, string maskPath)
         {
             _path = Path.GetDirectoryName(basePath);
+            _normPath = Path.GetDirectoryName(normalPath);
+            _maskPath = Path.GetDirectoryName(maskPath);
             _baseTexture = "\\" + Path.GetFileName(basePath);
             _baseTextureSecondary = "\\" + _baseTexture.Replace("xaela", "raen");
             _normal = !string.IsNullOrEmpty(normalPath) ? "\\" + Path.GetFileName(normalPath) : "";
@@ -63,15 +71,17 @@ namespace FFXIVLooseTextureCompiler.Export
         string _mask = "";
         [JsonProperty]
         string _path;
+        private string _normPath;
+        private string? _maskPath;
 
         [JsonIgnore]
         public string Base { get => _path + _baseTexture; }
         [JsonIgnore]
         public string BaseSecondary { get => !string.IsNullOrEmpty(_baseTextureSecondary) ? _path + _baseTextureSecondary : Base; }
         [JsonIgnore]
-        public string Normal { get => _path + _normal; }
+        public string Normal { get => _normPath + _normal; }
         [JsonIgnore]
-        public string Mask { get => !string.IsNullOrEmpty(_mask) ? _path + _mask : ""; }
+        public string Mask { get => !string.IsNullOrEmpty(_mask) ? _maskPath + _mask : ""; }
         [JsonIgnore]
         public bool NeedsNormal => string.IsNullOrEmpty(_normal);
         [JsonIgnore]

@@ -176,6 +176,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
         }
         public static Bitmap BoostAboveThreshold(Bitmap file, int threshhold) {
+            try {
+                return ComputeSharpImageManipulation.BoostAboveThresholdGpu(file, threshhold);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[ImageManipulation.BoostAboveThreshold] GPU failed, falling back to CPU: {ex.Message}");
+            }
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
@@ -213,6 +218,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap SanitizeArtifacts(Bitmap file) {
+            try {
+                return ComputeSharpImageManipulation.SanitizeArtifactsGpu(file);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[ImageManipulation.SanitizeArtifacts] GPU failed, falling back to CPU: {ex.Message}");
+            }
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
@@ -334,6 +344,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return image;
         }
         public static Bitmap ExtractRed(Bitmap file) {
+            try {
+                return ComputeSharpImageManipulation.ExtractRedGpu(file);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[ImageManipulation.ExtractRed] GPU failed, falling back to CPU: {ex.Message}");
+            }
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
@@ -351,6 +366,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return image;
         }
         public static Bitmap ExtractGreen(Bitmap file) {
+            try {
+                return ComputeSharpImageManipulation.ExtractGreenGpu(file);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[ImageManipulation.ExtractGreen] GPU failed, falling back to CPU: {ex.Message}");
+            }
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
@@ -423,6 +443,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap ExtractBlue(Bitmap file) {
+            try {
+                return ComputeSharpImageManipulation.ExtractBlueGpu(file);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[ImageManipulation.ExtractBlue] GPU failed, falling back to CPU: {ex.Message}");
+            }
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
@@ -681,6 +706,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap GrayscaleToAlpha(Bitmap file) {
+            try {
+                return ComputeSharpImageManipulation.GrayscaleToAlphaGpu(file);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[ImageManipulation.GrayscaleToAlpha] GPU failed, falling back to CPU: {ex.Message}");
+            }
             Bitmap image = TexIO.NewBitmap(file);
             LockBitmap source = new LockBitmap(image);
             source.LockBits();
@@ -699,6 +729,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap MergeGrayscalesToRGBA(Bitmap red, Bitmap green, Bitmap blue, Bitmap alpha) {
+            try {
+                return ComputeSharpImageManipulation.MergeGrayscalesToRGBAGpu(red, green, blue, alpha);
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[ImageManipulation.MergeGrayscalesToRGBA] GPU failed, falling back to CPU: {ex.Message}");
+            }
             Bitmap image = new Bitmap(red);
             LockBitmap destination = new LockBitmap(image);
             LockBitmap redBits = new LockBitmap(red);
