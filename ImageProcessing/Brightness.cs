@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 using System.Drawing.Imaging;
 using ColorMatrix = System.Drawing.Imaging.ColorMatrix;
 using Rectangle = System.Drawing.Rectangle;

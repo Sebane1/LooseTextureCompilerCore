@@ -1051,7 +1051,8 @@ namespace FFXIVLooseTextureCompiler
                     {
                         if (!skipTexExport)
                         {
-                            Task.Run(() => ExportTex((Path.Combine(_basePath, textureSet.BackupTexturePaths.Normal)),
+                            string normalPath = Path.IsPathRooted(textureSet.BackupTexturePaths.Normal) ? textureSet.BackupTexturePaths.Normal : Path.Combine(_basePath, textureSet.BackupTexturePaths.Normal);
+                            Task.Run(() => ExportTex(normalPath,
                             normalDiskPath, ExportType.MergeNormal, textureSet.FinalBase, textureSet.NormalMask,
                             (textureSet.BackupTexturePaths != null ? textureSet.BackupTexturePaths.Normal : ""),
                             textureSet.NormalCorrection, !textureSet.InternalBasePath.Contains("eye") ? textureSet.Glow : "", textureSet.InvertNormalGeneration));
@@ -1082,9 +1083,9 @@ namespace FFXIVLooseTextureCompiler
                     if (!skipTexExport)
                     {
                         string glowNormalInput = textureSet.BackupTexturePaths != null ?
-                            Path.Combine(_basePath, textureSet.BackupTexturePaths.Normal) : "";
+                        Path.IsPathRooted(textureSet.BackupTexturePaths.Normal) ? textureSet.BackupTexturePaths.Normal : Path.Combine(_basePath, textureSet.BackupTexturePaths.Normal) : "";
                         Task.Run(() => ExportTex(glowNormalInput, normalDiskPath,
-                        ExportType.None, "", textureSet.NormalMask, "",
+                        ExportType.SkipLayering, "", textureSet.NormalMask, "",
                         textureSet.NormalCorrection, textureSet.Glow, textureSet.InvertNormalGeneration, textureSet.InternalBasePath.Contains("fac_")));
                     }
                 }
@@ -1215,6 +1216,7 @@ namespace FFXIVLooseTextureCompiler
             XNormalImport,
             DontManipulate,
             DTMask,
+            SkipLayering,
         }
         public async Task<bool> ExportTex(string inputFile, string outputFile, ExportType exportType = ExportType.None,
             string baseTextureNormal = "", string modifierMap = "", string layeringImage = "",
@@ -1236,6 +1238,15 @@ namespace FFXIVLooseTextureCompiler
                         {
                             case ExportType.None:
                                 using (Bitmap resultBitmap = ExportTypeNone(inputFile, layeringImage, alphaOverride, invertAlpha, dontInvertAlphaOverride))
+                                {
+                                    if (resultBitmap != null)
+                                    {
+                                        PenumbraTextureImporter.BitmapToTex(resultBitmap, out data);
+                                    }
+                                }
+                                break;
+                            case ExportType.SkipLayering:
+                                using (Bitmap resultBitmap = ExportTypeSkipLayering(inputFile, layeringImage, alphaOverride, invertAlpha, dontInvertAlphaOverride))
                                 {
                                     if (resultBitmap != null)
                                     {
@@ -1320,6 +1331,23 @@ namespace FFXIVLooseTextureCompiler
                 _exportSemaphore.Release();
                 Interlocked.Decrement(ref _activeExportThreads);
             }
+        }
+
+        private Bitmap ExportTypeSkipLayering(string inputFile, string layeringImage, string alphaOverride, bool invertAlpha, bool dontInvertAlphaOverride)
+        {
+            using (Bitmap rgb = GetMergedBitmap(inputFile))
+            {
+                if (File.Exists(alphaOverride))
+                {
+                    using (Bitmap alpha = GetMergedBitmap(alphaOverride))
+                    {
+                        return ImageManipulation.MergeAlphaToRGB(invertAlpha && !dontInvertAlphaOverride ? ImageManipulation.InvertImage(alpha) : alpha, rgb);
+                    }
+                }
+                return rgb;
+            }
+
+            return new Bitmap(4096, 4096);
         }
 
         // ── Bitmap-returning variants: skip the PNG compress→decompress round-trip ──

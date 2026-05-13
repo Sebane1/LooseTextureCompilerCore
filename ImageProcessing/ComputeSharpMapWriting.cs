@@ -11,7 +11,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
     /// based on alpha thresholds. Replaces the CPU path that used the single-threaded
     /// KVImage.ImageBlender.BlendImages + Parallel.For pixel loop.
     /// </summary>
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct CalculateBaseShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> File;       // base texture
@@ -93,7 +93,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
     /// <summary>
     /// GPU CalculateMulti: If glow alpha > 20/255, write glow alpha into destination's blue channel.
     /// </summary>
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct CalculateMultiShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> File;
@@ -134,7 +134,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
     /// <summary>
     /// GPU CalculateEyeMulti: If glow alpha > 0, write (255-alpha) into destination's alpha channel.
     /// </summary>
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct CalculateEyeMultiShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> File;
@@ -173,7 +173,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
     /// <summary>
     /// GPU TransplantData: If glow pixel alpha > 0, copy it over the base.
     /// </summary>
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct TransplantDataShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> File;

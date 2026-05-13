@@ -11,7 +11,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
     /// Input: source texture (BGRA). Output: float buffer of brightness values.
     /// The source is expected to be horizontally flipped already (CPU side).
     /// </summary>
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct BrightnessMapShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
@@ -51,7 +51,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
     /// Pass 2: Compute Sobel gradient from brightness, apply contrast + overlay self-blend,
     /// and merge the original alpha — all in one pass.
     /// </summary>
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct NormalMapShader : IComputeShader {
         public readonly ReadWriteBuffer<float> Brightness;

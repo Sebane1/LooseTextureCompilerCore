@@ -10,7 +10,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
     /// GPU replacement for ImageManipulation.SeperateByDifference
     /// Fuses: Difference Blend + Grayscale + BoostAlpha + MergeAlphaToRGB into a single dispatch!
     /// </summary>
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct SeperateByDifferenceShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> Tattoo;

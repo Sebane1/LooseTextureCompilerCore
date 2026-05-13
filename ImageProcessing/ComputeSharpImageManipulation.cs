@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct ExtractRGBShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
@@ -31,7 +31,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct ExtractAlphaShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
@@ -56,7 +56,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct MergeAlphaToRGBShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> Alpha;
@@ -84,7 +84,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct InvertImageShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
@@ -109,7 +109,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct ExtractRedShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
@@ -134,7 +134,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct ExtractGreenShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
@@ -158,7 +158,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct ExtractBlueShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
@@ -182,7 +182,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct GrayscaleToAlphaShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
@@ -207,7 +207,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct MergeGrayscalesToRGBAShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> Red;
@@ -243,7 +243,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct SanitizeArtifactsShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
@@ -269,7 +269,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct BoostAboveThresholdShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> Source;

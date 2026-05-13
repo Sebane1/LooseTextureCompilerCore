@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct LayerImagesShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> BottomLayer;
@@ -76,7 +76,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
-    [ThreadGroupSize(DefaultThreadGroupSizes.X)]
+    [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct MaxImagesShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> BottomLayer;
