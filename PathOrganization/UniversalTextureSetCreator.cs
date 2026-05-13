@@ -268,7 +268,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
 
         private static void ConfigureTBSECrossCompatibility(TextureSet textureSet, int race, bool omniExport)
         {
-            ConfigureTextureSet(textureSet.TextureSetName, "", race, 1, 3, null, textureSet);
+            ConfigureTextureSet(textureSet.TextureSetName, "", race, 0, 3, null, textureSet);
             textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.TbseOverride : BackupTexturePaths.TbseSkinTypes[textureSet.SkinType].BackupTextures[0];
             TextureSet tbseVanilla = new TextureSet();
 
