@@ -11,6 +11,7 @@ namespace FFXIVLooseTextureCompiler
     {
         public static List<Tuple<string, string>> biboToGen2Batch = new List<Tuple<string, string>>();
         public static List<Tuple<string, string>> biboToGen3Batch = new List<Tuple<string, string>>();
+        public static List<Tuple<string, string>> biboToTbseBatch = new List<Tuple<string, string>>();
         public static List<Tuple<string, string>> gen3ToGen2Batch = new List<Tuple<string, string>>();
         public static List<Tuple<string, string>> gen3ToBiboBatch = new List<Tuple<string, string>>();
         public static List<Tuple<string, string>> gen2ToBiboBatch = new List<Tuple<string, string>>();
@@ -37,6 +38,7 @@ namespace FFXIVLooseTextureCompiler
         {
             foreach (var item in gen3ToBiboBatch) Gen3ToBibo(item.Item1, item.Item2);
             foreach (var item in biboToGen3Batch) BiboToGen3(item.Item1, item.Item2);
+            foreach (var item in biboToTbseBatch) PerformModularTransfer("bibo", "tbse", item.Item1, item.Item2, "bibo_to_tbse_transfer.tif");
             foreach (var item in gen2ToBiboBatch) Gen2ToBibo(item.Item1, item.Item2);
             foreach (var item in gen2ToGen3Batch) Gen2ToGen3(item.Item1, item.Item2);
 
@@ -76,6 +78,7 @@ namespace FFXIVLooseTextureCompiler
         {
             biboToGen2Batch.Clear();
             biboToGen3Batch.Clear();
+            biboToTbseBatch.Clear();
             gen3ToGen2Batch.Clear();
             gen3ToBiboBatch.Clear();
             gen2ToBiboBatch.Clear();
@@ -211,6 +214,7 @@ namespace FFXIVLooseTextureCompiler
             {
                 if (outputPath.Contains("gen2")) biboToGen2Batch.Add(new Tuple<string, string>(inputPath, outputPath));
                 else if (outputPath.Contains("gen3")) biboToGen3Batch.Add(new Tuple<string, string>(inputPath, outputPath));
+                else if (outputPath.Contains("tbse")) biboToTbseBatch.Add(new Tuple<string, string>(inputPath, outputPath));
                 else wasHandled = false;
             }
             else if (internalPath.Contains("eve") || internalPath.Contains("gen3"))
