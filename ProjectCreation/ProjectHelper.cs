@@ -145,6 +145,7 @@ namespace LooseTextureCompilerCore.ProjectCreation
         public static TextureSet CreateFaceTextureSet(int faceType, int facePart, int faceExtra,
             int gender, int race, int subRace, int auraScales, bool asym)
         {
+            if (faceType < 0) faceType = 0;
             TextureSet textureSet = new TextureSet();
             textureSet.TextureSetName = _faceParts[(int)facePart] + ((int)facePart == 4 ? " "
                 + (faceExtra + 1) : "") + ", " + ((int)facePart != 4 ? _genders[(int)gender] : "Unisex")

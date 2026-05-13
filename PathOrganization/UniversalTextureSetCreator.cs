@@ -268,8 +268,13 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 ConfigureTextureSet("Asym Lala [IsChild]", "asym_lala", race, 0, 6, asymLalaFell, textureSet);
                 asymLalaFell.BackupTexturePaths = BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
 
+                TextureSet relala = new TextureSet();
+                ConfigureTextureSet("ReLala [IsChild]", "relala", race, 1, 7, relala, textureSet);
+                relala.BackupTexturePaths = BackupTexturePaths.RelalaSkinTypes[textureSet.SkinType].BackupTextures[0];
+
                 textureSet.ChildSets.Add(asymLalaFell);
                 textureSet.ChildSets.Add(otopop);
+                textureSet.ChildSets.Add(relala);
             }
         }
 
@@ -286,8 +291,13 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 ConfigureTextureSet("Vanilla [IsChild]", "vanilla_lala", race, 0, 0, vanilla, textureSet);
                 vanilla.BackupTexturePaths = BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
 
+                TextureSet relala = new TextureSet();
+                ConfigureTextureSet("ReLala [IsChild]", "relala", race, 1, 7, relala, textureSet);
+                relala.BackupTexturePaths = BackupTexturePaths.RelalaSkinTypes[textureSet.SkinType].BackupTextures[0];
+
                 textureSet.ChildSets.Add(vanilla);
                 textureSet.ChildSets.Add(otopop);
+                textureSet.ChildSets.Add(relala);
             }
         }
 
@@ -304,8 +314,13 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 ConfigureTextureSet("Asym Lala [IsChild]", "asym_lala", race, 0, 6, asymLalafell, textureSet);
                 asymLalafell.BackupTexturePaths = BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
 
+                TextureSet relala = new TextureSet();
+                ConfigureTextureSet("ReLala [IsChild]", "relala", race, 1, 7, relala, textureSet);
+                relala.BackupTexturePaths = BackupTexturePaths.RelalaSkinTypes[textureSet.SkinType].BackupTextures[0];
+
                 textureSet.ChildSets.Add(asymLalafell);
                 textureSet.ChildSets.Add(vanilla);
+                textureSet.ChildSets.Add(relala);
             }
         }
 
@@ -322,8 +337,13 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 ConfigureTextureSet("Otopop [IsChild]", "otopop", race, 0, 5, otopop, textureSet);
                 otopop.BackupTexturePaths = BackupTexturePaths.RelalaSkinTypes[textureSet.SkinType].BackupTextures[1];
 
+                TextureSet asymLalafell = new TextureSet();
+                ConfigureTextureSet("Asym Lala [IsChild]", "asym_lala", race, 0, 6, asymLalafell, textureSet);
+                asymLalafell.BackupTexturePaths = BackupTexturePaths.AsymLalaPath(0);
+
                 textureSet.ChildSets.Add(otopop);
                 textureSet.ChildSets.Add(vanilla);
+                textureSet.ChildSets.Add(asymLalafell);
             }
         }
 
