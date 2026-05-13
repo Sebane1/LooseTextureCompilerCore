@@ -129,6 +129,7 @@ namespace LooseTextureCompilerCore.ProjectCreation
         }
         public static TextureSet CreateBodyTextureSet(int gender, int baseBody, int race, int tail, bool uniqueAuRa = false)
         {
+            if (race < 0) race = 0;
             TextureSet textureSet = new TextureSet();
             textureSet.TextureSetName = _bodyNames[baseBody] + (_bodyNames[baseBody].ToLower().Contains("tail") ? " " +
                 (tail + 1) : "") + ", " + (race == 5 ? "Unisex" : _genders[gender])
@@ -146,6 +147,7 @@ namespace LooseTextureCompilerCore.ProjectCreation
             int gender, int race, int subRace, int auraScales, bool asym)
         {
             if (faceType < 0) faceType = 0;
+            if (subRace < 0) subRace = 0;
             TextureSet textureSet = new TextureSet();
             textureSet.TextureSetName = _faceParts[(int)facePart] + ((int)facePart == 4 ? " "
                 + (faceExtra + 1) : "") + ", " + ((int)facePart != 4 ? _genders[(int)gender] : "Unisex")
@@ -189,7 +191,7 @@ namespace LooseTextureCompilerCore.ProjectCreation
         {
             textureSet.InternalBasePath = RacePaths.GetFaceTexturePath(faceExtra);
         }
-        public static void ExportProject(string path, string name, List<TextureSet> exportTextureSets, TextureProcessor textureProcessor, 
+        public static void ExportProject(string path, string name, List<TextureSet> exportTextureSets, TextureProcessor textureProcessor,
             string xNormalPath = "", int generationType = 3, bool generateNormals = false, bool generateMulti = false, bool finalize = true)
         {
             List<TextureSet> textureSets = new List<TextureSet>();
@@ -197,15 +199,13 @@ namespace LooseTextureCompilerCore.ProjectCreation
             string metaFilePath = Path.Combine(path, "meta.json");
             foreach (TextureSet item in exportTextureSets)
             {
-                if (item.OmniExportMode)
-                {
-                    UniversalTextureSetCreator.ConfigureTextureSet(item);
-                }
+                UniversalTextureSetCreator.ConfigureTextureSet(item);
                 textureSets.Add(item);
             }
             Directory.CreateDirectory(path);
             textureProcessor.CleanGeneratedAssets(path);
             textureProcessor.Export(textureSets, new Dictionary<string, int>(), path, generationType, generateNormals, generateMulti, File.Exists(xNormalPath) && finalize, xNormalPath);
+            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
             ProjectHelper.ExportJson(jsonFilepath);
             ProjectHelper.ExportMeta(metaFilePath, name);
         }
