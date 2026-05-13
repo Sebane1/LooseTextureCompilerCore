@@ -192,8 +192,9 @@ namespace LooseTextureCompilerCore.ProjectCreation
             textureSet.InternalBasePath = RacePaths.GetFaceTexturePath(faceExtra);
         }
         public static void ExportProject(string path, string name, List<TextureSet> exportTextureSets, TextureProcessor textureProcessor,
-            string xNormalPath = "", int generationType = 3, bool generateNormals = false, bool generateMulti = false, bool finalize = true)
+            string xNormalPath = "", int generationType = 3, bool generateNormals = false, bool generateMulti = false, bool finalize = true, bool exportBc7 = false)
         {
+            textureProcessor.ExportBc7 = exportBc7;
             List<TextureSet> textureSets = new List<TextureSet>();
             string jsonFilepath = Path.Combine(path, "default_mod.json");
             string metaFilePath = Path.Combine(path, "meta.json");

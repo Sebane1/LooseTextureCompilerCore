@@ -31,6 +31,7 @@ namespace FFXIVLooseTextureCompiler
 {
     public class TextureProcessor
     {
+        public bool ExportBc7 { get; set; } = false;
         private ConcurrentDictionary<string, TextureSet> _redirectionCache;
         private ConcurrentDictionary<string, TextureSet> _mtrlCache;
         private ConcurrentDictionary<string, Bitmap> _normalCache;
@@ -1234,6 +1235,21 @@ namespace FFXIVLooseTextureCompiler
                 try
                 {
                     {
+                        string fileName = Path.GetFileName(outputFile).ToLower();
+                        bool isNormalMap = exportType == ExportType.Normal 
+                            || exportType == ExportType.MergeNormal 
+                            || exportType == ExportType.XNormalImport 
+                            || fileName.Contains("_n_") || fileName.EndsWith("_n.tex") 
+                            || fileName.Contains("_norm_") || fileName.EndsWith("_norm.tex");
+                            
+                        bool isMaskMap = exportType == ExportType.Mask 
+                            || exportType == ExportType.DTMask 
+                            || fileName.Contains("_m_") || fileName.EndsWith("_m.tex") 
+                            || fileName.Contains("_mask_") || fileName.EndsWith("_mask.tex");
+                        
+                        bool actualExportBc7 = ExportBc7 && !isNormalMap;
+                        bool actualUseGpu = !(isNormalMap);
+
                         switch (exportType)
                         {
                             case ExportType.None:
@@ -1241,7 +1257,7 @@ namespace FFXIVLooseTextureCompiler
                                 {
                                     if (resultBitmap != null)
                                     {
-                                        PenumbraTextureImporter.BitmapToTex(resultBitmap, out data);
+                                        PenumbraTextureImporter.BitmapToTex(resultBitmap, out data, actualExportBc7, actualUseGpu);
                                     }
                                 }
                                 break;
@@ -1250,7 +1266,7 @@ namespace FFXIVLooseTextureCompiler
                                 {
                                     if (resultBitmap != null)
                                     {
-                                        PenumbraTextureImporter.BitmapToTex(resultBitmap, out data);
+                                        PenumbraTextureImporter.BitmapToTex(resultBitmap, out data, actualExportBc7, actualUseGpu);
                                     }
                                 }
                                 break;
@@ -1260,44 +1276,44 @@ namespace FFXIVLooseTextureCompiler
                             case ExportType.Glow:
                                 using (Bitmap glowResult = ExportTypeGlowAsBitmap(inputFile, modifierMap, layeringImage))
                                 {
-                                    if (glowResult != null) PenumbraTextureImporter.BitmapToTex(glowResult, out data);
+                                    if (glowResult != null) PenumbraTextureImporter.BitmapToTex(glowResult, out data, actualExportBc7, actualUseGpu);
                                 }
                                 break;
                             case ExportType.GlowEyeMask:
                                 using (Bitmap eyeResult = ExportTypeGlowEyeMaskAsBitmap(inputFile, modifierMap))
                                 {
-                                    if (eyeResult != null) PenumbraTextureImporter.BitmapToTex(eyeResult, out data);
+                                    if (eyeResult != null) PenumbraTextureImporter.BitmapToTex(eyeResult, out data, actualExportBc7, actualUseGpu);
                                 }
                                 break;
                             case ExportType.DTMask:
                                 using (Bitmap dtResult = ExportTypeDTMaskAsBitmap(inputFile, modifierMap))
                                 {
-                                    if (dtResult != null) PenumbraTextureImporter.BitmapToTex(dtResult, out data);
+                                    if (dtResult != null) PenumbraTextureImporter.BitmapToTex(dtResult, out data, actualExportBc7, actualUseGpu);
                                 }
                                 break;
                             case ExportType.Normal:
                                 using (Bitmap normalResult = ExportTypeNormalAsBitmap(inputFile, outputFile, modifierMap, normalCorrection, modifier, alphaOverride, invertAlpha))
                                 {
-                                    if (normalResult != null) PenumbraTextureImporter.BitmapToTex(normalResult, out data);
+                                    if (normalResult != null) PenumbraTextureImporter.BitmapToTex(normalResult, out data, exportBc7: false, actualUseGpu);
                                 }
                                 break;
                             case ExportType.Mask:
                                 using (Bitmap maskResult = ExportTypeMaskAsBitmap(inputFile, layeringImage, exportType, modifierMap))
                                 {
-                                    if (maskResult != null) PenumbraTextureImporter.BitmapToTex(maskResult, out data);
+                                    if (maskResult != null) PenumbraTextureImporter.BitmapToTex(maskResult, out data, actualExportBc7, actualUseGpu);
                                 }
                                 break;
                             case ExportType.MergeNormal:
                                 using (Bitmap mergeResult = ExportTypeMergeNormalAsBitmap(inputFile, outputFile, layeringImage, baseTextureNormal, modifierMap,
                                 normalCorrection, modifier, alphaOverride, invertAlpha))
                                 {
-                                    if (mergeResult != null) PenumbraTextureImporter.BitmapToTex(mergeResult, out data);
+                                    if (mergeResult != null) PenumbraTextureImporter.BitmapToTex(mergeResult, out data, exportBc7: false, actualUseGpu);
                                 }
                                 break;
                             case ExportType.XNormalImport:
                                 using (Bitmap xnResult = ExportTypeXNormalImportAsBitmap(inputFile, baseTextureNormal))
                                 {
-                                    if (xnResult != null) PenumbraTextureImporter.BitmapToTex(xnResult, out data);
+                                    if (xnResult != null) PenumbraTextureImporter.BitmapToTex(xnResult, out data, exportBc7: false, actualUseGpu);
                                 }
                                 break;
                         }

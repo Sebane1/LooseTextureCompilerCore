@@ -1,4 +1,4 @@
-﻿using Lumina.Data.Files;
+using Lumina.Data.Files;
 using Lumina.Extensions;
 using OtterTex;
 
@@ -78,7 +78,10 @@ public static class PenumbraTexFileParser {
         w.Write(header.Width);
         w.Write(header.Height);
         w.Write(header.Depth);
-        w.Write(header.MipCount);
+        // Force ArraySize=1. In older Lumina, MipCount is ushort.
+        // We write MipCount as byte, and then ArraySize as byte.
+        w.Write((byte)((uint)header.MipCount & 0xFF));
+        w.Write((byte)1); // ArraySize
         unsafe {
             w.Write(header.LodOffset[0]);
             w.Write(header.LodOffset[1]);
@@ -124,8 +127,10 @@ public static class PenumbraTexFileParser {
         }
 
         header.LodOffset[0] = 0;
-        header.LodOffset[1] = 1;
-        header.LodOffset[2] = 2;
+        
+        var mipCount = scratch.Meta.MipLevels;
+        header.LodOffset[1] = mipCount > 1 ? (uint)1 : 0;
+        header.LodOffset[2] = mipCount > 2 ? (uint)2 : (mipCount > 1 ? (uint)1 : 0);
     }
 
 
