@@ -25,6 +25,9 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private string _internalMaskPath = "";
         private string _normalMask = "";
         private string _glow = "";
+        private string _glowUV = "";
+        private List<string> _glowOverlays = new List<string>();
+        private List<string> _glowOverlayUVs = new List<string>();
 
         private bool _ignoreNormalGeneration;
         private bool _ignoreMaskGeneration;
@@ -116,6 +119,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 _glow = value;
             }
         }
+        public string GlowUV { get { if (_glowUV == null) { _glowUV = ""; } return _glowUV; } set => _glowUV = value; }
         public string InternalBasePath {
             get {
                 return _internalBasePath == null ? _internalBasePath = "" : _internalBasePath;
@@ -167,9 +171,12 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public List<string> NormalOverlayUVs { get { if (_normalOverlayUVs == null) { _normalOverlayUVs = new List<string>(); } return _normalOverlayUVs; } set => _normalOverlayUVs = value; }
         public List<string> MaskOverlays { get { if (_maskOverlays == null) { _maskOverlays = new List<string>(); } return _maskOverlays; } set => _maskOverlays = value; }
         public List<string> MaskOverlayUVs { get { if (_maskOverlayUVs == null) { _maskOverlayUVs = new List<string>(); } return _maskOverlayUVs; } set => _maskOverlayUVs = value; }
+        public List<string> GlowOverlays { get { if (_glowOverlays == null) { _glowOverlays = new List<string>(); } return _glowOverlays; } set => _glowOverlays = value; }
+        public List<string> GlowOverlayUVs { get { if (_glowOverlayUVs == null) { _glowOverlayUVs = new List<string>(); } return _glowOverlayUVs; } set => _glowOverlayUVs = value; }
         public string FinalBase { get => CreateFinalBasePath(); }
         public string FinalNormal { get => CreateFinalNormalPath(); }
         public string FinalMask { get => CreateFinalMaskPath(); }
+        public string FinalGlow { get => CreateFinalGlowPath(); }
         public Dictionary<string, ulong> Hashes { get => _hashes; set => _hashes = value; }
         private int _cleanupVersion = 0;
 
@@ -207,6 +214,16 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             }
             return "";
         }
+        public string CreateFinalGlowPath() {
+            if (IsChildSet) {
+                return _glow;
+            }
+            string path = !string.IsNullOrEmpty(_glow) ? _glow : (_glowOverlays.Count > 0 ? _glowOverlays[0] : "");
+            if (!string.IsNullOrEmpty(path)) {
+                return Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(path, _glowOverlays) + "_temp.png");
+            }
+            return "";
+        }
         public void CancelCleanup() {
             _cleanupVersion++;
         }
@@ -225,6 +242,9 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                     }
                     if (File.Exists(FinalMask)) {
                         File.Delete(FinalMask);
+                    }
+                    if (File.Exists(FinalGlow)) {
+                        File.Delete(FinalGlow);
                     }
                 } catch {
 
