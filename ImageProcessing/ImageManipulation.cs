@@ -79,7 +79,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             if (string.IsNullOrEmpty(file)) return false;
             string fileName = Path.GetFileNameWithoutExtension(file).ToLower();
             if (fileName.Contains("bibo") || fileName.Contains("b+")) return true;
-            if (fileName.Contains("gen3") || fileName.Contains("eve")) return true;
+            if (fileName.Contains("gen3") || System.Text.RegularExpressions.Regex.IsMatch(fileName, @"(^|[^a-z])eve([^a-z]|$)")) return true;
             if (fileName.Contains("tbse")) return true;
             if (fileName.Contains("gen2") || fileName.Contains("body") || fileName.Contains("mata")) return true;
             return false;
@@ -114,7 +114,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             else if (lowerPath.Contains("relala")) targetUV = "relala";
             else if (lowerPath.Contains("_b_d") || lowerPath.Contains("_b_base") || lowerPath.Contains("tbse")) targetUV = "tbse";
             else if (lowerPath.Contains("bibo") || lowerPath.Contains("b+")) targetUV = "bibo";
-            else if (lowerPath.Contains("gen3") || lowerPath.Contains("eve")) targetUV = "gen3";
+            else if (lowerPath.Contains("gen3") || System.Text.RegularExpressions.Regex.IsMatch(lowerPath, @"(^|[^a-z])eve([^a-z]|$)")) targetUV = "gen3";
             else if (lowerPath.Contains("0201") || lowerPath.Contains("vanilla_male")) targetUV = "vanillamale"; 
             else if (lowerPath.Contains("body") || lowerPath.Contains("mata")) targetUV = "gen2";
             return targetUV;
@@ -1422,6 +1422,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                             TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
                             ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
                         };
+                        string dir = Path.GetDirectoryName(ouputPath);
+                        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
                         imageData.SaveAsPng(ouputPath, encoder);
                     }
                 }
@@ -1441,6 +1443,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
                         ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
                     };
+                    string dir = Path.GetDirectoryName(ouputPath);
+                    if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
                     outputImage.SaveAsPng(ouputPath, encoder);
                 }
             }

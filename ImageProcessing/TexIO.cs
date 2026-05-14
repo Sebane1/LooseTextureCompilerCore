@@ -276,6 +276,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                     TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
                     ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
                 };
+                string dir = Path.GetDirectoryName(path);
+                if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
                 while (TexIO.IsFileLocked(path))
                 {
                     Thread.Sleep(100);
