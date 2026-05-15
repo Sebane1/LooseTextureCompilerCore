@@ -274,6 +274,117 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
     public static class ComputeSharpLayering {
         
+        private struct LayerPixelData {
+            public byte[] Pixels;
+            public int Width;
+            public int Height;
+        }
+
+        private static LayerPixelData LoadPixelDataDirect(string path) {
+            if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path))
+                return default;
+            
+            // For .tex and .dds files, fall back to TexIO which returns a Bitmap
+            if (path.EndsWith(".tex", StringComparison.OrdinalIgnoreCase) || 
+                path.EndsWith(".dds", StringComparison.OrdinalIgnoreCase) ||
+                path.EndsWith(".ltct", StringComparison.OrdinalIgnoreCase)) {
+                using (var bitmap = TexIO.ResolveBitmap(path)) {
+                    Bitmap safe = bitmap.PixelFormat == PixelFormat.Format32bppArgb ? bitmap : bitmap.Clone(new Rectangle(0, 0, bitmap.Width, bitmap.Height), PixelFormat.Format32bppArgb);
+                    var bmpData = safe.LockBits(new Rectangle(0, 0, safe.Width, safe.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+                    byte[] pixels = new byte[safe.Width * safe.Height * 4];
+                    Marshal.Copy(bmpData.Scan0, pixels, 0, pixels.Length);
+                    safe.UnlockBits(bmpData);
+                    if (safe != bitmap) safe.Dispose();
+                    return new LayerPixelData { Pixels = pixels, Width = safe.Width, Height = safe.Height };
+                }
+            }
+            
+            // For PNG/JPG/BMP: decode directly to Bgra32 pixel array, no System.Drawing.Bitmap needed
+            while (TexIO.IsFileLocked(path)) { System.Threading.Thread.Sleep(100); }
+            using (var ms = new System.IO.MemoryStream()) {
+                using (var fs = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read)) {
+                    fs.CopyTo(ms);
+                }
+                ms.Position = 0;
+                using (var image = SixLabors.ImageSharp.Image.Load<SixLabors.ImageSharp.PixelFormats.Bgra32>(ms)) {
+                    byte[] pixels = new byte[image.Width * image.Height * 4];
+                    image.CopyPixelDataTo(pixels);
+                    return new LayerPixelData { Pixels = pixels, Width = image.Width, Height = image.Height };
+                }
+            }
+        }
+
+        public static Bitmap MergeMultipleImagesGpuFromPaths(System.Collections.Generic.List<string> paths, int width, int height) {
+            var device = GraphicsDevice.GetDefault();
+            int totalPixels = width * height;
+
+            // Load all layers in parallel directly to pixel arrays (no Bitmap)
+            LayerPixelData[] layerData = new LayerPixelData[paths.Count];
+            System.Threading.Tasks.Parallel.For(0, paths.Count, i => {
+                layerData[i] = LoadPixelDataDirect(paths[i]);
+            });
+
+            using var ping = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
+            using var pong = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
+            
+            // Initialize ping with first layer
+            if (layerData.Length > 0 && layerData[0].Pixels != null) {
+                var ld = layerData[0];
+                if (ld.Width == width && ld.Height == height) {
+                    ping.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(ld.Pixels));
+                } else {
+                    // Different size: upload to temp texture and use shader to scale
+                    using (var gpuTemp = device.AllocateReadOnlyTexture2D<Bgra32, float4>(ld.Width, ld.Height)) {
+                        gpuTemp.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(ld.Pixels));
+                        // Use a blank base and merge layer 0 on top to handle scaling
+                        byte[] blankPixels = new byte[totalPixels * 4];
+                        ping.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(blankPixels));
+                        device.For(totalPixels, new MergeImagesPingPongShader(ping, gpuTemp, pong, width, height, ld.Width, ld.Height));
+                        // Result is now in pong, copy back to ping for consistency
+                        pong.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(blankPixels));
+                        ping.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(blankPixels));
+                    }
+                }
+            } else {
+                byte[] blankPixels = new byte[totalPixels * 4];
+                ping.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(blankPixels));
+            }
+            
+            bool isPing = true;
+
+            for (int i = 1; i < layerData.Length; i++) {
+                var ld = layerData[i];
+                if (ld.Pixels == null) continue;
+                
+                using (var gpuTop = device.AllocateReadOnlyTexture2D<Bgra32, float4>(ld.Width, ld.Height)) {
+                    gpuTop.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(ld.Pixels));
+
+                    if (isPing) {
+                        device.For(totalPixels, new MergeImagesPingPongShader(ping, gpuTop, pong, width, height, ld.Width, ld.Height));
+                    } else {
+                        device.For(totalPixels, new MergeImagesPingPongShader(pong, gpuTop, ping, width, height, ld.Width, ld.Height));
+                    }
+                }
+                isPing = !isPing;
+                layerData[i].Pixels = null; // Allow GC to reclaim
+            }
+            layerData[0].Pixels = null;
+
+            byte[] resultPixels = new byte[totalPixels * 4];
+            if (isPing) {
+                ping.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(resultPixels));
+            } else {
+                pong.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(resultPixels));
+            }
+
+            Bitmap result = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+            var bmpDataResult = result.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+            Marshal.Copy(resultPixels, 0, bmpDataResult.Scan0, resultPixels.Length);
+            result.UnlockBits(bmpDataResult);
+
+            return result;
+        }
+
         public static Bitmap MergeMultipleImagesGpu(Bitmap[] layers, int width, int height) {
             var device = GraphicsDevice.GetDefault();
             int totalPixels = width * height;

@@ -1434,22 +1434,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     bench.AppendLine($"--- MergeImageLayers Benchmark ({validPaths.Count} layers) ---");
                     System.Diagnostics.Stopwatch totalTimer = System.Diagnostics.Stopwatch.StartNew();
 
-                    System.Diagnostics.Stopwatch loadTimer = System.Diagnostics.Stopwatch.StartNew();
-                    Bitmap[] layerBitmaps = new Bitmap[validPaths.Count];
-                    System.Threading.Tasks.Parallel.For(0, validPaths.Count, i => {
-                        layerBitmaps[i] = TexIO.ResolveBitmap(validPaths[i]);
-                    });
-                    loadTimer.Stop();
-                    bench.AppendLine($"Parallel Resolve+Resize: {loadTimer.ElapsedMilliseconds}ms");
-
                     System.Diagnostics.Stopwatch gpuTimer = System.Diagnostics.Stopwatch.StartNew();
-                    Bitmap outputBitmap = ComputeSharpLayering.MergeMultipleImagesGpu(layerBitmaps, maxX, maxY);
+                    Bitmap outputBitmap = ComputeSharpLayering.MergeMultipleImagesGpuFromPaths(validPaths, maxX, maxY);
                     gpuTimer.Stop();
-                    bench.AppendLine($"GPU Multi-Merge: {gpuTimer.ElapsedMilliseconds}ms");
-
-                    foreach (var bmp in layerBitmaps) {
-                        if (bmp != null) bmp.Dispose();
-                    }
+                    bench.AppendLine($"GPU Load+Merge (unified): {gpuTimer.ElapsedMilliseconds}ms");
                     
                     System.Diagnostics.Stopwatch saveTimer = System.Diagnostics.Stopwatch.StartNew();
                     string dir = Path.GetDirectoryName(ouputPath);
