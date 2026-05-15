@@ -1428,24 +1428,55 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     }
                 }
             } else {
-                using (var outputImage = new Image<Rgba32>(maxX, maxY)) {
+                bool gpuSuccess = false;
+                try {
+                    Bitmap outputBitmap = new Bitmap(maxX, maxY);
                     foreach (var image in validPaths) {
                         using (var bitmap = TexIO.ResolveBitmap(image)) {
-                            using (var layer = TexIO.BitmapToImageSharp(bitmap)) {
-                                if (layer.Width != maxX || layer.Height != maxY) {
-                                    layer.Mutate(o => o.Resize(new SixLabors.ImageSharp.Size(maxX, maxY)));
-                                }
-                                outputImage.Mutate(o => o.DrawImage(layer, new SixLabors.ImageSharp.Point(0, 0), PixelColorBlendingMode.Normal, 1f));
+                            Bitmap resized = bitmap;
+                            bool needsDispose = false;
+                            if (bitmap.Width != maxX || bitmap.Height != maxY) {
+                                resized = new Bitmap(bitmap, maxX, maxY);
+                                needsDispose = true;
                             }
+                            
+                            Bitmap oldOutput = outputBitmap;
+                            outputBitmap = ComputeSharpLayering.MergeImagesGpu(oldOutput, resized);
+                            oldOutput.Dispose();
+                            
+                            if (needsDispose) resized.Dispose();
                         }
                     }
-                    var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder() {
-                        TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
-                        ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
-                    };
                     string dir = Path.GetDirectoryName(ouputPath);
                     if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                    outputImage.SaveAsPng(ouputPath, encoder);
+                    TexIO.SaveBitmap(outputBitmap, ouputPath);
+                    outputBitmap.Dispose();
+                    gpuSuccess = true;
+                } catch (Exception ex) {
+                    System.Diagnostics.Debug.WriteLine($"[ImageManipulation.MergeImageLayers] GPU failed, falling back to ImageSharp: {ex.Message}");
+                    gpuSuccess = false;
+                }
+
+                if (!gpuSuccess) {
+                    using (var outputImage = new SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(maxX, maxY)) {
+                        foreach (var image in validPaths) {
+                            using (var bitmap = TexIO.ResolveBitmap(image)) {
+                                using (var layer = TexIO.BitmapToImageSharp(bitmap)) {
+                                    if (layer.Width != maxX || layer.Height != maxY) {
+                                        layer.Mutate(o => o.Resize(new SixLabors.ImageSharp.Size(maxX, maxY)));
+                                    }
+                                    outputImage.Mutate(o => o.DrawImage(layer, new SixLabors.ImageSharp.Point(0, 0), PixelColorBlendingMode.Normal, 1f));
+                                }
+                            }
+                        }
+                        var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder() {
+                            TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
+                            ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
+                        };
+                        string dir = Path.GetDirectoryName(ouputPath);
+                        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                        outputImage.SaveAsPng(ouputPath, encoder);
+                    }
                 }
             }
         }
