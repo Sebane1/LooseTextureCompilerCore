@@ -275,6 +275,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                 {
                     TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
                     ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
+                    CompressionLevel = SixLabors.ImageSharp.Formats.Png.PngCompressionLevel.BestSpeed
                 };
                 string dir = Path.GetDirectoryName(path);
                 if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
@@ -285,6 +286,33 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                 newImage.SaveAsPng(path, encoder);
             }
         }
+        
+        public static void SaveBitmapFast(Bitmap bitmap, string path)
+        {
+            var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder()
+            {
+                TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
+                ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
+                CompressionLevel = SixLabors.ImageSharp.Formats.Png.PngCompressionLevel.BestSpeed
+            };
+            string dir = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+            while (TexIO.IsFileLocked(path))
+            {
+                Thread.Sleep(100);
+            }
+            
+            var bmpData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            unsafe {
+                var span = new ReadOnlySpan<SixLabors.ImageSharp.PixelFormats.Bgra32>((void*)bmpData.Scan0, bitmap.Width * bitmap.Height);
+                using (var bgraImage = SixLabors.ImageSharp.Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Bgra32>(span, bitmap.Width, bitmap.Height)) {
+                    using (var rgbaImage = bgraImage.CloneAs<SixLabors.ImageSharp.PixelFormats.Rgba32>()) {
+                        rgbaImage.SaveAsPng(path, encoder);
+                    }
+                }
+            }
+            bitmap.UnlockBits(bmpData);
+        }
 
         public static void SaveBitmap(Bitmap bitmap, Stream stream)
         {
@@ -293,6 +321,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                 {
                     TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
                     ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
+                    CompressionLevel = SixLabors.ImageSharp.Formats.Png.PngCompressionLevel.BestSpeed
                 };
                 newImage.SaveAsPng(stream, encoder);
             }

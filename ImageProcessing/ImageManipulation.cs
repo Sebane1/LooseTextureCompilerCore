@@ -1430,29 +1430,48 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             } else {
                 bool gpuSuccess = false;
                 try {
-                    Bitmap outputBitmap = new Bitmap(maxX, maxY);
-                    foreach (var image in validPaths) {
-                        using (var bitmap = TexIO.ResolveBitmap(image)) {
-                            Bitmap resized = bitmap;
-                            bool needsDispose = false;
+                    System.Text.StringBuilder bench = new System.Text.StringBuilder();
+                    bench.AppendLine($"--- MergeImageLayers Benchmark ({validPaths.Count} layers) ---");
+                    System.Diagnostics.Stopwatch totalTimer = System.Diagnostics.Stopwatch.StartNew();
+
+                    System.Diagnostics.Stopwatch loadTimer = System.Diagnostics.Stopwatch.StartNew();
+                    Bitmap[] layerBitmaps = new Bitmap[validPaths.Count];
+                    System.Threading.Tasks.Parallel.For(0, validPaths.Count, i => {
+                        using (var bitmap = TexIO.ResolveBitmap(validPaths[i])) {
                             if (bitmap.Width != maxX || bitmap.Height != maxY) {
-                                resized = new Bitmap(bitmap, maxX, maxY);
-                                needsDispose = true;
+                                layerBitmaps[i] = new Bitmap(bitmap, maxX, maxY);
+                            } else {
+                                layerBitmaps[i] = new Bitmap(bitmap);
                             }
-                            
-                            Bitmap oldOutput = outputBitmap;
-                            outputBitmap = ComputeSharpLayering.MergeImagesGpu(oldOutput, resized);
-                            oldOutput.Dispose();
-                            
-                            if (needsDispose) resized.Dispose();
                         }
+                    });
+                    loadTimer.Stop();
+                    bench.AppendLine($"Parallel Resolve+Resize: {loadTimer.ElapsedMilliseconds}ms");
+
+                    System.Diagnostics.Stopwatch gpuTimer = System.Diagnostics.Stopwatch.StartNew();
+                    Bitmap outputBitmap = ComputeSharpLayering.MergeMultipleImagesGpu(layerBitmaps, maxX, maxY);
+                    gpuTimer.Stop();
+                    bench.AppendLine($"GPU Multi-Merge: {gpuTimer.ElapsedMilliseconds}ms");
+
+                    foreach (var bmp in layerBitmaps) {
+                        if (bmp != null) bmp.Dispose();
                     }
+                    
+                    System.Diagnostics.Stopwatch saveTimer = System.Diagnostics.Stopwatch.StartNew();
                     string dir = Path.GetDirectoryName(ouputPath);
                     if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                    TexIO.SaveBitmap(outputBitmap, ouputPath);
+                    TexIO.SaveBitmapFast(outputBitmap, ouputPath);
+                    bench.AppendLine($"SaveBitmapFast (PNG Encode + IO): {saveTimer.ElapsedMilliseconds}ms");
+                    
                     outputBitmap.Dispose();
                     gpuSuccess = true;
+                    
+                    totalTimer.Stop();
+                    bench.AppendLine($"Total MergeImageLayers Time: {totalTimer.ElapsedMilliseconds}ms\n");
+                    try { System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Benchmark.txt"), bench.ToString()); } catch {}
+
                 } catch (Exception ex) {
+                    try { System.IO.File.WriteAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Fallback_Error.txt"), ex.ToString()); } catch {}
                     System.Diagnostics.Debug.WriteLine($"[ImageManipulation.MergeImageLayers] GPU failed, falling back to ImageSharp: {ex.Message}");
                     gpuSuccess = false;
                 }
