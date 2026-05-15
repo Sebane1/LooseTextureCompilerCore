@@ -340,5 +340,6 @@ namespace FFXIVLooseTextureCompiler.Export
         public static BackupTexturePaths OtopopOverride { get; set; } = new BackupTexturePaths("nada/nada.ltct");
         public static BackupTexturePaths RelalaOverride { get; set; } = new BackupTexturePaths("nada/nada.ltct");
         public static BackupTexturePaths VanillaLalaOverride { get; set; } = new BackupTexturePaths("nada/nada.ltct");
+        public bool FillsMissingTextures { get; set; }
     }
 }

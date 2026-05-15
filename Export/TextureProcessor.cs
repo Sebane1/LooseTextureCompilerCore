@@ -1149,6 +1149,20 @@ namespace FFXIVLooseTextureCompiler
                 }
                 outputGenerated = true;
             }
+            else if (textureSet.BackupTexturePaths != null && textureSet.BackupTexturePaths.FillsMissingTextures)
+            {
+                if (!textureSet.InternalBasePath.Contains("eye"))
+                {
+                    if (!skipTexExport)
+                    {
+                        string normalInput =
+                        Path.IsPathRooted(textureSet.BackupTexturePaths.Normal) ? textureSet.BackupTexturePaths.Normal : Path.Combine(_basePath, textureSet.BackupTexturePaths.Normal);
+                        Task.Run(() => ExportTex(normalInput, normalDiskPath,
+                        ExportType.SkipLayering, "", textureSet.NormalMask, "",
+                        textureSet.NormalCorrection, "", textureSet.InvertNormalGeneration, false));
+                    }
+                }
+            }
             if (skipTexExport && outputGenerated)
             {
                 OnProgressChange?.Invoke(this, EventArgs.Empty);
