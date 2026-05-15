@@ -306,19 +306,20 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 
                 Bitmap safeTop = topLayer.PixelFormat == PixelFormat.Format32bppArgb ? topLayer : topLayer.Clone(new Rectangle(0, 0, topLayer.Width, topLayer.Height), PixelFormat.Format32bppArgb);
                 
-                using var gpuTop = device.AllocateReadOnlyTexture2D<Bgra32, float4>(topLayer.Width, topLayer.Height);
-                var bmpDataTop = safeTop.LockBits(new Rectangle(0, 0, safeTop.Width, safeTop.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-                unsafe {
-                    var span = new ReadOnlySpan<Bgra32>((void*)bmpDataTop.Scan0, safeTop.Width * safeTop.Height);
-                    gpuTop.CopyFrom(span);
-                }
-                safeTop.UnlockBits(bmpDataTop);
-                if (safeTop != topLayer) safeTop.Dispose();
+                using (var gpuTop = device.AllocateReadOnlyTexture2D<Bgra32, float4>(topLayer.Width, topLayer.Height)) {
+                    var bmpDataTop = safeTop.LockBits(new Rectangle(0, 0, safeTop.Width, safeTop.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+                    unsafe {
+                        var span = new ReadOnlySpan<Bgra32>((void*)bmpDataTop.Scan0, safeTop.Width * safeTop.Height);
+                        gpuTop.CopyFrom(span);
+                    }
+                    safeTop.UnlockBits(bmpDataTop);
+                    if (safeTop != topLayer) safeTop.Dispose();
 
-                if (isPing) {
-                    device.For(totalPixels, new MergeImagesPingPongShader(ping, gpuTop, pong, width, height, topLayer.Width, topLayer.Height));
-                } else {
-                    device.For(totalPixels, new MergeImagesPingPongShader(pong, gpuTop, ping, width, height, topLayer.Width, topLayer.Height));
+                    if (isPing) {
+                        device.For(totalPixels, new MergeImagesPingPongShader(ping, gpuTop, pong, width, height, topLayer.Width, topLayer.Height));
+                    } else {
+                        device.For(totalPixels, new MergeImagesPingPongShader(pong, gpuTop, ping, width, height, topLayer.Width, topLayer.Height));
+                    }
                 }
                 isPing = !isPing;
             }

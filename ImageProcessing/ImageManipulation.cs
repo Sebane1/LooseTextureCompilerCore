@@ -1437,13 +1437,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     System.Diagnostics.Stopwatch loadTimer = System.Diagnostics.Stopwatch.StartNew();
                     Bitmap[] layerBitmaps = new Bitmap[validPaths.Count];
                     System.Threading.Tasks.Parallel.For(0, validPaths.Count, i => {
-                        using (var bitmap = TexIO.ResolveBitmap(validPaths[i])) {
-                            if (bitmap.Width != maxX || bitmap.Height != maxY) {
-                                layerBitmaps[i] = new Bitmap(bitmap, maxX, maxY);
-                            } else {
-                                layerBitmaps[i] = new Bitmap(bitmap);
-                            }
-                        }
+                        layerBitmaps[i] = TexIO.ResolveBitmap(validPaths[i]);
                     });
                     loadTimer.Stop();
                     bench.AppendLine($"Parallel Resolve+Resize: {loadTimer.ElapsedMilliseconds}ms");

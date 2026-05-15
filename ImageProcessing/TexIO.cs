@@ -206,14 +206,15 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             {
                 Thread.Sleep(1000);
             }
-            MemoryStream memoryStream = new MemoryStream();
-            using (FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                fileStream.CopyTo(memoryStream);
-            }
-            memoryStream.Position = 0;
-            using (var newImage = SixLabors.ImageSharp.Image.Load<Rgba32>(memoryStream)) {
-                return ImageSharpToBitmap(newImage, noAlpha);
+            using (MemoryStream memoryStream = new MemoryStream()) {
+                using (FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    fileStream.CopyTo(memoryStream);
+                }
+                memoryStream.Position = 0;
+                using (var newImage = SixLabors.ImageSharp.Image.Load<Rgba32>(memoryStream)) {
+                    return ImageSharpToBitmap(newImage, noAlpha);
+                }
             }
         }
         public static Bitmap Clone(Bitmap bitmap, Rectangle rectangle)
