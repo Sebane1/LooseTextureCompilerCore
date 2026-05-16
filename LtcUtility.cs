@@ -14,6 +14,9 @@ namespace LooseTextureCompilerCore {
             string values = path;
             foreach (string value in list) {
                 values += value;
+                if (System.IO.File.Exists(value)) {
+                    values += GetMD5HashFromFile(value);
+                }
             }
             return CreateMD5(values);
         }
