@@ -1450,9 +1450,16 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         } catch {}
                     } else {
                         try {
-                            using (var img = System.Drawing.Image.FromFile(pathToLoad)) {
-                                width = img.Width;
-                                height = img.Height;
+                            var cachedDims = ComputeSharpLayering.GetDimensions(pathToLoad);
+                            if (cachedDims.Width > 0 && cachedDims.Height > 0) {
+                                width = cachedDims.Width;
+                                height = cachedDims.Height;
+                            } else {
+                                var info = SixLabors.ImageSharp.Image.Identify(pathToLoad);
+                                if (info != null) {
+                                    width = info.Width;
+                                    height = info.Height;
+                                }
                             }
                         } catch {}
                     }

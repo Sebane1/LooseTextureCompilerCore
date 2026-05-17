@@ -529,6 +529,17 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             public bool CacheHit;
         }
 
+        public static (int Width, int Height) GetDimensions(string path) {
+            if (string.IsNullOrEmpty(path)) return (0, 0);
+            if (_cpuPixelCache.TryGetValue(path, out var cpuCached)) {
+                return (cpuCached.Width, cpuCached.Height);
+            }
+            if (_vramCache.TryGetValue(path, out var vramCached)) {
+                return (vramCached.Width, vramCached.Height);
+            }
+            return (0, 0);
+        }
+
         private static CpuLayerData LoadPixelsCpu(string path) {
             var result = new CpuLayerData { Path = path };
             if (string.IsNullOrEmpty(path))
