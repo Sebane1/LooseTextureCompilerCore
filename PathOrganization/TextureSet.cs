@@ -245,16 +245,16 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 Thread.Sleep(20000);
                 if (_cleanupVersion != currentVersion) return;
                 try {
-                    if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(FinalBase)) {
+                    if (FinalBase.Contains("_temp") && FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(FinalBase)) {
                         File.Delete(FinalBase);
                     }
-                    if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(FinalNormal)) {
+                    if (FinalNormal.Contains("_temp") && FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(FinalNormal)) {
                         File.Delete(FinalNormal);
                     }
-                    if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(FinalMask)) {
+                    if (FinalMask.Contains("_temp") && FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(FinalMask)) {
                         File.Delete(FinalMask);
                     }
-                    if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(FinalGlow)) {
+                    if (FinalGlow.Contains("_temp") && FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(FinalGlow)) {
                         File.Delete(FinalGlow);
                     }
                 } catch {

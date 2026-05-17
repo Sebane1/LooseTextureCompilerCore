@@ -41,22 +41,16 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             float4 bottomPixel = BottomLayer[pos];
 
-            // Calculate scaled coordinates for the top layer
-            // This mimics the CPU scaling: widthRatio = top.Width / top.Height
-            // destWidthForTop = bottom.Height * widthRatio
-            // We scale X based on that ratio.
+            float srcAspect = (float)SrcWidth / (float)SrcHeight;
+            float scaledWidth = (float)DestHeight * srcAspect;
+            float scaledHeight = (float)DestHeight;
             
-            float widthRatio = (float)SrcWidth / (float)SrcHeight;
-            int scaledTopWidth = (int)(DestHeight * widthRatio);
-            
-            float srcXf = (float)x / scaledTopWidth * SrcWidth;
-            float srcYf = (float)y / DestHeight * SrcHeight;
+            float srcXf = (float)x / scaledWidth * SrcWidth;
+            float srcYf = (float)y / scaledHeight * SrcHeight;
 
             float4 topPixel = float4.Zero;
             
-            // Only sample if within the bounds of the drawn top layer
-            if (x < scaledTopWidth && srcXf < SrcWidth && srcYf < SrcHeight) {
-                // Nearest neighbor sampling to match standard DrawImage without explicit filters
+            if (srcXf >= 0.0f && srcXf < (float)SrcWidth && srcYf >= 0.0f && srcYf < (float)SrcHeight) {
                 int srcX = Hlsl.Clamp((int)srcXf, 0, SrcWidth - 1);
                 int srcY = Hlsl.Clamp((int)srcYf, 0, SrcHeight - 1);
                 topPixel = TopLayer[new int2(srcX, srcY)];
@@ -172,16 +166,16 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int2 pos = new int2(x, y);
 
             float4 bottomPixel = BottomLayer[pos];
+            float srcAspect = (float)SrcWidth / (float)SrcHeight;
+            float scaledWidth = (float)DestHeight * srcAspect;
+            float scaledHeight = (float)DestHeight;
             
-            float widthRatio = (float)SrcWidth / (float)SrcHeight;
-            int scaledTopWidth = (int)(DestHeight * widthRatio);
-            
-            float srcXf = (float)x / scaledTopWidth * SrcWidth;
-            float srcYf = (float)y / DestHeight * SrcHeight;
+            float srcXf = (float)x / scaledWidth * SrcWidth;
+            float srcYf = (float)y / scaledHeight * SrcHeight;
 
             float4 topPixel = float4.Zero;
             
-            if (x < scaledTopWidth && srcXf < SrcWidth && srcYf < SrcHeight) {
+            if (srcXf >= 0.0f && srcXf < (float)SrcWidth && srcYf >= 0.0f && srcYf < (float)SrcHeight) {
                 int srcX = Hlsl.Clamp((int)srcXf, 0, SrcWidth - 1);
                 int srcY = Hlsl.Clamp((int)srcYf, 0, SrcHeight - 1);
                 topPixel = TopLayer[new int2(srcX, srcY)];
@@ -239,16 +233,16 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int2 pos = new int2(x, y);
 
             float4 bottomPixel = BottomLayer[pos];
+            float srcAspect = (float)SrcWidth / (float)SrcHeight;
+            float scaledWidth = (float)DestHeight * srcAspect;
+            float scaledHeight = (float)DestHeight;
             
-            float widthRatio = (float)SrcWidth / (float)SrcHeight;
-            int scaledTopWidth = (int)(DestHeight * widthRatio);
-            
-            float srcXf = (float)x / scaledTopWidth * SrcWidth;
-            float srcYf = (float)y / DestHeight * SrcHeight;
+            float srcXf = (float)x / scaledWidth * SrcWidth;
+            float srcYf = (float)y / scaledHeight * SrcHeight;
 
             float4 topPixel = float4.Zero;
             
-            if (x < scaledTopWidth && srcXf < SrcWidth && srcYf < SrcHeight) {
+            if (srcXf >= 0.0f && srcXf < (float)SrcWidth && srcYf >= 0.0f && srcYf < (float)SrcHeight) {
                 int srcX = Hlsl.Clamp((int)srcXf, 0, SrcWidth - 1);
                 int srcY = Hlsl.Clamp((int)srcYf, 0, SrcHeight - 1);
                 topPixel = TopLayer[new int2(srcX, srcY)];
@@ -412,14 +406,14 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 int srcH = Meta[metaBase + 1];
                 int pixelOffset = Meta[metaBase + 2];
 
-                // Compute source coordinates with aspect-ratio scaling
-                float widthRatio = (float)srcW / (float)srcH;
-                int scaledTopWidth = (int)(destH * widthRatio);
+                float srcAspect = (float)srcW / (float)srcH;
+                float scaledWidth = (float)destH * srcAspect;
+                float scaledHeight = (float)destH;
+                
+                float srcXf = (float)x / scaledWidth * srcW;
+                float srcYf = (float)y / scaledHeight * srcH;
 
-                float srcXf = (float)x / scaledTopWidth * srcW;
-                float srcYf = (float)y / destH * srcH;
-
-                if (x < scaledTopWidth && srcXf < srcW && srcYf < srcH) {
+                if (srcXf >= 0.0f && srcXf < (float)srcW && srcYf >= 0.0f && srcYf < (float)srcH) {
                     int srcX = Hlsl.Clamp((int)srcXf, 0, srcW - 1);
                     int srcY = Hlsl.Clamp((int)srcYf, 0, srcH - 1);
 

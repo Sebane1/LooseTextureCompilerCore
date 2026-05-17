@@ -2287,18 +2287,21 @@ namespace FFXIVLooseTextureCompiler
                     var paths = new System.Collections.Generic.List<string> { underlayPath, inputFile };
                     int width = 4096;
                     int height = 4096;
-                    if (inputFile.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))
+                    
+                    // Determine canvas dimensions from the underlayPath so the underlay is never cropped/scaled down
+                    string baselinePath = FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(underlayPath) || underlayPath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase) ? underlayPath : inputFile;
+                    if (baselinePath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))
                     {
-                        if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.VirtualFileSystem.TryGetValue(inputFile, out FFXIVLooseTextureCompiler.ImageProcessing.TexIO.MemoryFile memFile))
+                        if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.VirtualFileSystem.TryGetValue(baselinePath, out FFXIVLooseTextureCompiler.ImageProcessing.TexIO.MemoryFile memFile))
                         {
                             width = memFile.Width;
                             height = memFile.Height;
                         }
                     }
-                    else if (inputFile.EndsWith(".tex", StringComparison.OrdinalIgnoreCase))
+                    else if (baselinePath.EndsWith(".tex", StringComparison.OrdinalIgnoreCase))
                     {
                         try {
-                            using (var stream = new FileStream(inputFile, FileMode.Open, FileAccess.Read)) {
+                            using (var stream = new FileStream(baselinePath, FileMode.Open, FileAccess.Read)) {
                                 var scratch = global::Penumbra.LTCImport.Textures.PenumbraTexFileParser.Parse(stream);
                                 width = scratch.Meta.Width;
                                 height = scratch.Meta.Height;
@@ -2308,7 +2311,7 @@ namespace FFXIVLooseTextureCompiler
                     else
                     {
                         try {
-                            using (var img = System.Drawing.Image.FromFile(inputFile)) {
+                            using (var img = System.Drawing.Image.FromFile(baselinePath)) {
                                 width = img.Width;
                                 height = img.Height;
                             }
