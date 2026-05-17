@@ -228,7 +228,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         {
             string extension = FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration ? ".raw" : ".png";
             string prefix = (FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration && PathOrganization.UniversalTextureSetCreator.UseMemoryCache) ? "memory://" : "";
-            return prefix + Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(path, overlays) + "_temp" + extension);
+            string baseDir = path.StartsWith("memory://", StringComparison.OrdinalIgnoreCase) ? "" : (Path.GetDirectoryName(path) ?? "");
+            return prefix + Path.Combine(baseDir, LtcUtility.CreateIdentifier(path, overlays) + "_temp" + extension);
         }
         public void CancelCleanup() {
             _cleanupVersion++;

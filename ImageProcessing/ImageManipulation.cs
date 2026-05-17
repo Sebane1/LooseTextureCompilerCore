@@ -1401,12 +1401,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     string pathToLoad = image;
 
                     if (uvs != null && i < uvs.Count && !string.IsNullOrEmpty(uvs[i]) && !string.IsNullOrEmpty(targetUV) && uvs[i].ToLower() != targetUV.ToLower()) {
-                        bool isMemory = image.StartsWith("memory://", StringComparison.OrdinalIgnoreCase);
-                        string fileHash = isMemory ? image.GetHashCode().ToString() : LooseTextureCompilerCore.LtcUtility.GetMD5HashFromFile(image);
+                        string fileHash = LooseTextureCompilerCore.LtcUtility.GetMD5HashFromFile(image);
                         
-                        string cachedPath = isMemory 
-                            ? image + $"_from_{uvs[i].ToLower()}_to_{targetUV.ToLower()}.raw"
-                            : Path.Combine(Path.GetDirectoryName(image), fileHash + $"_from_{uvs[i].ToLower()}_to_{targetUV.ToLower()}.png");
+                        string ext = FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration ? ".raw" : ".png";
+                        string prefix = (FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration && FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) ? "memory://" : "";
+
+                        string baseDir = image.StartsWith("memory://", StringComparison.OrdinalIgnoreCase) ? "" : (Path.GetDirectoryName(image) ?? "");
+                        string cachedPath = prefix + Path.Combine(baseDir, fileHash + $"_from_{uvs[i].ToLower()}_to_{targetUV.ToLower()}" + ext);
 
                         if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(cachedPath) && !TexIO.VirtualFileSystem.ContainsKey(cachedPath)) {
                             string conversionKey = uvs[i].ToLower() + "to" + targetUV.ToLower();

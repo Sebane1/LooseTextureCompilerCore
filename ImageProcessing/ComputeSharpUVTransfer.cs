@@ -573,7 +573,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         /// </summary>
         public static bool TransferFile(string inputPath, string outputPath, string transferMapPath, bool useBilinear = true) {
             string ext = System.IO.Path.GetExtension(inputPath).ToLowerInvariant();
-            // Only handle formats ImageSharp can load natively
+            // Only handle formats we can load directly
             if (ext == ".tex" || ext == ".dds" || ext == ".ltct") return false;
 
             var totalSw = System.Diagnostics.Stopwatch.StartNew();
@@ -610,11 +610,26 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             // Load source directly as Bgra32 bytes — no Bitmap!
             int srcWidth, srcHeight;
             byte[] srcPixels;
-            using (var srcImage = SixLabors.ImageSharp.Image.Load<SixLabors.ImageSharp.PixelFormats.Bgra32>(inputPath)) {
-                srcWidth = srcImage.Width;
-                srcHeight = srcImage.Height;
-                srcPixels = new byte[srcWidth * srcHeight * 4];
-                srcImage.CopyPixelDataTo(srcPixels);
+            
+            if (inputPath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+                if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.VirtualFileSystem.TryGetValue(inputPath, out var memFile)) return false;
+                srcWidth = memFile.Width;
+                srcHeight = memFile.Height;
+                srcPixels = memFile.Data;
+            } else if (inputPath.EndsWith(".raw", StringComparison.OrdinalIgnoreCase)) {
+                using (var fs = new System.IO.FileStream(inputPath, System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                using (var br = new System.IO.BinaryReader(fs)) {
+                    srcWidth = br.ReadInt32();
+                    srcHeight = br.ReadInt32();
+                    srcPixels = br.ReadBytes(srcWidth * srcHeight * 4);
+                }
+            } else {
+                using (var srcImage = SixLabors.ImageSharp.Image.Load<SixLabors.ImageSharp.PixelFormats.Bgra32>(inputPath)) {
+                    srcWidth = srcImage.Width;
+                    srcHeight = srcImage.Height;
+                    srcPixels = new byte[srcWidth * srcHeight * 4];
+                    srcImage.CopyPixelDataTo(srcPixels);
+                }
             }
 
             long loadMs = phaseSw.ElapsedMilliseconds;
@@ -673,17 +688,32 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             long gpuMs = phaseSw.ElapsedMilliseconds;
             phaseSw.Restart();
 
-            // Save directly as PNG via ImageSharp — no Bitmap conversion!
-            // BestSpeed compression: these are intermediate files that get converted to .tex anyway
-            using (var bgraImage = SixLabors.ImageSharp.Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Bgra32>(resultPixels, destWidth, destHeight))
-            using (var resultImage = bgraImage.CloneAs<SixLabors.ImageSharp.PixelFormats.Rgba32>()) {
-                var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder() {
-                    TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
-                    ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
-                    CompressionLevel = SixLabors.ImageSharp.Formats.Png.PngCompressionLevel.BestSpeed,
-                };
-                using (var fs = new System.IO.FileStream(outputPath, System.IO.FileMode.Create, System.IO.FileAccess.Write)) {
-                    resultImage.Save(fs, encoder);
+            // Save directly based on extension — no Bitmap conversion!
+            if (outputPath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+                var memFile = new FFXIVLooseTextureCompiler.ImageProcessing.TexIO.MemoryFile();
+                memFile.Width = destWidth;
+                memFile.Height = destHeight;
+                memFile.Data = resultPixels;
+                FFXIVLooseTextureCompiler.ImageProcessing.TexIO.VirtualFileSystem[outputPath] = memFile;
+            } else if (outputPath.EndsWith(".raw", StringComparison.OrdinalIgnoreCase)) {
+                using (var fs = new System.IO.FileStream(outputPath, System.IO.FileMode.Create, System.IO.FileAccess.Write))
+                using (var bw = new System.IO.BinaryWriter(fs)) {
+                    bw.Write(destWidth);
+                    bw.Write(destHeight);
+                    bw.Write(resultPixels);
+                }
+            } else {
+                // BestSpeed compression: these are intermediate files that get converted to .tex anyway
+                using (var bgraImage = SixLabors.ImageSharp.Image.LoadPixelData<SixLabors.ImageSharp.PixelFormats.Bgra32>(resultPixels, destWidth, destHeight))
+                using (var resultImage = bgraImage.CloneAs<SixLabors.ImageSharp.PixelFormats.Rgba32>()) {
+                    var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder() {
+                        TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
+                        ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
+                        CompressionLevel = SixLabors.ImageSharp.Formats.Png.PngCompressionLevel.BestSpeed,
+                    };
+                    using (var fs = new System.IO.FileStream(outputPath, System.IO.FileMode.Create, System.IO.FileAccess.Write)) {
+                        resultImage.Save(fs, encoder);
+                    }
                 }
             }
 
