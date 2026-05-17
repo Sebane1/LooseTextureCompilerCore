@@ -1493,25 +1493,47 @@ namespace FFXIVLooseTextureCompiler
 
         private Bitmap ExportTypeSkipLayering(string inputFile, string layeringImage, string alphaOverride, bool invertAlpha, bool dontInvertAlphaOverride)
         {
-            Bitmap input = null;
-            using (Bitmap rgb = GetMergedBitmap(inputFile))
+            if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(alphaOverride))
             {
-                input = rgb;
-                if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(alphaOverride))
-                {
-                    using (Bitmap alpha = GetMergedBitmap(alphaOverride))
-                    {
-                        if (alpha.Width > rgb.Width || alpha.Height > rgb.Height)
-                        {
-                            input = ImageManipulation.Resize(rgb, alpha.Width, alpha.Height);
-                        }
-                        return ImageManipulation.MergeAlphaToRGB(invertAlpha && !dontInvertAlphaOverride ? ImageManipulation.InvertImage(alpha) : alpha, input);
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                int width = 4096, height = 4096;
+                // Get the base normal map dimensions to use as the output bounds
+                if (inputFile.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+                    if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.VirtualFileSystem.TryGetValue(inputFile, out var memFile)) {
+                        width = memFile.Width;
+                        height = memFile.Height;
                     }
+                } else if (inputFile.EndsWith(".tex", StringComparison.OrdinalIgnoreCase)) {
+                    try {
+                        using (var stream = new FileStream(inputFile, FileMode.Open, FileAccess.Read)) {
+                            var scratch = global::Penumbra.LTCImport.Textures.PenumbraTexFileParser.Parse(stream);
+                            width = scratch.Meta.Width;
+                            height = scratch.Meta.Height;
+                        }
+                    } catch {}
+                } else {
+                    try {
+                        using (var img = System.Drawing.Image.FromFile(inputFile)) {
+                            width = img.Width;
+                            height = img.Height;
+                        }
+                    } catch {}
                 }
-                return rgb;
-            }
 
-            return new Bitmap(4096, 4096);
+                long setupMs = sw.ElapsedMilliseconds;
+                sw.Restart();
+                
+                // Use the GPU cache path which inherently supports scaling the alpha map dynamically
+                Bitmap result = ComputeSharpLayering.MergeAlphaToRGBGpuFromPaths(inputFile, alphaOverride, width, height, invertAlpha && !dontInvertAlphaOverride);
+                
+                long compositeMs = sw.ElapsedMilliseconds;
+                sw.Stop();
+                _asyncBenchLog.Enqueue($"    [SkipLayering Detail] CachedGpuPath Setup={setupMs}ms, Composite={compositeMs}ms");
+                
+                return result;
+            }
+            
+            return GetMergedBitmap(inputFile) ?? new Bitmap(4096, 4096);
         }
 
         // ── Bitmap-returning variants: skip the PNG compress→decompress round-trip ──
@@ -2256,11 +2278,66 @@ namespace FFXIVLooseTextureCompiler
         {
             if (!string.IsNullOrEmpty(layeringImage))
             {
-                using (Bitmap bottomLayer = ResolveBitmapScaled(Path.Combine(_basePath, layeringImage)))
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                string underlayPath = Path.Combine(_basePath, layeringImage);
+                
+                if (string.IsNullOrEmpty(alphaOverride))
                 {
-                    using (Bitmap topLayer = GetMergedBitmap(inputFile))
+                    // Fast path: no alpha override, use fully cached GPU pipeline
+                    var paths = new System.Collections.Generic.List<string> { underlayPath, inputFile };
+                    int width = 4096;
+                    int height = 4096;
+                    if (inputFile.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))
                     {
-                        return ImageManipulation.LayerImages(bottomLayer, topLayer, alphaOverride, invertAlpha, dontInvertAlphaOverrid);
+                        if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.VirtualFileSystem.TryGetValue(inputFile, out FFXIVLooseTextureCompiler.ImageProcessing.TexIO.MemoryFile memFile))
+                        {
+                            width = memFile.Width;
+                            height = memFile.Height;
+                        }
+                    }
+                    else if (inputFile.EndsWith(".tex", StringComparison.OrdinalIgnoreCase))
+                    {
+                        try {
+                            using (var stream = new FileStream(inputFile, FileMode.Open, FileAccess.Read)) {
+                                var scratch = global::Penumbra.LTCImport.Textures.PenumbraTexFileParser.Parse(stream);
+                                width = scratch.Meta.Width;
+                                height = scratch.Meta.Height;
+                            }
+                        } catch {}
+                    }
+                    else
+                    {
+                        try {
+                            using (var img = System.Drawing.Image.FromFile(inputFile)) {
+                                width = img.Width;
+                                height = img.Height;
+                            }
+                        } catch {}
+                    }
+                    
+                    long setupMs = sw.ElapsedMilliseconds;
+                    sw.Restart();
+                    Bitmap result = ComputeSharpLayering.MergeMultipleImagesGpuFromPaths(paths, width, height);
+                    long compositeMs = sw.ElapsedMilliseconds;
+                    sw.Stop();
+                    _asyncBenchLog.Enqueue($"    [None Detail] CachedGpuPath Setup={setupMs}ms, Composite={compositeMs}ms");
+                    return result;
+                }
+                else
+                {
+                    // Alpha override path: use original LayerImages which handles alpha correctly
+                    using (Bitmap bottomLayer = ResolveBitmapScaled(underlayPath))
+                    {
+                        using (Bitmap topLayer = GetMergedBitmap(inputFile))
+                        {
+                            long setupMs = sw.ElapsedMilliseconds;
+                            sw.Restart();
+                            Bitmap result = ImageManipulation.LayerImages(bottomLayer, topLayer, alphaOverride, invertAlpha, dontInvertAlphaOverrid);
+                            long compositeMs = sw.ElapsedMilliseconds;
+                            sw.Stop();
+                            _asyncBenchLog.Enqueue($"    [None Detail] AlphaOverridePath Setup={setupMs}ms, Composite={compositeMs}ms");
+                            return result;
+                        }
                     }
                 }
             }
