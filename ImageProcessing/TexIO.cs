@@ -229,7 +229,12 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
         public static Bitmap Resize(Bitmap bitmap, int width, int height)
         {
             using (var newImage = BitmapToImageSharp(bitmap)) {
-                newImage.Mutate(i => i.Resize(width, height));
+                var options = new ResizeOptions
+                {
+                    Size = new SixLabors.ImageSharp.Size(width, height),
+                    PremultiplyAlpha = false
+                };
+                newImage.Mutate(i => i.Resize(options));
                 using (var cloned = newImage.Clone()) {
                     return ImageSharpToBitmap(cloned);
                 }
