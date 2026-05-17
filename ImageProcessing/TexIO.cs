@@ -155,14 +155,101 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             rgba.Pixels[..(f.Meta.Width * f.Meta.Height * f.Meta.Format.BitsPerPixel() / 8)].ToArray());
         }
 
+                public struct MemoryFile
+        {
+            public int Width;
+            public int Height;
+            public byte[] Data;
+        }
+
+        public static System.Collections.Concurrent.ConcurrentDictionary<string, MemoryFile> VirtualFileSystem = new System.Collections.Concurrent.ConcurrentDictionary<string, MemoryFile>();
+
+        public static void SaveMemoryBitmap(Bitmap bitmap, string path)
+        {
+            MemoryFile file = new MemoryFile();
+            file.Width = bitmap.Width;
+            file.Height = bitmap.Height;
+            LockBitmap lockBitmap = new LockBitmap(bitmap);
+            lockBitmap.LockBits();
+            file.Data = new byte[lockBitmap.Pixels.Length];
+            Array.Copy(lockBitmap.Pixels, file.Data, lockBitmap.Pixels.Length);
+            lockBitmap.UnlockBits();
+            VirtualFileSystem[path] = file;
+        }
+
+        public static bool Exists(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return false;
+            if (path.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))
+            {
+                return VirtualFileSystem.ContainsKey(path);
+            }
+            return File.Exists(path);
+        }
+
+        public static Bitmap ResolveMemoryBitmap(string path)
+        {
+            if (VirtualFileSystem.TryGetValue(path, out MemoryFile file))
+            {
+                Bitmap bitmap = new Bitmap(file.Width, file.Height, PixelFormat.Format32bppArgb);
+                LockBitmap lockBitmap = new LockBitmap(bitmap);
+                lockBitmap.LockBits();
+                Array.Copy(file.Data, lockBitmap.Pixels, file.Data.Length);
+                lockBitmap.UnlockBits();
+                return bitmap;
+            }
+            return new Bitmap(4096, 4096);
+        }
+        public static void SaveRawBitmap(Bitmap bitmap, string path)
+        {
+            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            using (BinaryWriter bw = new BinaryWriter(fs))
+            {
+                bw.Write(bitmap.Width);
+                bw.Write(bitmap.Height);
+                LockBitmap lockBitmap = new LockBitmap(bitmap);
+                lockBitmap.LockBits();
+                bw.Write(lockBitmap.Pixels);
+                lockBitmap.UnlockBits();
+            }
+        }
+
+        public static Bitmap ResolveRawBitmap(string path)
+        {
+            using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+            using (BinaryReader br = new BinaryReader(fs))
+            {
+                int width = br.ReadInt32();
+                int height = br.ReadInt32();
+                Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+                LockBitmap lockBitmap = new LockBitmap(bitmap);
+                lockBitmap.LockBits();
+                byte[] data = br.ReadBytes(width * height * 4);
+                Array.Copy(data, lockBitmap.Pixels, data.Length);
+                lockBitmap.UnlockBits();
+                return bitmap;
+            }
+        }
+
         public static Bitmap ResolveBitmap(string inputFile, bool noAlpha = false)
         {
-            if (string.IsNullOrEmpty(inputFile) || !File.Exists(inputFile))
+            if (string.IsNullOrEmpty(inputFile) || (!File.Exists(inputFile) && !inputFile.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)))
             {
                 var item = new Bitmap(4096, 4096);
                 Graphics.FromImage(item).Clear(Color.Transparent);
                 return item;
             }
+
+            if (inputFile.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))
+            {
+                return ResolveMemoryBitmap(inputFile);
+            }
+
+            if (inputFile.EndsWith(".raw", StringComparison.OrdinalIgnoreCase))
+            {
+                return ResolveRawBitmap(inputFile);
+            }
+
             bool succeeded = false;
             while (!succeeded)
             {
@@ -274,8 +361,21 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             destination.UnlockBits();
             return canvas;
         }
+
         public static void SaveBitmap(Bitmap bitmap, string path)
         {
+            if (path.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))
+            {
+                SaveMemoryBitmap(bitmap, path);
+                return;
+            }
+
+            if (path.EndsWith(".raw", StringComparison.OrdinalIgnoreCase))
+            {
+                SaveRawBitmap(bitmap, path);
+                return;
+            }
+
             using (var newImage = BitmapToImageSharp(bitmap)) {
                 var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder()
                 {
@@ -295,6 +395,17 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
         
         public static void SaveBitmapFast(Bitmap bitmap, string path)
         {
+            if (path.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))
+            {
+                SaveMemoryBitmap(bitmap, path);
+                return;
+            }
+
+            if (path.EndsWith(".raw", StringComparison.OrdinalIgnoreCase))
+            {
+                SaveRawBitmap(bitmap, path);
+                return;
+            }
             var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder()
             {
                 TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
@@ -519,3 +630,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
         }
     }
 }
+
+
+
+
+
+
+
+
+
+

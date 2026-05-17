@@ -113,7 +113,7 @@ namespace FFXIVLooseTextureCompiler
             {
                 string path1 = file.Replace("baseTexBaked", "alpha_baseTexBaked");
                 string path2 = file.Replace("baseTexBaked", "rgb_baseTexBaked");
-                if (File.Exists(path1) && File.Exists(path2))
+                if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(path1) && FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(path2))
                 {
                     Bitmap alpha = TexIO.ResolveBitmap(path1);
                     Bitmap rgb = TexIO.ResolveBitmap(path2);
@@ -193,7 +193,7 @@ namespace FFXIVLooseTextureCompiler
                 // Create a hash algorithm
                 var hash = CreateHash(parent.FinalBase);
 
-                if (!File.Exists(child.FinalBase) || !parent.Hashes.ContainsKey(child.FinalBase) || hash != parent.Hashes[child.FinalBase])
+                if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(child.FinalBase) || !parent.Hashes.ContainsKey(child.FinalBase) || hash != parent.Hashes[child.FinalBase])
                 {
                     OnProgressReport?.Invoke(this, "Queue For UV Transfer");
                     AddToXnormalPool(parent, child, XNormalTextureType.Base);
@@ -208,7 +208,7 @@ namespace FFXIVLooseTextureCompiler
                 // Create a hash algorithm
                 var hash = CreateHash(parent.FinalNormal);
 
-                if (!File.Exists(child.FinalNormal) || !parent.Hashes.ContainsKey(child.FinalNormal) || hash != parent.Hashes[child.FinalNormal])
+                if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(child.FinalNormal) || !parent.Hashes.ContainsKey(child.FinalNormal) || hash != parent.Hashes[child.FinalNormal])
                 {
                     OnProgressReport?.Invoke(this, "Queue For UV Transfer");
                     AddToXnormalPool(parent, child, XNormalTextureType.Normal);
@@ -223,7 +223,7 @@ namespace FFXIVLooseTextureCompiler
                 // Create a hash algorithm
                 var hash = CreateHash(parent.FinalMask);
 
-                if (!File.Exists(child.FinalMask) || !parent.Hashes.ContainsKey(child.FinalMask) || hash != parent.Hashes[child.FinalMask])
+                if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(child.FinalMask) || !parent.Hashes.ContainsKey(child.FinalMask) || hash != parent.Hashes[child.FinalMask])
                 {
                     OnProgressReport?.Invoke(this, "Queue For UV Transfer");
                     AddToXnormalPool(parent, child, XNormalTextureType.Mask);
@@ -238,7 +238,7 @@ namespace FFXIVLooseTextureCompiler
                 // Create a hash algorithm
                 var hash = CreateHash(parent.FinalGlow);
 
-                if (!File.Exists(child.FinalGlow) || !parent.Hashes.ContainsKey(child.FinalGlow) || hash != parent.Hashes[child.FinalGlow])
+                if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(child.FinalGlow) || !parent.Hashes.ContainsKey(child.FinalGlow) || hash != parent.Hashes[child.FinalGlow])
                 {
                     OnProgressReport?.Invoke(this, "Queue For UV Transfer");
                     AddToXnormalPool(parent, child, XNormalTextureType.Glow);
@@ -288,8 +288,8 @@ namespace FFXIVLooseTextureCompiler
                 ImageManipulation.AddSuffix(parentTexturePath, "_alpha"), ".png");
                 string baseTextureRGB = ImageManipulation.ReplaceExtension(
                 ImageManipulation.AddSuffix(parentTexturePath, "_rgb"), ".png");
-                if (_finalizeResults || !File.Exists(childTexturePath.Replace("baseTexBaked", "rgb_baseTexBaked"))
-                    || !File.Exists(childTexturePath.Replace("baseTexBaked", "alpha_baseTexBaked")))
+                if (_finalizeResults || !FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(childTexturePath.Replace("baseTexBaked", "rgb_baseTexBaked"))
+                    || !FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(childTexturePath.Replace("baseTexBaked", "alpha_baseTexBaked")))
                 {
                     if (childTexturePath.Contains("baseTexBaked"))
                     {
@@ -322,13 +322,13 @@ namespace FFXIVLooseTextureCompiler
                                 }
                                 else
                                 {
-                                    if (!File.Exists(ImageManipulation.AddSuffix(childTexturePath, "_baseTexBaked")))
+                                    if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(ImageManipulation.AddSuffix(childTexturePath, "_baseTexBaked")))
                                     {
-                                        if (!File.Exists(childAlpha))
+                                        if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(childAlpha))
                                         {
                                             new Bitmap(1024, 1024).Save(ImageManipulation.AddSuffix(childAlpha, "_baseTexBaked"), ImageFormat.Png);
                                         }
-                                        if (!File.Exists(childRGB))
+                                        if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(childRGB))
                                         {
                                             new Bitmap(1024, 1024).Save(ImageManipulation.AddSuffix(childRGB, "_baseTexBaked"), ImageFormat.Png);
                                         }
@@ -1019,8 +1019,8 @@ namespace FFXIVLooseTextureCompiler
                                 @"res\materials\eye_glow.mtrl"
                                 : @"res\materials\skin_glow.mtrl");
 
-                                Trace.WriteLine($"[Glow Debug] MaterialLogic: donor mtrl path = '{value}', exists = {File.Exists(value)}");
-                                if (!File.Exists(value))
+                                Trace.WriteLine($"[Glow Debug] MaterialLogic: donor mtrl path = '{value}', exists = {FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(value)}");
+                                if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(value))
                                 {
                                     OnError?.Invoke(this, $"[Glow] Donor material file not found: {value}");
                                     OnProgressChange?.Invoke(this, EventArgs.Empty);
@@ -1424,7 +1424,7 @@ namespace FFXIVLooseTextureCompiler
                         {
                             Thread.Sleep(500);
                         }
-                        if (File.Exists(outputFile))
+                        if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(outputFile))
                         {
                             File.Delete(outputFile);
                         }
@@ -1454,7 +1454,7 @@ namespace FFXIVLooseTextureCompiler
             using (Bitmap rgb = GetMergedBitmap(inputFile))
             {
                 input = rgb;
-                if (File.Exists(alphaOverride))
+                if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(alphaOverride))
                 {
                     using (Bitmap alpha = GetMergedBitmap(alphaOverride))
                     {
@@ -1636,7 +1636,7 @@ namespace FFXIVLooseTextureCompiler
                             }
 
                             Bitmap toCalculate = modifier ? ImageManipulation.InvertImage(target) : target;
-                            if (File.Exists(modifierMap))
+                            if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(modifierMap))
                             {
                                 using (Bitmap normalMaskBitmap = TexIO.ResolveBitmap(modifierMap))
                                 {
@@ -1743,7 +1743,7 @@ namespace FFXIVLooseTextureCompiler
                             {
                                 using (Bitmap canvasImage = new Bitmap(baseTexture.Size.Width, baseTexture.Size.Height, PixelFormat.Format32bppArgb))
                                 {
-                                    if (File.Exists(modifierMap))
+                                    if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(modifierMap))
                                     {
                                         using (Bitmap normalMaskBitmap = TexIO.ResolveBitmap(modifierMap))
                                         {
@@ -1886,7 +1886,7 @@ namespace FFXIVLooseTextureCompiler
                             {
                                 using (Bitmap canvasImage = new Bitmap(baseTexture.Size.Width, baseTexture.Size.Height, PixelFormat.Format32bppArgb))
                                 {
-                                    if (File.Exists(modifierMap))
+                                    if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(modifierMap))
                                     {
                                         using (Bitmap normalMaskBitmap = TexIO.ResolveBitmap(modifierMap))
                                         {
@@ -2056,7 +2056,7 @@ namespace FFXIVLooseTextureCompiler
                             }
 
                             Bitmap toCalculate = modifier ? ImageManipulation.InvertImage(target) : target;
-                            if (File.Exists(modifierMap))
+                            if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(modifierMap))
                             {
                                 using (Bitmap normalMaskBitmap = TexIO.ResolveBitmap(modifierMap))
                                 {
@@ -2249,6 +2249,8 @@ namespace FFXIVLooseTextureCompiler
         }
     }
 }
+
+
 
 
 

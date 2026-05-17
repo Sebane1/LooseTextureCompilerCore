@@ -34,6 +34,32 @@ namespace FFXIVLooseTextureCompiler
         }
         public static List<ModularTransferJob> modularBatch = new List<ModularTransferJob>();
 
+        
+        public static Bitmap PerformTransfer(Bitmap inputImage, string transferMapFilename)
+        {
+            string transferMapPath = Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "res", "fastuvtransfer", "body", transferMapFilename);
+            if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(transferMapPath)) return null;
+            if (UVTransferMap.UseGPUAcceleration)
+            {
+                return ComputeSharpUVTransfer.ApplyTransferMapFast(inputImage, transferMapPath, true);
+            }
+            return UVTransferMap.ApplyTransferMap(inputImage, transferMapPath);
+        }
+
+        public static Bitmap BiboToGen2(Bitmap inputImage) => PerformTransfer(inputImage, "bibo_to_gen2_transfer.tif");
+        public static Bitmap BiboToGen3(Bitmap inputImage) => PerformTransfer(inputImage, "bibo_to_gen3_transfer.tif");
+        public static Bitmap Gen3ToGen2(Bitmap inputImage) => PerformTransfer(inputImage, "gen3_to_gen2_transfer.tif");
+        public static Bitmap Gen3ToBibo(Bitmap inputImage) => PerformTransfer(inputImage, "gen3_to_bibo_transfer.tif");
+        public static Bitmap Gen2ToBibo(Bitmap inputImage) => PerformTransfer(inputImage, "gen2_to_bibo_transfer.tif");
+        public static Bitmap Gen2ToGen3(Bitmap inputImage) => PerformTransfer(inputImage, "gen2_to_gen3_transfer.tif");
+        public static Bitmap OtopopToVanillaLala(Bitmap inputImage) => PerformTransfer(inputImage, "otopop_to_vanillalala_transfer.tif");
+        public static Bitmap VanillaLalaToOtopop(Bitmap inputImage) => PerformTransfer(inputImage, "vanillalala_to_otopop_transfer.tif");
+        public static Bitmap VanillaLalaToAsymLala(Bitmap inputImage) => PerformTransfer(inputImage, "vanillalala_to_asymlala_transfer.tif");
+        public static Bitmap AsymLalaToVanillaLala(Bitmap inputImage) => PerformTransfer(inputImage, "asymlala_to_vanillalala_transfer.tif");
+        public static Bitmap AsymLalaToOtopop(Bitmap inputImage) => PerformTransfer(inputImage, "asymlala_to_otopop_transfer.tif");
+        public static Bitmap OtopopToAsymLala(Bitmap inputImage) => PerformTransfer(inputImage, "otopop_to_asymlala_transfer.tif");
+        public static Bitmap RelalaToAsymLala(Bitmap inputImage) => PerformTransfer(inputImage, "relala_to_asymlala_transfer.tif");
+        public static Bitmap AsymLalaToRelala(Bitmap inputImage) => PerformTransfer(inputImage, "asymlala_to_relala_transfer.tif");
         public static void ProcessBatches()
         {
             foreach (var item in gen3ToBiboBatch) Gen3ToBibo(item.Item1, item.Item2);
@@ -55,7 +81,7 @@ namespace FFXIVLooseTextureCompiler
 
             foreach (var item in biboToGen2Batch)
             {
-                while (!File.Exists(item.Item1))
+                while (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(item.Item1))
                 {
                     Thread.Sleep(100);
                 }
@@ -64,7 +90,7 @@ namespace FFXIVLooseTextureCompiler
             foreach (var item in gen3ToGen2Batch)
             {
                 string preBakedFile = item.Item2.Replace("gen2", "bibo");
-                while (!File.Exists(preBakedFile))
+                while (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(preBakedFile))
                 {
                     Thread.Sleep(100);
                 }
@@ -101,13 +127,13 @@ namespace FFXIVLooseTextureCompiler
             string transferMapPath = Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "res", "fastuvtransfer", "body", transferMapFilename);
 
             // If the map doesn't exist for some reason, fallback to XNormal
-            if (!File.Exists(transferMapPath))
+            if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(transferMapPath))
             {
                 xnormalFallback(inputImage, outputImage);
                 string xnormalOutput = ImageManipulation.AddSuffix(outputImage, "_baseTexBaked");
-                if (File.Exists(xnormalOutput))
+                if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(xnormalOutput))
                 {
-                    if (File.Exists(outputImage)) File.Delete(outputImage);
+                    if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(outputImage)) File.Delete(outputImage);
                     File.Move(xnormalOutput, outputImage);
                 }
                 return;
@@ -287,7 +313,7 @@ namespace FFXIVLooseTextureCompiler
             string transferMapPath = Path.Combine(transferMapDir, transferMapName);
 
             // If the map doesn't exist, generate it seamlessly using XNormal!
-            if (!File.Exists(transferMapPath))
+            if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(transferMapPath))
             {
                 XNormal.BakeTransferMap(sourceMeshRelPath, targetMeshRelPath, transferMapPath);
             }
@@ -317,3 +343,6 @@ namespace FFXIVLooseTextureCompiler
 
     }
 }
+
+
+

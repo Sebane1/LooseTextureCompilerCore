@@ -190,7 +190,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             }
             string path = !string.IsNullOrEmpty(_baseTexture) ? _baseTexture : (_baseOverlays.Count > 0 ? _baseOverlays[0] : "");
             if (!string.IsNullOrEmpty(path)) {
-                return Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(path, _baseOverlays) + "_temp.png");
+                return GetCachePath(path, _baseOverlays);
             }
             return "";
         }
@@ -200,7 +200,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             }
             string path = !string.IsNullOrEmpty(_normal) ? _normal : (_normalOverlays.Count > 0 ? _normalOverlays[0] : "");
             if (!string.IsNullOrEmpty(path)) {
-                return Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(path, _normalOverlays) + "_temp.png");
+                return GetCachePath(path, _normalOverlays);
             }
             return "";
         }
@@ -210,7 +210,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             }
             string path = !string.IsNullOrEmpty(_mask) ? _mask : (_maskOverlays.Count > 0 ? _maskOverlays[0] : "");
             if (!string.IsNullOrEmpty(path)) {
-                return Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(path, _maskOverlays) + "_temp.png");
+                return GetCachePath(path, _maskOverlays);
             }
             return "";
         }
@@ -220,9 +220,15 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
             }
             string path = !string.IsNullOrEmpty(_glow) ? _glow : (_glowOverlays.Count > 0 ? _glowOverlays[0] : "");
             if (!string.IsNullOrEmpty(path)) {
-                return Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(path, _glowOverlays) + "_temp.png");
+                return GetCachePath(path, _glowOverlays);
             }
             return "";
+        }
+        private string GetCachePath(string path, List<string> overlays)
+        {
+            string extension = FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration ? ".raw" : ".png";
+            string prefix = (FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration && PathOrganization.UniversalTextureSetCreator.UseMemoryCache) ? "memory://" : "";
+            return prefix + Path.Combine(Path.GetDirectoryName(path), LtcUtility.CreateIdentifier(path, overlays) + "_temp" + extension);
         }
         public void CancelCleanup() {
             _cleanupVersion++;
@@ -234,16 +240,16 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
                 Thread.Sleep(20000);
                 if (_cleanupVersion != currentVersion) return;
                 try {
-                    if (File.Exists(FinalBase)) {
+                    if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(FinalBase)) {
                         File.Delete(FinalBase);
                     }
-                    if (File.Exists(FinalNormal)) {
+                    if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(FinalNormal)) {
                         File.Delete(FinalNormal);
                     }
-                    if (File.Exists(FinalMask)) {
+                    if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(FinalMask)) {
                         File.Delete(FinalMask);
                     }
-                    if (File.Exists(FinalGlow)) {
+                    if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(FinalGlow)) {
                         File.Delete(FinalGlow);
                     }
                 } catch {
@@ -253,3 +259,6 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         }
     }
 }
+
+
+

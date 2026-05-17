@@ -1213,7 +1213,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 ReplaceExtension(AddSuffix(filename, "_eye_norm"), ".png"),
                 ReplaceExtension(AddSuffix(filename, "_eye_mask"), ".png")
             };
-            if (!ignoreIfExists || !File.Exists(strings[0])) {
+            if (!ignoreIfExists || !FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(strings[0])) {
                 Bitmap image = !wasEyeMulti ? TexIO.ResolveBitmap(filename) : ExtractRed(TexIO.ResolveBitmap(filename));
                 Bitmap eyeBase = BitmapToEyeBaseDawntrail(image, scaleTexture, baseDirectory);
                 Bitmap eyeMulti = BitmapToEyeMultiDawntrail(image, scaleTexture, baseDirectory);
@@ -1365,19 +1365,50 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             MergeImageLayers(images, new List<string>(), "", ouputPath);
         }
 
+        public static Bitmap MergeImageLayers(List<Bitmap> images) {
+            if (images == null || images.Count == 0) return null;
+
+            if (images.Count == 1) {
+                return new Bitmap(images[0]);
+            }
+
+            int maxX = 0;
+            int maxY = 0;
+            List<Bitmap> validImages = new List<Bitmap>();
+            foreach (var img in images) {
+                if (img == null) continue;
+                validImages.Add(img);
+                if (img.Width > maxX) maxX = img.Width;
+                if (img.Height > maxY) maxY = img.Height;
+            }
+
+            if (validImages.Count == 0 || maxX == 0 || maxY == 0) return null;
+
+            if (validImages.Count == 1) {
+                return new Bitmap(validImages[0]);
+            }
+
+            return ComputeSharpLayering.MergeMultipleImagesGpu(validImages.ToArray(), maxX, maxY);
+        }
+
         public static void MergeImageLayers(List<string> images, List<string> uvs, string targetUV, string ouputPath) {
             int maxX = 0;
             int maxY = 0;
             List<string> validPaths = new List<string>();
             for (int i = 0; i < images.Count; i++) {
                 var image = images[i];
-                if (!string.IsNullOrEmpty(image) && File.Exists(image)) {
+                if (!string.IsNullOrEmpty(image) && (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(image) || image.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))) {
                     string pathToLoad = image;
 
                     if (uvs != null && i < uvs.Count && !string.IsNullOrEmpty(uvs[i]) && !string.IsNullOrEmpty(targetUV) && uvs[i].ToLower() != targetUV.ToLower()) {
-                        string fileHash = LooseTextureCompilerCore.LtcUtility.GetMD5HashFromFile(image);
-                        string cachedPath = Path.Combine(Path.GetDirectoryName(image), fileHash + $"_from_{uvs[i].ToLower()}_to_{targetUV.ToLower()}.png");
-                        if (!File.Exists(cachedPath)) {
+                        bool isMemory = image.StartsWith("memory://", StringComparison.OrdinalIgnoreCase);
+                        string fileHash = isMemory ? image.GetHashCode().ToString() : LooseTextureCompilerCore.LtcUtility.GetMD5HashFromFile(image);
+                        
+                        string cachedPath = isMemory 
+                            ? image + $"_from_{uvs[i].ToLower()}_to_{targetUV.ToLower()}.raw"
+                            : Path.Combine(Path.GetDirectoryName(image), fileHash + $"_from_{uvs[i].ToLower()}_to_{targetUV.ToLower()}.png");
+
+                        if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(cachedPath) && !TexIO.VirtualFileSystem.ContainsKey(cachedPath)) {
                             string conversionKey = uvs[i].ToLower() + "to" + targetUV.ToLower();
                             try {
                                 switch (conversionKey) {
@@ -1396,7 +1427,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                                 }
                             } catch { }
                         }
-                        if (File.Exists(cachedPath)) {
+                        if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(cachedPath) || TexIO.VirtualFileSystem.ContainsKey(cachedPath)) {
                             pathToLoad = cachedPath;
                         }
                     }
@@ -1417,15 +1448,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             if (validPaths.Count == 1) {
                 using (var bitmap = TexIO.ResolveBitmap(validPaths[0])) {
-                    using (var imageData = TexIO.BitmapToImageSharp(bitmap)) {
-                        var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder() {
-                            TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
-                            ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
-                        };
+                    if (!ouputPath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
                         string dir = Path.GetDirectoryName(ouputPath);
                         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                        imageData.SaveAsPng(ouputPath, encoder);
                     }
+                    TexIO.SaveBitmapFast(bitmap, ouputPath);
                 }
             } else {
                 bool gpuSuccess = false;
@@ -1440,10 +1467,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     bench.AppendLine($"GPU Load+Merge (unified): {gpuTimer.ElapsedMilliseconds}ms");
                     
                     System.Diagnostics.Stopwatch saveTimer = System.Diagnostics.Stopwatch.StartNew();
-                    string dir = Path.GetDirectoryName(ouputPath);
-                    if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                    if (!ouputPath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+                        string dir = Path.GetDirectoryName(ouputPath);
+                        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                    }
                     TexIO.SaveBitmapFast(outputBitmap, ouputPath);
-                    bench.AppendLine($"SaveBitmapFast (PNG Encode + IO): {saveTimer.ElapsedMilliseconds}ms");
+                    string saveMode = ouputPath.StartsWith("memory://") ? "Memory Dump" : (ouputPath.EndsWith(".raw") ? "Raw Dump" : "PNG Encode");
+                    bench.AppendLine($"SaveBitmapFast ({saveMode} + IO): {saveTimer.ElapsedMilliseconds}ms");
                     
                     outputBitmap.Dispose();
                     gpuSuccess = true;
@@ -1474,8 +1504,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                             TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
                             ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
                         };
+                        if (!ouputPath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
                         string dir = Path.GetDirectoryName(ouputPath);
                         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                    }
                         outputImage.SaveAsPng(ouputPath, encoder);
                     }
                 }
@@ -1554,4 +1586,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 }
+
+
+
+
+
 
