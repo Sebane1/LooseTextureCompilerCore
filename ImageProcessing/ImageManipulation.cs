@@ -1361,8 +1361,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
         }
 
-        public static void MergeImageLayers(List<string> images, string ouputPath) {
-            MergeImageLayers(images, new List<string>(), "", ouputPath);
+        public static string MergeImageLayers(List<string> images, string ouputPath) {
+            return MergeImageLayers(images, new List<string>(), "", ouputPath);
         }
 
         public static Bitmap MergeImageLayers(List<Bitmap> images) {
@@ -1391,7 +1391,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return ComputeSharpLayering.MergeMultipleImagesGpu(validImages.ToArray(), maxX, maxY);
         }
 
-        public static void MergeImageLayers(List<string> images, List<string> uvs, string targetUV, string ouputPath) {
+        public static string MergeImageLayers(List<string> images, List<string> uvs, string targetUV, string ouputPath, float scale = 1.0f) {
             int maxX = 0;
             int maxY = 0;
             List<string> validPaths = new List<string>();
@@ -1434,27 +1434,50 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     }
 
                     validPaths.Add(pathToLoad);
-                    using (var bitmap = TexIO.ResolveBitmap(pathToLoad)) {
-                        if (bitmap.Width > maxX) {
-                            maxX = bitmap.Width;
+                                        int width = 0, height = 0;
+                    if (pathToLoad.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+                        if (TexIO.VirtualFileSystem.TryGetValue(pathToLoad, out var memFile)) {
+                            width = memFile.Width;
+                            height = memFile.Height;
                         }
-                        if (bitmap.Height > maxY) {
-                            maxY = bitmap.Height;
+                    } else if (pathToLoad.EndsWith(".tex", StringComparison.OrdinalIgnoreCase)) {
+                        try {
+                            using (var stream = new FileStream(pathToLoad, FileMode.Open, FileAccess.Read)) {
+                                var scratch = global::Penumbra.LTCImport.Textures.PenumbraTexFileParser.Parse(stream);
+                                width = scratch.Meta.Width;
+                                height = scratch.Meta.Height;
+                            }
+                        } catch {}
+                    } else {
+                        try {
+                            using (var img = System.Drawing.Image.FromFile(pathToLoad)) {
+                                width = img.Width;
+                                height = img.Height;
+                            }
+                        } catch {}
+                    }
+                    if (width == 0 || height == 0) {
+                        using (var bitmap = TexIO.ResolveBitmap(pathToLoad)) {
+                            width = bitmap.Width;
+                            height = bitmap.Height;
                         }
                     }
+
+                    if (width > maxX) maxX = width;
+                    if (height > maxY) maxY = height;
                 }
             }
 
-            if (validPaths.Count == 0) return;
+            if (validPaths.Count == 0) return ouputPath;
 
-            if (validPaths.Count == 1) {
-                using (var bitmap = TexIO.ResolveBitmap(validPaths[0])) {
-                    if (!ouputPath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
-                        string dir = Path.GetDirectoryName(ouputPath);
-                        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                    }
-                    TexIO.SaveBitmapFast(bitmap, ouputPath);
-                }
+            if (scale > 0.0f && scale < 1.0f) {
+                maxX = Math.Max(1, (int)(maxX * scale));
+                maxY = Math.Max(1, (int)(maxY * scale));
+            }
+
+            if (validPaths.Count == 1 && (scale == 1.0f || scale <= 0.0f)) {
+                // Fast path for single images with no scaling - bypass entirely!
+                return validPaths[0];
             } else {
                 bool gpuSuccess = false;
                 try {
@@ -1512,6 +1535,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         outputImage.SaveAsPng(ouputPath, encoder);
                     }
                 }
+                return ouputPath;
             }
         }
 

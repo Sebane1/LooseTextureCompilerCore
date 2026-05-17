@@ -173,10 +173,14 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public List<string> MaskOverlayUVs { get { if (_maskOverlayUVs == null) { _maskOverlayUVs = new List<string>(); } return _maskOverlayUVs; } set => _maskOverlayUVs = value; }
         public List<string> GlowOverlays { get { if (_glowOverlays == null) { _glowOverlays = new List<string>(); } return _glowOverlays; } set => _glowOverlays = value; }
         public List<string> GlowOverlayUVs { get { if (_glowOverlayUVs == null) { _glowOverlayUVs = new List<string>(); } return _glowOverlayUVs; } set => _glowOverlayUVs = value; }
-        public string FinalBase { get => CreateFinalBasePath(); }
-        public string FinalNormal { get => CreateFinalNormalPath(); }
-        public string FinalMask { get => CreateFinalMaskPath(); }
-        public string FinalGlow { get => CreateFinalGlowPath(); }
+        private string _finalBaseOverride = null;
+        public string FinalBase { get => _finalBaseOverride ?? CreateFinalBasePath(); set => _finalBaseOverride = value; }
+        private string _finalNormalOverride = null;
+        public string FinalNormal { get => _finalNormalOverride ?? CreateFinalNormalPath(); set => _finalNormalOverride = value; }
+        private string _finalMaskOverride = null;
+        public string FinalMask { get => _finalMaskOverride ?? CreateFinalMaskPath(); set => _finalMaskOverride = value; }
+        private string _finalGlowOverride = null;
+        public string FinalGlow { get => _finalGlowOverride ?? CreateFinalGlowPath(); set => _finalGlowOverride = value; }
         public Dictionary<string, ulong> Hashes { get => _hashes; set => _hashes = value; }
         private int _cleanupVersion = 0;
 

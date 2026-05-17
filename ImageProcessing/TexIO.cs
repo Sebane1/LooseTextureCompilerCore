@@ -177,6 +177,15 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             VirtualFileSystem[path] = file;
         }
 
+        public static void WriteMemoryFile(string path, byte[] data, int width, int height)
+        {
+            MemoryFile file = new MemoryFile();
+            file.Width = width;
+            file.Height = height;
+            file.Data = data;
+            VirtualFileSystem[path] = file;
+        }
+
         public static bool Exists(string path)
         {
             if (string.IsNullOrEmpty(path)) return false;
