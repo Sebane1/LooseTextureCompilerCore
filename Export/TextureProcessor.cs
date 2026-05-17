@@ -160,30 +160,21 @@ namespace FFXIVLooseTextureCompiler
         }
         public ulong CreateHash(string path)
         {
-            if (_hashAlgorithm == null)
-            {
-                _hashAlgorithm = new DifferenceHash();
+            OnProgressReport?.Invoke(this, "Hashing " + Path.GetFileNameWithoutExtension(path));
+            string md5 = LtcUtility.GetMD5HashFromFile(path);
+            if (string.IsNullOrEmpty(md5)) {
+                OnProgressReport?.Invoke(this, "Hash Calculated");
+                return (ulong)path.GetHashCode();
             }
-            ulong hash = 0;
-            OnProgressReport?.Invoke(this, "Preparing " + Path.GetFileNameWithoutExtension(path));
-            using (var image = TexIO.ResolveBitmap(path))
-            {
-                if (image != null)
-                {
-                    OnProgressReport?.Invoke(this, "Scaling " + Path.GetFileNameWithoutExtension(path));
-                    using (var resized = TexIO.Resize(image, 100, 100))
-                    {
-                        OnProgressReport?.Invoke(this, "Translating " + Path.GetFileNameWithoutExtension(path));
-                        using (var imageSharped = TexIO.BitmapToImageSharp(resized))
-                        {
-                            OnProgressReport?.Invoke(this, "Hashing " + Path.GetFileNameWithoutExtension(path));
-                            hash = _hashAlgorithm.Hash(imageSharped);
-                            OnProgressReport?.Invoke(this, "Hash Calculated");
-                        }
-                    }
+            
+            if (md5.Length >= 16) {
+                if (ulong.TryParse(md5.Substring(0, 16), System.Globalization.NumberStyles.HexNumber, null, out ulong result)) {
+                    OnProgressReport?.Invoke(this, "Hash Calculated");
+                    return result;
                 }
             }
-            return hash;
+            OnProgressReport?.Invoke(this, "Hash Calculated");
+            return (ulong)md5.GetHashCode();
         }
         public void BatchTextureSet(TextureSet parent, TextureSet child)
         {
@@ -877,7 +868,7 @@ namespace FFXIVLooseTextureCompiler
                 }
                 while (_exportCompletion < _exportMax)
                 {
-                    Thread.Sleep(500);
+                    Thread.Sleep(10);
                 }
                 foreach (TextureSet textureSet in textureSetList)
                 {
@@ -1422,7 +1413,7 @@ namespace FFXIVLooseTextureCompiler
                         Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
                         while (TexIO.IsFileLocked(outputFile))
                         {
-                            Thread.Sleep(500);
+                            Thread.Sleep(10);
                         }
                         if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(outputFile))
                         {
