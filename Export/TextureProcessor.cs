@@ -1056,7 +1056,7 @@ namespace FFXIVLooseTextureCompiler
                                 timeoutTimer.Start();
                                 while (TexIO.IsFileLocked(materialDiskPath) && timeoutTimer.ElapsedMilliseconds < 30000)
                                 {
-                                    Thread.Sleep(1000);
+                                    Thread.Sleep(10);
                                 }
                                 File.WriteAllBytes(materialDiskPath, mtrlFile.Write());
                                 Trace.WriteLine($"[Glow Debug] MaterialLogic: wrote mtrl to '{materialDiskPath}'");

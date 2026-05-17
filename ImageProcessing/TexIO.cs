@@ -255,7 +255,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             {
                 while (IsFileLocked(inputFile))
                 {
-                    Thread.Sleep(1000);
+                    Thread.Sleep(10);
                 }
                 try
                 {
@@ -281,7 +281,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                     }
                     catch (Exception e)
                     {
-                        Thread.Sleep(1000);
+                        Thread.Sleep(10);
                     }
                 }
             }
@@ -291,7 +291,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
         {
             while (IsFileLocked(path))
             {
-                Thread.Sleep(1000);
+                Thread.Sleep(10);
             }
             using (MemoryStream memoryStream = new MemoryStream()) {
                 using (FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
