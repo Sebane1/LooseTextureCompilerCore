@@ -272,114 +272,354 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
+    [ThreadGroupSize(1024, 1, 1)]
+    [GeneratedComputeShaderDescriptor]
+    public readonly partial struct CopyShader : IComputeShader {
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Destination;
+        public readonly int Width;
+        public readonly int Height;
+
+        public CopyShader(ReadOnlyTexture2D<Bgra32, float4> source, ReadWriteTexture2D<Bgra32, float4> destination, int width, int height) {
+            Source = source;
+            Destination = destination;
+            Width = width;
+            Height = height;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            if (idx >= Width * Height) return;
+
+            int y = idx / Width;
+            int x = idx % Width;
+            int2 pos = new int2(x, y);
+
+            Destination[pos] = Source[pos];
+        }
+    }
+
+    // Single-dispatch shader that composites ALL layers in one pass
+    // Layer metadata layout in metaBuffer: [layerCount, destW, destH, <padding>,
+    //                                       layer0_width, layer0_height, layer0_pixelOffset, <padding>,
+    //                                       layer1_width, layer1_height, layer1_pixelOffset, <padding>, ...]
+    [ThreadGroupSize(1024, 1, 1)]
+    [GeneratedComputeShaderDescriptor]
+    public readonly partial struct MultiLayerMergeShader : IComputeShader {
+        public readonly ReadOnlyBuffer<uint> AllPixels;
+        public readonly ReadOnlyBuffer<int> Meta;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+
+        public MultiLayerMergeShader(
+            ReadOnlyBuffer<uint> allPixels,
+            ReadOnlyBuffer<int> meta,
+            ReadWriteTexture2D<Bgra32, float4> output) {
+            AllPixels = allPixels;
+            Meta = meta;
+            Output = output;
+        }
+
+        public void Execute() {
+            int layerCount = Meta[0];
+            int destW = Meta[1];
+            int destH = Meta[2];
+
+            int idx = ThreadIds.X;
+            if (idx >= destW * destH) return;
+
+            int y = idx / destW;
+            int x = idx % destW;
+
+            // Accumulate: start transparent
+            float accR = 0, accG = 0, accB = 0, accA = 0;
+
+            for (int layer = 0; layer < layerCount; layer++) {
+                int metaBase = 4 + layer * 4;
+                int srcW = Meta[metaBase];
+                int srcH = Meta[metaBase + 1];
+                int pixelOffset = Meta[metaBase + 2];
+
+                // Compute source coordinates with aspect-ratio scaling
+                float widthRatio = (float)srcW / (float)srcH;
+                int scaledTopWidth = (int)(destH * widthRatio);
+
+                float srcXf = (float)x / scaledTopWidth * srcW;
+                float srcYf = (float)y / destH * srcH;
+
+                if (x < scaledTopWidth && srcXf < srcW && srcYf < srcH) {
+                    int srcX = Hlsl.Clamp((int)srcXf, 0, srcW - 1);
+                    int srcY = Hlsl.Clamp((int)srcYf, 0, srcH - 1);
+
+                    uint packed = AllPixels[pixelOffset + srcY * srcW + srcX];
+                    // BGRA byte order: B=byte0, G=byte1, R=byte2, A=byte3
+                    float topB = (float)(packed & 0xFF) / 255.0f;
+                    float topG = (float)((packed >> 8) & 0xFF) / 255.0f;
+                    float topR = (float)((packed >> 16) & 0xFF) / 255.0f;
+                    float topA = (float)((packed >> 24) & 0xFF) / 255.0f;
+
+                    if (topA > 0) {
+                        float outA = topA + accA * (1.0f - topA);
+                        if (outA > 0) {
+                            accR = (topR * topA + accR * accA * (1.0f - topA)) / outA;
+                            accG = (topG * topA + accG * accA * (1.0f - topA)) / outA;
+                            accB = (topB * topA + accB * accA * (1.0f - topA)) / outA;
+                        }
+                        accA = outA;
+                    }
+                }
+            }
+
+            Output[new int2(x, y)] = new float4(accB, accG, accR, accA);
+        }
+    }
+
     public static class ComputeSharpLayering {
         
-        private struct LayerPixelData {
+        private static System.Collections.Concurrent.ConcurrentDictionary<string, (ReadOnlyTexture2D<Bgra32, float4> Texture, int Width, int Height)> _vramCache = new();
+        private static System.Collections.Concurrent.ConcurrentDictionary<string, System.IO.FileSystemWatcher> _watchers = new();
+        private static System.Collections.Concurrent.ConcurrentDictionary<string, byte> _invalidatedPaths = new();
+
+        // Cached working surfaces — reused across merge calls to avoid GPU alloc/dealloc churn
+        private static ReadWriteTexture2D<Bgra32, float4> _cachedPing;
+        private static ReadWriteTexture2D<Bgra32, float4> _cachedPong;
+        private static int _cachedWidth;
+        private static int _cachedHeight;
+        private static byte[] _cachedResultBuffer;
+        private static readonly object _gpuLock = new object();
+
+        private static void OnFileChanged(object sender, System.IO.FileSystemEventArgs e) {
+            var fullPath = e.FullPath;
+            if (_vramCache.TryRemove(fullPath, out var entry)) {
+                entry.Texture.Dispose();
+            }
+            _invalidatedPaths[fullPath] = 0;
+        }
+
+        private static void WatchDirectory(string filePath) {
+            var dir = System.IO.Path.GetDirectoryName(filePath);
+            if (string.IsNullOrEmpty(dir) || _watchers.ContainsKey(dir))
+                return;
+
+            try {
+                var watcher = new System.IO.FileSystemWatcher(dir) {
+                    NotifyFilter = System.IO.NotifyFilters.LastWrite | System.IO.NotifyFilters.FileName,
+                    IncludeSubdirectories = false,
+                    EnableRaisingEvents = true
+                };
+                watcher.Changed += OnFileChanged;
+                watcher.Renamed += (s, e) => OnFileChanged(s, e);
+                watcher.Deleted += OnFileChanged;
+                _watchers[dir] = watcher;
+            } catch {
+                // Directory may not exist or be inaccessible — silently skip
+            }
+        }
+
+        public static void ClearCache() {
+            foreach (var kvp in _vramCache) {
+                kvp.Value.Texture.Dispose();
+            }
+            _vramCache.Clear();
+            _invalidatedPaths.Clear();
+            foreach (var kvp in _watchers) {
+                kvp.Value.Dispose();
+            }
+            _watchers.Clear();
+            _cachedPing?.Dispose();
+            _cachedPong?.Dispose();
+            _cachedPing = null;
+            _cachedPong = null;
+            _cachedResultBuffer = null;
+        }
+
+        // Phase 1: CPU-only pixel loading (thread-safe, parallelizable)
+        private struct CpuLayerData {
             public byte[] Pixels;
             public int Width;
             public int Height;
+            public string Path;
+            public bool IsPhysicalFile;
+            public bool VramCacheHit;
         }
 
-        private static LayerPixelData LoadPixelDataDirect(string path) {
-            if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path))
-                return default;
-            
-            // For .tex and .dds files, fall back to TexIO which returns a Bitmap
+        private static CpuLayerData LoadPixelsCpu(string path) {
+            var result = new CpuLayerData { Path = path };
+            if (string.IsNullOrEmpty(path))
+                return result;
+
+            result.IsPhysicalFile = !path.StartsWith("memory://", StringComparison.OrdinalIgnoreCase);
+
+            // Fast path: if file is cached and not invalidated by FileSystemWatcher, return immediately
+            if (result.IsPhysicalFile && FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
+                if (_vramCache.TryGetValue(path, out var cacheEntry) && !_invalidatedPaths.ContainsKey(path)) {
+                    result.VramCacheHit = true;
+                    result.Width = cacheEntry.Width;
+                    result.Height = cacheEntry.Height;
+                    return result;
+                }
+                // Clear invalidation flag — we're about to reload
+                _invalidatedPaths.TryRemove(path, out _);
+            }
+
+            // Cache miss or invalidated — validate file exists before decoding
+            if (!TexIO.Exists(path))
+                return result;
+
+            // Cache miss — decode pixels on CPU
             if (path.EndsWith(".tex", StringComparison.OrdinalIgnoreCase) || 
                 path.EndsWith(".dds", StringComparison.OrdinalIgnoreCase) ||
-                path.EndsWith(".ltct", StringComparison.OrdinalIgnoreCase)) {
+                path.EndsWith(".ltct", StringComparison.OrdinalIgnoreCase) ||
+                path.EndsWith(".raw", StringComparison.OrdinalIgnoreCase) ||
+                path.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
                 using (var bitmap = TexIO.ResolveBitmap(path)) {
                     Bitmap safe = bitmap.PixelFormat == PixelFormat.Format32bppArgb ? bitmap : bitmap.Clone(new Rectangle(0, 0, bitmap.Width, bitmap.Height), PixelFormat.Format32bppArgb);
                     var bmpData = safe.LockBits(new Rectangle(0, 0, safe.Width, safe.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-                    byte[] pixels = new byte[safe.Width * safe.Height * 4];
-                    Marshal.Copy(bmpData.Scan0, pixels, 0, pixels.Length);
+                    result.Pixels = new byte[safe.Width * safe.Height * 4];
+                    Marshal.Copy(bmpData.Scan0, result.Pixels, 0, result.Pixels.Length);
                     safe.UnlockBits(bmpData);
                     if (safe != bitmap) safe.Dispose();
-                    return new LayerPixelData { Pixels = pixels, Width = safe.Width, Height = safe.Height };
+                    result.Width = safe.Width;
+                    result.Height = safe.Height;
+                }
+            } else {
+                while (TexIO.IsFileLocked(path)) { System.Threading.Thread.Sleep(100); }
+                using (var ms = new System.IO.MemoryStream()) {
+                    using (var fs = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read)) {
+                        fs.CopyTo(ms);
+                    }
+                    ms.Position = 0;
+                    using (var image = SixLabors.ImageSharp.Image.Load<SixLabors.ImageSharp.PixelFormats.Bgra32>(ms)) {
+                        result.Pixels = new byte[image.Width * image.Height * 4];
+                        image.CopyPixelDataTo(result.Pixels);
+                        result.Width = image.Width;
+                        result.Height = image.Height;
+                    }
                 }
             }
-            
-            // For PNG/JPG/BMP: decode directly to Bgra32 pixel array, no System.Drawing.Bitmap needed
-            while (TexIO.IsFileLocked(path)) { System.Threading.Thread.Sleep(100); }
-            using (var ms = new System.IO.MemoryStream()) {
-                using (var fs = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read)) {
-                    fs.CopyTo(ms);
-                }
-                ms.Position = 0;
-                using (var image = SixLabors.ImageSharp.Image.Load<SixLabors.ImageSharp.PixelFormats.Bgra32>(ms)) {
-                    byte[] pixels = new byte[image.Width * image.Height * 4];
-                    image.CopyPixelDataTo(pixels);
-                    return new LayerPixelData { Pixels = pixels, Width = image.Width, Height = image.Height };
+
+            return result;
+        }
+
+        // Phase 2: GPU upload (must be called sequentially on a single thread)
+        private static (ReadOnlyTexture2D<Bgra32, float4> Texture, bool IsCached, int Width, int Height) UploadToVram(GraphicsDevice device, CpuLayerData cpuData) {
+            if (string.IsNullOrEmpty(cpuData.Path))
+                return (null, false, 0, 0);
+
+            // Fast path: Phase 1 already confirmed VRAM cache hit — just return the pointer
+            if (cpuData.VramCacheHit && _vramCache.TryGetValue(cpuData.Path, out var cached)) {
+                return (cached.Texture, true, cached.Width, cached.Height);
+            }
+
+            // Slow path: cache miss — dispose stale entry if present
+            if (cpuData.IsPhysicalFile && FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
+                if (_vramCache.TryRemove(cpuData.Path, out var staleEntry)) {
+                    staleEntry.Texture.Dispose();
                 }
             }
+
+            if (cpuData.Pixels == null) return (null, false, 0, 0);
+
+            // Allocate and upload to GPU (single-threaded, no driver contention)
+            var texture = device.AllocateReadOnlyTexture2D<Bgra32, float4>(cpuData.Width, cpuData.Height);
+            texture.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(cpuData.Pixels));
+
+            if (cpuData.IsPhysicalFile && FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
+                _vramCache[cpuData.Path] = (texture, cpuData.Width, cpuData.Height);
+                WatchDirectory(cpuData.Path);
+                return (texture, true, cpuData.Width, cpuData.Height);
+            }
+
+            return (texture, false, cpuData.Width, cpuData.Height);
         }
 
         public static Bitmap MergeMultipleImagesGpuFromPaths(System.Collections.Generic.List<string> paths, int width, int height) {
             var device = GraphicsDevice.GetDefault();
             int totalPixels = width * height;
 
-            // Load all layers in parallel directly to pixel arrays (no Bitmap)
-            LayerPixelData[] layerData = new LayerPixelData[paths.Count];
-            System.Threading.Tasks.Parallel.For(0, paths.Count, i => {
-                layerData[i] = LoadPixelDataDirect(paths[i]);
-            });
+            // Phase 1: Try fast sequential cache check first — skip Parallel.For if fully cached
+            var cpuLayers = new CpuLayerData[paths.Count];
+            bool allCached = true;
+            for (int i = 0; i < paths.Count; i++) {
+                cpuLayers[i] = LoadPixelsCpu(paths[i]);
+                if (!cpuLayers[i].VramCacheHit && !string.IsNullOrEmpty(cpuLayers[i].Path)) {
+                    allCached = false;
+                    break;
+                }
+            }
 
-            using var ping = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
-            using var pong = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
-            
-            // Initialize ping with first layer
-            if (layerData.Length > 0 && layerData[0].Pixels != null) {
-                var ld = layerData[0];
-                if (ld.Width == width && ld.Height == height) {
-                    ping.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(ld.Pixels));
-                } else {
-                    // Different size: upload to temp texture and use shader to scale
-                    using (var gpuTemp = device.AllocateReadOnlyTexture2D<Bgra32, float4>(ld.Width, ld.Height)) {
-                        gpuTemp.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(ld.Pixels));
-                        // Use a blank base and merge layer 0 on top to handle scaling
+            // If cache misses exist, finish remaining layers in parallel (CPU-heavy decode)
+            if (!allCached) {
+                System.Threading.Tasks.Parallel.For(0, paths.Count, i => {
+                    if (!cpuLayers[i].VramCacheHit) {
+                        cpuLayers[i] = LoadPixelsCpu(paths[i]);
+                    }
+                });
+            }
+
+            // GPU operations serialized to prevent concurrent access to shared resources
+            lock (_gpuLock) {
+                // Phase 2: Sequential GPU upload (single-threaded to avoid DX12 driver contention)
+                var textures = new (ReadOnlyTexture2D<Bgra32, float4> Tex, bool IsCached, int Width, int Height)[paths.Count];
+                for (int i = 0; i < paths.Count; i++) {
+                    textures[i] = UploadToVram(device, cpuLayers[i]);
+                    cpuLayers[i].Pixels = null;
+                }
+
+                // Reuse cached ping/pong working textures if dimensions match
+                if (_cachedPing == null || _cachedWidth != width || _cachedHeight != height) {
+                    _cachedPing?.Dispose();
+                    _cachedPong?.Dispose();
+                    _cachedPing = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
+                    _cachedPong = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
+                    _cachedWidth = width;
+                    _cachedHeight = height;
+                    _cachedResultBuffer = new byte[totalPixels * 4];
+                }
+                var ping = _cachedPing;
+                var pong = _cachedPong;
+                
+                if (textures.Length > 0 && textures[0].Tex != null) {
+                    var ld = textures[0];
+                    if (ld.Width == width && ld.Height == height) {
+                        device.For(totalPixels, new CopyShader(ld.Tex, ping, width, height));
+                    } else {
                         byte[] blankPixels = new byte[totalPixels * 4];
                         ping.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(blankPixels));
-                        device.For(totalPixels, new MergeImagesPingPongShader(ping, gpuTemp, pong, width, height, ld.Width, ld.Height));
-                        // Result is now in pong, copy back to ping for consistency
+                        device.For(totalPixels, new MergeImagesPingPongShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height));
                         pong.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(blankPixels));
                         ping.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(blankPixels));
                     }
+                    if (!ld.IsCached) ld.Tex.Dispose();
+                } else {
+                    byte[] blankPixels = new byte[totalPixels * 4];
+                    ping.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(blankPixels));
                 }
-            } else {
-                byte[] blankPixels = new byte[totalPixels * 4];
-                ping.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(blankPixels));
-            }
-            
-            bool isPing = true;
-
-            for (int i = 1; i < layerData.Length; i++) {
-                var ld = layerData[i];
-                if (ld.Pixels == null) continue;
                 
-                using (var gpuTop = device.AllocateReadOnlyTexture2D<Bgra32, float4>(ld.Width, ld.Height)) {
-                    gpuTop.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(ld.Pixels));
+                bool isPing = true;
 
+                for (int i = 1; i < textures.Length; i++) {
+                    var ld = textures[i];
+                    if (ld.Tex == null) continue;
+                    
                     if (isPing) {
-                        device.For(totalPixels, new MergeImagesPingPongShader(ping, gpuTop, pong, width, height, ld.Width, ld.Height));
+                        device.For(totalPixels, new MergeImagesPingPongShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height));
                     } else {
-                        device.For(totalPixels, new MergeImagesPingPongShader(pong, gpuTop, ping, width, height, ld.Width, ld.Height));
+                        device.For(totalPixels, new MergeImagesPingPongShader(pong, ld.Tex, ping, width, height, ld.Width, ld.Height));
                     }
+                    if (!ld.IsCached) ld.Tex.Dispose();
+                    isPing = !isPing;
                 }
-                isPing = !isPing;
-                layerData[i].Pixels = null; // Allow GC to reclaim
-            }
-            layerData[0].Pixels = null;
 
-            byte[] resultPixels = new byte[totalPixels * 4];
-            if (isPing) {
-                ping.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(resultPixels));
-            } else {
-                pong.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(resultPixels));
-            }
+                if (isPing) {
+                    ping.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(_cachedResultBuffer));
+                } else {
+                    pong.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(_cachedResultBuffer));
+                }
+            } // release GPU lock
 
             Bitmap result = new Bitmap(width, height, PixelFormat.Format32bppArgb);
             var bmpDataResult = result.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
-            Marshal.Copy(resultPixels, 0, bmpDataResult.Scan0, resultPixels.Length);
+            Marshal.Copy(_cachedResultBuffer, 0, bmpDataResult.Scan0, _cachedResultBuffer.Length);
             result.UnlockBits(bmpDataResult);
 
             return result;
