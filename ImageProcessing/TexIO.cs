@@ -164,6 +164,50 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
 
         public static System.Collections.Concurrent.ConcurrentDictionary<string, MemoryFile> VirtualFileSystem = new System.Collections.Concurrent.ConcurrentDictionary<string, MemoryFile>();
 
+        public static void SaveVFS(string path)
+        {
+            try
+            {
+                using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+                using (BinaryWriter bw = new BinaryWriter(fs))
+                {
+                    bw.Write(VirtualFileSystem.Count);
+                    foreach (var kvp in VirtualFileSystem)
+                    {
+                        bw.Write(kvp.Key);
+                        bw.Write(kvp.Value.Width);
+                        bw.Write(kvp.Value.Height);
+                        bw.Write(kvp.Value.Data.Length);
+                        bw.Write(kvp.Value.Data);
+                    }
+                }
+            }
+            catch { }
+        }
+
+        public static void LoadVFS(string path)
+        {
+            if (!File.Exists(path)) return;
+            try
+            {
+                using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+                using (BinaryReader br = new BinaryReader(fs))
+                {
+                    int count = br.ReadInt32();
+                    for (int i = 0; i < count; i++)
+                    {
+                        string key = br.ReadString();
+                        int width = br.ReadInt32();
+                        int height = br.ReadInt32();
+                        int length = br.ReadInt32();
+                        byte[] data = br.ReadBytes(length);
+                        VirtualFileSystem[key] = new MemoryFile { Width = width, Height = height, Data = data };
+                    }
+                }
+            }
+            catch { }
+        }
+
         public static void SaveMemoryBitmap(Bitmap bitmap, string path)
         {
             MemoryFile file = new MemoryFile();

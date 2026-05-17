@@ -1503,6 +1503,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
                     }
                     TexIO.SaveBitmapFast(outputBitmap, ouputPath);
+                    ComputeSharpLayering.InvalidateCache(ouputPath);
                     string saveMode = ouputPath.StartsWith("memory://") ? "Memory Dump" : (ouputPath.EndsWith(".raw") ? "Raw Dump" : "PNG Encode");
                     bench.AppendLine($"SaveBitmapFast ({saveMode} + IO): {saveTimer.ElapsedMilliseconds}ms");
                     
@@ -1535,11 +1536,16 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                             TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
                             ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
                         };
-                        if (!ouputPath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
-                        string dir = Path.GetDirectoryName(ouputPath);
-                        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                    }
-                        outputImage.SaveAsPng(ouputPath, encoder);
+                        if (ouputPath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+                            using (var bitmap = TexIO.ImageSharpToBitmap(outputImage)) {
+                                TexIO.SaveBitmapFast(bitmap, ouputPath);
+                            }
+                        } else {
+                            string dir = Path.GetDirectoryName(ouputPath);
+                            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                            outputImage.SaveAsPng(ouputPath, encoder);
+                        }
+                        ComputeSharpLayering.InvalidateCache(ouputPath);
                     }
                 }
                 return ouputPath;

@@ -446,6 +446,21 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         private static System.Collections.Concurrent.ConcurrentDictionary<string, (byte[] Pixels, int Width, int Height)> _cpuPixelCache = new();
         private static System.Collections.Concurrent.ConcurrentDictionary<string, System.IO.FileSystemWatcher> _watchers = new();
         private static System.Collections.Concurrent.ConcurrentDictionary<string, byte> _invalidatedPaths = new();
+        private static System.Collections.Concurrent.ConcurrentDictionary<string, DateTime> _lastAccess = new();
+        private const int MAX_CACHE_SIZE = 50;
+
+        public static void AuditVram() {
+            if (_vramCache.Count <= MAX_CACHE_SIZE) return;
+            
+            var oldest = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Select(System.Linq.Enumerable.Take(System.Linq.Enumerable.OrderBy(_lastAccess, kvp => kvp.Value), _vramCache.Count - MAX_CACHE_SIZE), kvp => kvp.Key));
+            foreach (var path in oldest) {
+                if (_vramCache.TryRemove(path, out var entry)) {
+                    entry.Texture.Dispose();
+                }
+                _cpuPixelCache.TryRemove(path, out _);
+                _lastAccess.TryRemove(path, out _);
+            }
+        }
 
         // Cached working surfaces — reused across merge calls to avoid GPU alloc/dealloc churn
         private static ReadWriteTexture2D<Bgra32, float4> _cachedPing;
@@ -458,6 +473,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         private static int _invalidationCount = 0;
         private static void OnFileChanged(object sender, System.IO.FileSystemEventArgs e) {
             var fullPath = e.FullPath;
+            InvalidateCache(fullPath);
+        }
+
+        public static void InvalidateCache(string fullPath) {
             // Only invalidate if this file is actually in one of our caches
             bool wasCached = false;
             if (_vramCache.TryRemove(fullPath, out var entry)) {
@@ -471,7 +490,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 _invalidatedPaths[fullPath] = 0;
                 _invalidationCount++;
                 try { System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Benchmark.txt"), 
-                    $"  [CACHE INVALIDATED #{_invalidationCount}] {e.ChangeType}: {System.IO.Path.GetFileName(fullPath)}\r\n"); } catch {}
+                    $"  [CACHE INVALIDATED #{_invalidationCount}] System IO Event: {System.IO.Path.GetFileName(fullPath)}\r\n"); } catch {}
             }
         }
 
@@ -546,6 +565,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 bool inCache = _cpuPixelCache.TryGetValue(path, out var cpuCached);
                 bool invalidated = _invalidatedPaths.ContainsKey(path);
                 if (inCache && !invalidated) {
+                    _lastAccess[path] = DateTime.UtcNow;
                     result.CacheHit = true;
                     result.Pixels = cpuCached.Pixels;
                     result.Width = cpuCached.Width;
@@ -608,7 +628,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             // Store in CPU pixel cache for fast buffer packing on future calls
             if (result.Pixels != null && result.IsPhysicalFile && FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
                 _cpuPixelCache[path] = (result.Pixels, result.Width, result.Height);
+                _lastAccess[path] = DateTime.UtcNow;
                 WatchDirectory(path);
+                AuditVram();
             }
 
             return result;
@@ -621,6 +643,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             // Fast path: check VRAM cache directly
             if (_vramCache.TryGetValue(cpuData.Path, out var cached) && !_invalidatedPaths.ContainsKey(cpuData.Path)) {
+                _lastAccess[cpuData.Path] = DateTime.UtcNow;
                 return (cached.Texture, true, cached.Width, cached.Height);
             }
 
@@ -639,7 +662,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             if (cpuData.IsPhysicalFile && FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
                 _vramCache[cpuData.Path] = (texture, cpuData.Width, cpuData.Height);
+                _lastAccess[cpuData.Path] = DateTime.UtcNow;
                 WatchDirectory(cpuData.Path);
+                AuditVram();
                 return (texture, true, cpuData.Width, cpuData.Height);
             }
 
@@ -651,11 +676,16 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int totalPixels = width * height;
             var sw = System.Diagnostics.Stopwatch.StartNew();
 
+            long[] cpuTimes = new long[paths.Count];
+            long[] vramTimes = new long[paths.Count];
+
             // Phase 1: Load/cache all layer pixels on CPU (parallel for cache misses)
             var cpuLayers = new CpuLayerData[paths.Count];
             bool allCached = true;
             for (int i = 0; i < paths.Count; i++) {
+                var layerSw = System.Diagnostics.Stopwatch.StartNew();
                 cpuLayers[i] = LoadPixelsCpu(paths[i]);
+                cpuTimes[i] = layerSw.ElapsedMilliseconds;
                 if (!cpuLayers[i].CacheHit && !string.IsNullOrEmpty(cpuLayers[i].Path)) {
                     allCached = false;
                     break;
@@ -665,7 +695,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             if (!allCached) {
                 System.Threading.Tasks.Parallel.For(0, paths.Count, i => {
                     if (!cpuLayers[i].CacheHit) {
+                        var layerSw = System.Diagnostics.Stopwatch.StartNew();
                         cpuLayers[i] = LoadPixelsCpu(paths[i]);
+                        cpuTimes[i] = layerSw.ElapsedMilliseconds;
                     }
                 });
             }
@@ -684,7 +716,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 var textures = new (ReadOnlyTexture2D<Bgra32, float4> Tex, bool IsCached, int Width, int Height)[paths.Count];
                 int vramHits = 0, vramMisses = 0;
                 for (int i = 0; i < paths.Count; i++) {
+                    var layerSw = System.Diagnostics.Stopwatch.StartNew();
                     textures[i] = UploadToVram(device, cpuLayers[i]);
+                    vramTimes[i] = layerSw.ElapsedMilliseconds;
+                    
                     if (textures[i].IsCached && cpuLayers[i].CacheHit) vramHits++; 
                     else if (textures[i].Tex != null) vramMisses++;
                 }
@@ -750,8 +785,42 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 long phase4Ms = sw.ElapsedMilliseconds;
                 sw.Restart();
 
-                try { System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Benchmark.txt"), 
-                    $"  [GPU Phases] CpuCache={phase1Ms}ms(hit={cpuHits}/miss={cpuMisses}/mem={memoryPaths}) VramUpload={phase2Ms}ms(hit={vramHits}/miss={vramMisses}) GpuMerge={phase3Ms}ms Readback={phase4Ms}ms CacheSize(cpu={_cpuPixelCache.Count}/vram={_vramCache.Count})\r\n"); } catch {}
+                var detailedLog = new System.Text.StringBuilder();
+                detailedLog.AppendLine($"--- Detailed GPU Merge Benchmark ({paths.Count} layers) ---");
+                detailedLog.AppendLine($"Total Phase 1 (CPU Load): {phase1Ms}ms");
+                for (int i = 0; i < paths.Count; i++) {
+                    if (string.IsNullOrEmpty(paths[i])) continue;
+                    string hitMiss = cpuLayers[i].CacheHit ? "HIT" : "MISS";
+                    string pName = System.IO.Path.GetFileName(paths[i]);
+                    detailedLog.AppendLine($"  [{i:D2}] CPU Load ({hitMiss}): {cpuTimes[i]}ms - {pName}");
+                }
+                detailedLog.AppendLine($"Total Phase 2 (VRAM Upload): {phase2Ms}ms");
+                for (int i = 0; i < paths.Count; i++) {
+                    if (string.IsNullOrEmpty(paths[i])) continue;
+                    string hitMiss = (textures[i].IsCached && cpuLayers[i].CacheHit) ? "HIT" : "MISS";
+                    string pName = System.IO.Path.GetFileName(paths[i]);
+                    detailedLog.AppendLine($"  [{i:D2}] VRAM Upload ({hitMiss}): {vramTimes[i]}ms - {pName}");
+                }
+                detailedLog.AppendLine($"Phase 3 (GPU Merge Dispatches): {phase3Ms}ms");
+                detailedLog.AppendLine($"Phase 4 (Readback to CPU): {phase4Ms}ms");
+                detailedLog.AppendLine($"Cache State: CPU={_cpuPixelCache.Count}, VRAM={_vramCache.Count}");
+                detailedLog.AppendLine();
+
+                // Safe to do inside _gpuLock because it guarantees serial writes from this method
+                try { 
+                    string logPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Benchmark.txt");
+                    bool locked = true;
+                    int retries = 5;
+                    while (locked && retries > 0) {
+                        try {
+                            System.IO.File.AppendAllText(logPath, detailedLog.ToString());
+                            locked = false;
+                        } catch (System.IO.IOException) {
+                            System.Threading.Thread.Sleep(5);
+                            retries--;
+                        }
+                    }
+                } catch {}
             } // release GPU lock
 
             Bitmap result = new Bitmap(width, height, PixelFormat.Format32bppArgb);
