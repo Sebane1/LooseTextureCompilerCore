@@ -10,6 +10,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
 {
     public static class UniversalTextureSetCreator
     {
+        public static bool UseMemoryCache { get; set; } = true;
         /// <summary>
         /// Adds children to a primary texture set if asym.
         /// </summary>
@@ -249,16 +250,19 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
             }
             if (destinationTextureSet != null)
             {
-                destinationTextureSet.Base = ImageManipulation.ReplaceExtension(
-                    ImageManipulation.AddSuffix(baseTextureSet.FinalBase, $"_{prefix}_d_baseTexBaked"), ".png");
-                destinationTextureSet.Normal = ImageManipulation.ReplaceExtension(
-                    ImageManipulation.AddSuffix(baseTextureSet.FinalNormal, $"_{prefix}_n_baseTexBaked"), ".png");
-                destinationTextureSet.Mask = ImageManipulation.ReplaceExtension(
-                    ImageManipulation.AddSuffix(baseTextureSet.FinalMask, $"_{prefix}_m_baseTexBaked"), ".png");
-                destinationTextureSet.Glow = ImageManipulation.ReplaceExtension(
-                    ImageManipulation.AddSuffix(baseTextureSet.Glow, $"_{prefix}_g_baseTexBaked"), ".png");
-                destinationTextureSet.NormalMask = ImageManipulation.ReplaceExtension(
-                    ImageManipulation.AddSuffix(baseTextureSet.NormalMask, $"_{prefix}_nm_baseTexBaked"), ".png");
+                string extension = FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration ? ".raw" : ".png";
+                string memPrefix = (FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration && UseMemoryCache) ? "memory://" : "";
+
+                destinationTextureSet.Base = memPrefix + ImageManipulation.ReplaceExtension(
+                    ImageManipulation.AddSuffix(baseTextureSet.FinalBase, $"_{prefix}_d_baseTexBaked"), extension);
+                destinationTextureSet.Normal = memPrefix + ImageManipulation.ReplaceExtension(
+                    ImageManipulation.AddSuffix(baseTextureSet.FinalNormal, $"_{prefix}_n_baseTexBaked"), extension);
+                destinationTextureSet.Mask = memPrefix + ImageManipulation.ReplaceExtension(
+                    ImageManipulation.AddSuffix(baseTextureSet.FinalMask, $"_{prefix}_m_baseTexBaked"), extension);
+                destinationTextureSet.Glow = memPrefix + ImageManipulation.ReplaceExtension(
+                    ImageManipulation.AddSuffix(baseTextureSet.Glow, $"_{prefix}_g_baseTexBaked"), extension);
+                destinationTextureSet.NormalMask = memPrefix + ImageManipulation.ReplaceExtension(
+                    ImageManipulation.AddSuffix(baseTextureSet.NormalMask, $"_{prefix}_nm_baseTexBaked"), extension);
                 destinationTextureSet.IgnoreNormalGeneration = baseTextureSet.IgnoreNormalGeneration;
                 destinationTextureSet.IgnoreMaskGeneration = baseTextureSet.IgnoreMaskGeneration;
                 destinationTextureSet.InvertNormalGeneration = baseTextureSet.InvertNormalGeneration;
@@ -268,7 +272,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
 
         private static void ConfigureTBSECrossCompatibility(TextureSet textureSet, int race, bool omniExport)
         {
-            ConfigureTextureSet(textureSet.TextureSetName, "", race, 1, 3, null, textureSet);
+            ConfigureTextureSet(textureSet.TextureSetName, "", race, 0, 3, null, textureSet);
             textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.TbseOverride : BackupTexturePaths.TbseSkinTypes[textureSet.SkinType].BackupTextures[0];
             TextureSet tbseVanilla = new TextureSet();
 
@@ -286,7 +290,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
                 string vanillaBase =
                     Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
                     tbseVanilla.BackupTexturePaths.Base);
-                if (!File.Exists(vanillaBase))
+                if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(vanillaBase))
                 {
                     TexIO.WriteImageToXOR(ImageManipulation.CutInHalf(
                         TexIO.ResolveBitmap(
@@ -296,7 +300,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
                 string vanillaRaen =
                      Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
                      tbseVanilla.BackupTexturePaths.BaseSecondary);
-                if (!File.Exists(vanillaRaen))
+                if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(vanillaRaen))
                 {
                     TexIO.WriteImageToXOR(ImageManipulation.CutInHalf(
                          TexIO.ResolveBitmap(
@@ -305,29 +309,29 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
                 }
                 string vanillaNormal = Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
                     tbseVanilla.BackupTexturePaths.Normal);
-                if (!File.Exists(vanillaNormal))
+                if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(vanillaNormal))
                 {
                     TexIO.WriteImageToXOR(ImageManipulation.CutInHalf(
                         TexIO.ResolveBitmap(Path.Combine(GlobalPathStorage.OriginalBaseDirectory,
                         textureSet.BackupTexturePaths.Normal))), vanillaNormal);
                 }
-                if (File.Exists(textureSet.Base))
+                if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(textureSet.Base))
                 {
                     TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Base), tbseVanilla.Base);
                 }
-                if (File.Exists(textureSet.Normal))
+                if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(textureSet.Normal))
                 {
                     TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Normal), tbseVanilla.Normal);
                 }
-                if (File.Exists(textureSet.Mask))
+                if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(textureSet.Mask))
                 {
                     TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Mask), tbseVanilla.Mask);
                 }
-                if (File.Exists(textureSet.Glow))
+                if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(textureSet.Glow))
                 {
                     TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Glow), tbseVanilla.Glow);
                 }
-                if (File.Exists(textureSet.NormalMask))
+                if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(textureSet.NormalMask))
                 {
                     TexIO.SaveBitmap(TexIO.ResolveBitmap(textureSet.Glow), tbseVanilla.NormalMask);
                 }
@@ -497,3 +501,6 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
         }
     }
 }
+
+
+

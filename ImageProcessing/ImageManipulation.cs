@@ -79,7 +79,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             if (string.IsNullOrEmpty(file)) return false;
             string fileName = Path.GetFileNameWithoutExtension(file).ToLower();
             if (fileName.Contains("bibo") || fileName.Contains("b+")) return true;
-            if (fileName.Contains("gen3") || fileName.Contains("eve")) return true;
+            if (fileName.Contains("gen3") || System.Text.RegularExpressions.Regex.IsMatch(fileName, @"(^|[^a-z])eve([^a-z]|$)")) return true;
             if (fileName.Contains("tbse")) return true;
             if (fileName.Contains("gen2") || fileName.Contains("body") || fileName.Contains("mata")) return true;
             return false;
@@ -114,7 +114,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             else if (lowerPath.Contains("relala")) targetUV = "relala";
             else if (lowerPath.Contains("_b_d") || lowerPath.Contains("_b_base") || lowerPath.Contains("tbse")) targetUV = "tbse";
             else if (lowerPath.Contains("bibo") || lowerPath.Contains("b+")) targetUV = "bibo";
-            else if (lowerPath.Contains("gen3") || lowerPath.Contains("eve")) targetUV = "gen3";
+            else if (lowerPath.Contains("gen3") || System.Text.RegularExpressions.Regex.IsMatch(lowerPath, @"(^|[^a-z])eve([^a-z]|$)")) targetUV = "gen3";
             else if (lowerPath.Contains("0201") || lowerPath.Contains("vanilla_male")) targetUV = "vanillamale"; 
             else if (lowerPath.Contains("body") || lowerPath.Contains("mata")) targetUV = "gen2";
             return targetUV;
@@ -1213,7 +1213,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 ReplaceExtension(AddSuffix(filename, "_eye_norm"), ".png"),
                 ReplaceExtension(AddSuffix(filename, "_eye_mask"), ".png")
             };
-            if (!ignoreIfExists || !File.Exists(strings[0])) {
+            if (!ignoreIfExists || !FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(strings[0])) {
                 Bitmap image = !wasEyeMulti ? TexIO.ResolveBitmap(filename) : ExtractRed(TexIO.ResolveBitmap(filename));
                 Bitmap eyeBase = BitmapToEyeBaseDawntrail(image, scaleTexture, baseDirectory);
                 Bitmap eyeMulti = BitmapToEyeMaskDawntrail(image, scaleTexture, baseDirectory);
@@ -1361,23 +1361,55 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
         }
 
-        public static void MergeImageLayers(List<string> images, string ouputPath) {
-            MergeImageLayers(images, new List<string>(), "", ouputPath);
+        public static string MergeImageLayers(List<string> images, string ouputPath) {
+            return MergeImageLayers(images, new List<string>(), "", ouputPath);
         }
 
-        public static void MergeImageLayers(List<string> images, List<string> uvs, string targetUV, string ouputPath) {
+        public static Bitmap MergeImageLayers(List<Bitmap> images) {
+            if (images == null || images.Count == 0) return null;
+
+            if (images.Count == 1) {
+                return new Bitmap(images[0]);
+            }
+
+            int maxX = 0;
+            int maxY = 0;
+            List<Bitmap> validImages = new List<Bitmap>();
+            foreach (var img in images) {
+                if (img == null) continue;
+                validImages.Add(img);
+                if (img.Width > maxX) maxX = img.Width;
+                if (img.Height > maxY) maxY = img.Height;
+            }
+
+            if (validImages.Count == 0 || maxX == 0 || maxY == 0) return null;
+
+            if (validImages.Count == 1) {
+                return new Bitmap(validImages[0]);
+            }
+
+            return ComputeSharpLayering.MergeMultipleImagesGpu(validImages.ToArray(), maxX, maxY);
+        }
+
+        public static string MergeImageLayers(List<string> images, List<string> uvs, string targetUV, string ouputPath, float scale = 1.0f) {
             int maxX = 0;
             int maxY = 0;
             List<string> validPaths = new List<string>();
             for (int i = 0; i < images.Count; i++) {
                 var image = images[i];
-                if (!string.IsNullOrEmpty(image) && File.Exists(image)) {
+                if (!string.IsNullOrEmpty(image) && (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(image) || image.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))) {
                     string pathToLoad = image;
 
                     if (uvs != null && i < uvs.Count && !string.IsNullOrEmpty(uvs[i]) && !string.IsNullOrEmpty(targetUV) && uvs[i].ToLower() != targetUV.ToLower()) {
                         string fileHash = LooseTextureCompilerCore.LtcUtility.GetMD5HashFromFile(image);
-                        string cachedPath = Path.Combine(Path.GetDirectoryName(image), fileHash + $"_from_{uvs[i].ToLower()}_to_{targetUV.ToLower()}.png");
-                        if (!File.Exists(cachedPath)) {
+                        
+                        string ext = FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration ? ".raw" : ".png";
+                        string prefix = (FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration && FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) ? "memory://" : "";
+
+                        string baseDir = image.StartsWith("memory://", StringComparison.OrdinalIgnoreCase) ? "" : (Path.GetDirectoryName(image) ?? "");
+                        string cachedPath = prefix + Path.Combine(baseDir, fileHash + $"_from_{uvs[i].ToLower()}_to_{targetUV.ToLower()}" + ext);
+
+                        if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(cachedPath) && !TexIO.VirtualFileSystem.ContainsKey(cachedPath)) {
                             string conversionKey = uvs[i].ToLower() + "to" + targetUV.ToLower();
                             try {
                                 switch (conversionKey) {
@@ -1396,53 +1428,127 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                                 }
                             } catch { }
                         }
-                        if (File.Exists(cachedPath)) {
+                        if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(cachedPath) || TexIO.VirtualFileSystem.ContainsKey(cachedPath)) {
                             pathToLoad = cachedPath;
                         }
                     }
 
                     validPaths.Add(pathToLoad);
-                    using (var bitmap = TexIO.ResolveBitmap(pathToLoad)) {
-                        if (bitmap.Width > maxX) {
-                            maxX = bitmap.Width;
+                                        int width = 0, height = 0;
+                    if (pathToLoad.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+                        if (TexIO.VirtualFileSystem.TryGetValue(pathToLoad, out var memFile)) {
+                            width = memFile.Width;
+                            height = memFile.Height;
                         }
-                        if (bitmap.Height > maxY) {
-                            maxY = bitmap.Height;
+                    } else if (pathToLoad.EndsWith(".tex", StringComparison.OrdinalIgnoreCase)) {
+                        try {
+                            using (var stream = new FileStream(pathToLoad, FileMode.Open, FileAccess.Read)) {
+                                var scratch = global::Penumbra.LTCImport.Textures.PenumbraTexFileParser.Parse(stream);
+                                width = scratch.Meta.Width;
+                                height = scratch.Meta.Height;
+                            }
+                        } catch {}
+                    } else {
+                        try {
+                            var cachedDims = ComputeSharpLayering.GetDimensions(pathToLoad);
+                            if (cachedDims.Width > 0 && cachedDims.Height > 0) {
+                                width = cachedDims.Width;
+                                height = cachedDims.Height;
+                            } else {
+                                var info = SixLabors.ImageSharp.Image.Identify(pathToLoad);
+                                if (info != null) {
+                                    width = info.Width;
+                                    height = info.Height;
+                                }
+                            }
+                        } catch {}
+                    }
+                    if (width == 0 || height == 0) {
+                        using (var bitmap = TexIO.ResolveBitmap(pathToLoad)) {
+                            width = bitmap.Width;
+                            height = bitmap.Height;
                         }
                     }
+
+                    if (width > maxX) maxX = width;
+                    if (height > maxY) maxY = height;
                 }
             }
 
-            if (validPaths.Count == 0) return;
+            if (validPaths.Count == 0) return ouputPath;
 
-            if (validPaths.Count == 1) {
-                using (var bitmap = TexIO.ResolveBitmap(validPaths[0])) {
-                    using (var imageData = TexIO.BitmapToImageSharp(bitmap)) {
+            if (scale > 0.0f && scale < 1.0f) {
+                maxX = Math.Max(1, (int)(maxX * scale));
+                maxY = Math.Max(1, (int)(maxY * scale));
+            }
+
+            if (validPaths.Count == 1 && (scale == 1.0f || scale <= 0.0f)) {
+                // Fast path for single images with no scaling - bypass entirely!
+                return validPaths[0];
+            } else {
+                bool gpuSuccess = false;
+                try {
+                    System.Text.StringBuilder bench = new System.Text.StringBuilder();
+                    bench.AppendLine($"--- MergeImageLayers Benchmark ({validPaths.Count} layers) ---");
+                    System.Diagnostics.Stopwatch totalTimer = System.Diagnostics.Stopwatch.StartNew();
+
+                    System.Diagnostics.Stopwatch gpuTimer = System.Diagnostics.Stopwatch.StartNew();
+                    Bitmap outputBitmap = ComputeSharpLayering.MergeMultipleImagesGpuFromPaths(validPaths, maxX, maxY);
+                    gpuTimer.Stop();
+                    bench.AppendLine($"GPU Load+Merge (unified): {gpuTimer.ElapsedMilliseconds}ms");
+                    
+                    System.Diagnostics.Stopwatch saveTimer = System.Diagnostics.Stopwatch.StartNew();
+                    if (!ouputPath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+                        string dir = Path.GetDirectoryName(ouputPath);
+                        if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                    }
+                    TexIO.SaveBitmapFast(outputBitmap, ouputPath);
+                    ComputeSharpLayering.InvalidateCache(ouputPath);
+                    string saveMode = ouputPath.StartsWith("memory://") ? "Memory Dump" : (ouputPath.EndsWith(".raw") ? "Raw Dump" : "PNG Encode");
+                    bench.AppendLine($"SaveBitmapFast ({saveMode} + IO): {saveTimer.ElapsedMilliseconds}ms");
+                    
+                    outputBitmap.Dispose();
+                    gpuSuccess = true;
+                    
+                    totalTimer.Stop();
+                    bench.AppendLine($"Total MergeImageLayers Time: {totalTimer.ElapsedMilliseconds}ms\n");
+                    try { System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Benchmark.txt"), bench.ToString()); } catch {}
+
+                } catch (Exception ex) {
+                    try { System.IO.File.WriteAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Fallback_Error.txt"), ex.ToString()); } catch {}
+                    System.Diagnostics.Debug.WriteLine($"[ImageManipulation.MergeImageLayers] GPU failed, falling back to ImageSharp: {ex.Message}");
+                    gpuSuccess = false;
+                }
+
+                if (!gpuSuccess) {
+                    using (var outputImage = new SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(maxX, maxY)) {
+                        foreach (var image in validPaths) {
+                            using (var bitmap = TexIO.ResolveBitmap(image)) {
+                                using (var layer = TexIO.BitmapToImageSharp(bitmap)) {
+                                    if (layer.Width != maxX || layer.Height != maxY) {
+                                        layer.Mutate(o => o.Resize(new SixLabors.ImageSharp.Size(maxX, maxY)));
+                                    }
+                                    outputImage.Mutate(o => o.DrawImage(layer, new SixLabors.ImageSharp.Point(0, 0), PixelColorBlendingMode.Normal, 1f));
+                                }
+                            }
+                        }
                         var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder() {
                             TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
                             ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
                         };
-                        imageData.SaveAsPng(ouputPath, encoder);
-                    }
-                }
-            } else {
-                using (var outputImage = new Image<Rgba32>(maxX, maxY)) {
-                    foreach (var image in validPaths) {
-                        using (var bitmap = TexIO.ResolveBitmap(image)) {
-                            using (var layer = TexIO.BitmapToImageSharp(bitmap)) {
-                                if (layer.Width != maxX || layer.Height != maxY) {
-                                    layer.Mutate(o => o.Resize(new SixLabors.ImageSharp.Size(maxX, maxY)));
-                                }
-                                outputImage.Mutate(o => o.DrawImage(layer, new SixLabors.ImageSharp.Point(0, 0), PixelColorBlendingMode.Normal, 1f));
+                        if (ouputPath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+                            using (var bitmap = TexIO.ImageSharpToBitmap(outputImage)) {
+                                TexIO.SaveBitmapFast(bitmap, ouputPath);
                             }
+                        } else {
+                            string dir = Path.GetDirectoryName(ouputPath);
+                            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                            outputImage.SaveAsPng(ouputPath, encoder);
                         }
+                        ComputeSharpLayering.InvalidateCache(ouputPath);
                     }
-                    var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder() {
-                        TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
-                        ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
-                    };
-                    outputImage.SaveAsPng(ouputPath, encoder);
                 }
+                return ouputPath;
             }
         }
 
@@ -1518,4 +1624,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 }
+
+
+
+
+
 

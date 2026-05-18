@@ -283,7 +283,7 @@ namespace FFXIVLooseTextureCompiler.Export
         }
         public static BackupTexturePaths AsymLalaPath(int skinType)
         {
-            if (!File.Exists(_otopopSkinTypes[skinType].BackupTextures[1].Base))
+            if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(_otopopSkinTypes[skinType].BackupTextures[1].Base))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(
                 GlobalPathStorage.OriginalBaseDirectory,
@@ -305,7 +305,7 @@ namespace FFXIVLooseTextureCompiler.Export
         }
         public static BackupTexturePaths AsymOverridePath()
         {
-            if (!File.Exists(OtopopOverride.Base))
+            if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(OtopopOverride.Base))
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(
                 GlobalPathStorage.OriginalBaseDirectory,
@@ -340,5 +340,8 @@ namespace FFXIVLooseTextureCompiler.Export
         public static BackupTexturePaths OtopopOverride { get; set; } = new BackupTexturePaths("nada/nada.ltct");
         public static BackupTexturePaths RelalaOverride { get; set; } = new BackupTexturePaths("nada/nada.ltct");
         public static BackupTexturePaths VanillaLalaOverride { get; set; } = new BackupTexturePaths("nada/nada.ltct");
+        public bool FillsMissingTextures { get; set; }
     }
 }
+
+

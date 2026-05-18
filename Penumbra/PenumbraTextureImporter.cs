@@ -91,25 +91,22 @@ public static class PenumbraTextureImporter {
             int width = file.Width;
             int height = file.Height;
 
-            byte[] rgbaPixels = new byte[lockBmp.Pixels.Length];
-            System.Buffer.BlockCopy(lockBmp.Pixels, 0, rgbaPixels, 0, lockBmp.Pixels.Length);
-            
-            // Convert BGRA (Bitmap) to RGBA for OtterTex
-            for (int i = 0; i < rgbaPixels.Length; i += 4) {
-                (rgbaPixels[i], rgbaPixels[i + 2]) = (rgbaPixels[i + 2], rgbaPixels[i]);
+            if (exportBc7) {
+                byte[] rgbaPixels = new byte[lockBmp.Pixels.Length];
+                System.Buffer.BlockCopy(lockBmp.Pixels, 0, rgbaPixels, 0, lockBmp.Pixels.Length);
+                
+                // Convert BGRA (Bitmap) to RGBA for OtterTex
+                for (int i = 0; i < rgbaPixels.Length; i += 4) {
+                    (rgbaPixels[i], rgbaPixels[i + 2]) = (rgbaPixels[i + 2], rgbaPixels[i]);
+                }
+
+                if (RgbaBytesToTex(rgbaPixels, width, height, out texData, true, useGpu)) return true;
             }
 
-            bool success = RgbaBytesToTex(rgbaPixels, width, height, out texData, exportBc7, useGpu);
-            if (success) return true;
-
-            // Fallback to uncompressed (requires BGRA, so swap back)
-            for (int i = 0; i < rgbaPixels.Length; i += 4) {
-                (rgbaPixels[i], rgbaPixels[i + 2]) = (rgbaPixels[i + 2], rgbaPixels[i]);
-            }
-
+            // Uncompressed path: Bitmap is already BGRA, which matches uncompressed .tex
             texData = new byte[80 + width * height * 4];
             WriteHeader(texData, width, height);
-            System.Buffer.BlockCopy(rgbaPixels, 0, texData, 80, rgbaPixels.Length);
+            System.Buffer.BlockCopy(lockBmp.Pixels, 0, texData, 80, lockBmp.Pixels.Length);
             return true;
         }
     }
