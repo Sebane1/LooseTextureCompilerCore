@@ -651,10 +651,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return MergeGrayscalesToRGBA(canvas, new Bitmap(new Bitmap(gloss), image.Width, image.Height), white, new Bitmap(white));
         }
 
-        public static Bitmap BitmapToEyeMultiDawntrail(Bitmap image, bool scaleTexture, string baseDirectory = null) {
+        public static Bitmap BitmapToEyeMaskDawntrail(Bitmap image, bool scaleTexture, string baseDirectory = null) {
             int enforcedSize = 2048;
             string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
-                : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\multi.png");
+                : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\mask.png");
             Bitmap canvas = new Bitmap(enforcedSize, enforcedSize, PixelFormat.Format32bppArgb);
             Bitmap newEye = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 0.8f, 1.5f, 1);
 
@@ -729,11 +729,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap MergeGrayscalesToRGBA(Bitmap red, Bitmap green, Bitmap blue, Bitmap alpha) {
-            try {
-                return ComputeSharpImageManipulation.MergeGrayscalesToRGBAGpu(red, green, blue, alpha);
-            } catch (Exception ex) {
-                System.Diagnostics.Debug.WriteLine($"[ImageManipulation.MergeGrayscalesToRGBA] GPU failed, falling back to CPU: {ex.Message}");
-            }
+            //try {
+            //    return ComputeSharpImageManipulation.MergeGrayscalesToRGBAGpu(red, green, blue, alpha);
+            //} catch (Exception ex) {
+            //    System.Diagnostics.Debug.WriteLine($"[ImageManipulation.MergeGrayscalesToRGBA] GPU failed, falling back to CPU: {ex.Message}");
+            //}
             Bitmap image = new Bitmap(red);
             LockBitmap destination = new LockBitmap(image);
             LockBitmap redBits = new LockBitmap(red);
@@ -1216,7 +1216,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             if (!ignoreIfExists || !File.Exists(strings[0])) {
                 Bitmap image = !wasEyeMulti ? TexIO.ResolveBitmap(filename) : ExtractRed(TexIO.ResolveBitmap(filename));
                 Bitmap eyeBase = BitmapToEyeBaseDawntrail(image, scaleTexture, baseDirectory);
-                Bitmap eyeMulti = BitmapToEyeMultiDawntrail(image, scaleTexture, baseDirectory);
+                Bitmap eyeMulti = BitmapToEyeMaskDawntrail(image, scaleTexture, baseDirectory);
                 Bitmap normal = ImageToEyeNormalDawntrail(image, scaleTexture, baseDirectory);
                 image.Dispose();
                 TexIO.SaveBitmap(eyeBase, strings[0]);
@@ -1232,7 +1232,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public static void ConvertOldEyeMultiToDawntrailEyeMaps(string filename, bool scaleTexture, string baseDirectory = null) {
             Bitmap image = ExtractRed(TexIO.ResolveBitmap(filename));
             Bitmap eyeBase = BitmapToEyeBaseDawntrail(image, scaleTexture, baseDirectory);
-            Bitmap eyeMulti = BitmapToEyeMultiDawntrail(image, scaleTexture, baseDirectory);
+            Bitmap eyeMulti = BitmapToEyeMaskDawntrail(image, scaleTexture, baseDirectory);
             Bitmap normal = ImageToEyeNormalDawntrail(image, scaleTexture, baseDirectory);
             image.Dispose();
             TexIO.SaveBitmap(eyeBase, ReplaceExtension(AddSuffix(filename, "_eye_base"), ".png"));
