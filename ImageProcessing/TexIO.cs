@@ -162,7 +162,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             public byte[] Data;
         }
 
-        public static System.Collections.Concurrent.ConcurrentDictionary<string, MemoryFile> VirtualFileSystem = new System.Collections.Concurrent.ConcurrentDictionary<string, MemoryFile>();
+        public static VirtualFileSystemStore VirtualFileSystem = new VirtualFileSystemStore();
 
         public static void SaveVFS(string path)
         {
@@ -190,6 +190,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             if (!File.Exists(path)) return;
             try
             {
+                VirtualFileSystem.Clear();
                 using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
                 using (BinaryReader br = new BinaryReader(fs))
                 {
@@ -218,7 +219,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             file.Data = new byte[lockBitmap.Pixels.Length];
             Array.Copy(lockBitmap.Pixels, file.Data, lockBitmap.Pixels.Length);
             lockBitmap.UnlockBits();
-            VirtualFileSystem[path] = file;
+            VirtualFileSystem.Set(path, file);
         }
 
         public static void WriteMemoryFile(string path, byte[] data, int width, int height)
@@ -227,7 +228,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             file.Width = width;
             file.Height = height;
             file.Data = data;
-            VirtualFileSystem[path] = file;
+            VirtualFileSystem.Set(path, file);
         }
 
         public static bool Exists(string path)

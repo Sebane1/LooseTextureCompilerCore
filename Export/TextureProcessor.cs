@@ -905,6 +905,8 @@ namespace FFXIVLooseTextureCompiler
                     textureSet.CleanTempFiles();
                 }
 
+                FFXIVLooseTextureCompiler.ImageProcessing.TexIO.VirtualFileSystem.TrimAfterExport();
+
                 while (_asyncBenchLog.TryDequeue(out string asyncLog)) {
                     benchLog.AppendLine(asyncLog);
                 }
