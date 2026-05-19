@@ -143,6 +143,21 @@ namespace LooseTextureCompilerCore.ProjectCreation
             return CreateFaceTextureSet((int)faceType, (int)facePart, faceExtra, (int)gender, (int)race, (int)subRace, (int)auraScales, asym);
         }
 
+        public static TextureSet CreateEquipmentTextureSet(string displayName, string internalBasePath,
+            string internalNormalPath = "", string internalMaskPath = "", string internalMaterialPath = "")
+        {
+            var textureSet = new TextureSet
+            {
+                TextureSetName = displayName,
+                InternalBasePath = internalBasePath ?? "",
+                InternalNormalPath = internalNormalPath ?? "",
+                InternalMaskPath = internalMaskPath ?? "",
+                InternalMaterialPath = internalMaterialPath ?? "",
+            };
+            textureSet.IgnoreMultiGeneration = false;
+            return textureSet;
+        }
+
         public static TextureSet CreateFaceTextureSet(int faceType, int facePart, int faceExtra,
             int gender, int race, int subRace, int auraScales, bool asym)
         {
