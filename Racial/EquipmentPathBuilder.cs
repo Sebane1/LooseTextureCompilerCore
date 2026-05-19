@@ -37,6 +37,14 @@ namespace FFXIVLooseTextureCompiler.Racial
                 yield break;
 
             string core = $"{raceCode}{equipSetId}";
+            string[] letters = new[] { "a", "b", "c", "d" };
+            foreach (var letter in letters)
+            {
+                yield return $"chara/human/{raceCode}/obj/equipment/{equipSetId}/material/v{variant}/mt_{core}_{slotSuffix}_{letter}.mtrl";
+                yield return $"chara/human/{raceCode}/obj/equipment/{equipSetId}/material/mt_{core}_{slotSuffix}_{letter}.mtrl";
+                yield return $"chara/equipment/{equipSetId}/material/v{variant}/mt_{core}_{slotSuffix}_{letter}.mtrl";
+                yield return $"chara/equipment/{equipSetId}/material/mt_{core}_{slotSuffix}_{letter}.mtrl";
+            }
             yield return $"chara/human/{raceCode}/obj/equipment/{equipSetId}/material/v{variant}/mt_{core}_{slotSuffix}.mtrl";
             yield return $"chara/human/{raceCode}/obj/equipment/{equipSetId}/material/mt_{core}_{slotSuffix}.mtrl";
             yield return $"chara/equipment/{equipSetId}/material/v{variant}/mt_{core}_{slotSuffix}.mtrl";
@@ -57,8 +65,8 @@ namespace FFXIVLooseTextureCompiler.Racial
             if (string.IsNullOrEmpty(basePath)) return "";
             return basePath
                 .Replace("_d.tex", "_n.tex")
-                .Replace("_base.tex", "_norm.tex")
-                .Replace("_dif.tex", "_norm.tex");
+                .Replace("_base", "_norm")
+                .Replace("_dif", "_norm");
         }
 
         public static string GuessMaskPath(string basePath)
@@ -66,8 +74,8 @@ namespace FFXIVLooseTextureCompiler.Racial
             if (string.IsNullOrEmpty(basePath)) return "";
             return basePath
                 .Replace("_d.tex", "_m.tex")
-                .Replace("_base.tex", "_mask.tex")
-                .Replace("_dif.tex", "_mask.tex");
+                .Replace("_base", "_mask")
+                .Replace("_dif", "_mask");
         }
     }
 }
