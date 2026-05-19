@@ -35,9 +35,23 @@ namespace LooseTextureCompilerCore.ProjectCreation
 }";
             if (jsonFilePath != null)
             {
-                using (StreamWriter writer = new StreamWriter(jsonFilePath))
+                int retries = 50;
+                while (retries > 0)
                 {
-                    writer.WriteLine(jsonText);
+                    try
+                    {
+                        using (StreamWriter writer = new StreamWriter(jsonFilePath))
+                        {
+                            writer.WriteLine(jsonText);
+                        }
+                        break;
+                    }
+                    catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                    {
+                        retries--;
+                        if (retries == 0) throw;
+                        Thread.Sleep(50);
+                    }
                 }
             }
         }
@@ -116,9 +130,23 @@ namespace LooseTextureCompilerCore.ProjectCreation
 }";
             if (metaFilePath != null)
             {
-                using (StreamWriter writer = new StreamWriter(metaFilePath))
+                int retries = 50;
+                while (retries > 0)
                 {
-                    writer.WriteLine(metaText);
+                    try
+                    {
+                        using (StreamWriter writer = new StreamWriter(metaFilePath))
+                        {
+                            writer.WriteLine(metaText);
+                        }
+                        break;
+                    }
+                    catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                    {
+                        retries--;
+                        if (retries == 0) throw;
+                        Thread.Sleep(50);
+                    }
                 }
             }
         }

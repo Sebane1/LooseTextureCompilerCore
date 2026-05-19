@@ -1260,30 +1260,69 @@ namespace FFXIVLooseTextureCompiler
             {
                 if (file.Contains("_generated"))
                 {
-                    File.Delete(file);
+                    int retries = 50;
+                    while (retries > 0)
+                    {
+                        try
+                        {
+                            File.Delete(file);
+                            break;
+                        }
+                        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                        {
+                            retries--;
+                            if (retries == 0) throw;
+                            Thread.Sleep(50);
+                        }
+                    }
                 }
                 if (file.EndsWith(".json"))
                 {
                     bool isGenerated = false;
-                    using (StreamReader jsonFile = File.OpenText(file))
+                    int readRetries = 50;
+                    while (readRetries > 0)
                     {
                         try
                         {
-                            JsonSerializer serializer = new JsonSerializer();
-                            Group group = (Group)serializer.Deserialize(jsonFile, typeof(Group));
-                            if (!string.IsNullOrEmpty(group.Description) && group.Description.Contains("-generated"))
+                            using (StreamReader jsonFile = File.OpenText(file))
                             {
-                                isGenerated = true;
+                                JsonSerializer serializer = new JsonSerializer();
+                                Group group = (Group)serializer.Deserialize(jsonFile, typeof(Group));
+                                if (!string.IsNullOrEmpty(group.Description) && group.Description.Contains("-generated"))
+                                {
+                                    isGenerated = true;
+                                }
                             }
+                            break;
+                        }
+                        catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                        {
+                            readRetries--;
+                            if (readRetries == 0) throw;
+                            Thread.Sleep(50);
                         }
                         catch
                         {
-                            // Todo: should we report when we skip a .json we cant read?
+                            break; // JSON parsing error or something else, skip
                         }
                     }
                     if (isGenerated)
                     {
-                        File.Delete(file);
+                        int delRetries = 50;
+                        while (delRetries > 0)
+                        {
+                            try
+                            {
+                                File.Delete(file);
+                                break;
+                            }
+                            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                            {
+                                delRetries--;
+                                if (delRetries == 0) throw;
+                                Thread.Sleep(50);
+                            }
+                        }
                     }
                 }
             }
@@ -1309,21 +1348,49 @@ namespace FFXIVLooseTextureCompiler
                         Group newGroup = new Group(group.Name + $" ({i + 1})", group.Description + " -generated",
                                         group.Priority, group.Type, group.DefaultSettings);
                         newGroup.Options = group.Options.GetRange(rangeStartingPoint, maxRange > 32 ? 32 : maxRange);
-                        using (StreamWriter file = File.CreateText(path.Replace(".", $" ({i}).")))
+                        int retries = 50;
+                        while (retries > 0)
                         {
-                            JsonSerializer serializer = new JsonSerializer();
-                            serializer.Formatting = Formatting.Indented;
-                            serializer.Serialize(file, newGroup);
+                            try
+                            {
+                                using (StreamWriter file = File.CreateText(path.Replace(".", $" ({i}).")))
+                                {
+                                    JsonSerializer serializer = new JsonSerializer();
+                                    serializer.Formatting = Formatting.Indented;
+                                    serializer.Serialize(file, newGroup);
+                                }
+                                break;
+                            }
+                            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                            {
+                                retries--;
+                                if (retries == 0) throw;
+                                Thread.Sleep(50);
+                            }
                         }
                     }
                 }
                 else if (group.Options.Count > 0)
                 {
-                    using (StreamWriter file = File.CreateText(path))
+                    int retries = 50;
+                    while (retries > 0)
                     {
-                        JsonSerializer serializer = new JsonSerializer();
-                        serializer.Formatting = Formatting.Indented;
-                        serializer.Serialize(file, group);
+                        try
+                        {
+                            using (StreamWriter file = File.CreateText(path))
+                            {
+                                JsonSerializer serializer = new JsonSerializer();
+                                serializer.Formatting = Formatting.Indented;
+                                serializer.Serialize(file, group);
+                            }
+                            break;
+                        }
+                            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                            {
+                                retries--;
+                                if (retries == 0) throw;
+                                Thread.Sleep(50);
+                            }
                     }
                 }
             }
@@ -1464,15 +1531,29 @@ namespace FFXIVLooseTextureCompiler
                         {
                             Thread.Sleep(10);
                         }
-                        if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(outputFile))
+                        int retries = 50;
+                        while (retries > 0)
                         {
-                            File.Delete(outputFile);
+                            try
+                            {
+                                if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(outputFile))
+                                {
+                                    File.Delete(outputFile);
+                                }
+                                
+                                System.Diagnostics.Stopwatch ioSw = System.Diagnostics.Stopwatch.StartNew();
+                                File.WriteAllBytes(outputFile, data);
+                                ioSw.Stop();
+                                _asyncBenchLog.Enqueue($"  [Tex IO] Wrote '{Path.GetFileName(outputFile)}' ({data.Length / 1024} KB) to disk: {ioSw.ElapsedMilliseconds}ms");
+                                break;
+                            }
+                            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                            {
+                                retries--;
+                                if (retries == 0) throw;
+                                Thread.Sleep(50);
+                            }
                         }
-                        
-                        System.Diagnostics.Stopwatch ioSw = System.Diagnostics.Stopwatch.StartNew();
-                        File.WriteAllBytes(outputFile, data);
-                        ioSw.Stop();
-                        _asyncBenchLog.Enqueue($"  [Tex IO] Wrote '{Path.GetFileName(outputFile)}' ({data.Length / 1024} KB) to disk: {ioSw.ElapsedMilliseconds}ms");
                     }
                 }
                 catch (Exception e)
