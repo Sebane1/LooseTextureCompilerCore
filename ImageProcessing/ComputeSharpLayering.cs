@@ -467,8 +467,48 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         private static ReadWriteTexture2D<Bgra32, float4> _cachedPong;
         private static int _cachedWidth;
         private static int _cachedHeight;
-        private static byte[] _cachedResultBuffer;
         private static readonly object _gpuLock = new object();
+
+        private static void CopyBitmapDataToTightBgraBuffer(BitmapData bmpData, int width, int height, byte[] destination) {
+            int rowBytes = width * 4;
+            int stride = bmpData.Stride;
+            if (stride == rowBytes) {
+                Marshal.Copy(bmpData.Scan0, destination, 0, destination.Length);
+                return;
+            }
+
+            int absStride = Math.Abs(stride);
+            for (int y = 0; y < height; y++) {
+                int srcRow = stride > 0 ? y : (height - 1 - y);
+                Marshal.Copy(IntPtr.Add(bmpData.Scan0, srcRow * absStride), destination, y * rowBytes, rowBytes);
+            }
+        }
+
+        private static void CopyTightBgraBufferToBitmapData(byte[] source, int width, int height, BitmapData bmpData) {
+            int rowBytes = width * 4;
+            int stride = bmpData.Stride;
+            if (stride == rowBytes) {
+                Marshal.Copy(source, 0, bmpData.Scan0, source.Length);
+                return;
+            }
+
+            int absStride = Math.Abs(stride);
+            for (int y = 0; y < height; y++) {
+                int destRow = stride > 0 ? y : (height - 1 - y);
+                Marshal.Copy(source, y * rowBytes, IntPtr.Add(bmpData.Scan0, destRow * absStride), rowBytes);
+            }
+        }
+
+        private static Bitmap CreateBitmapFromTightBgraBytes(byte[] pixels, int width, int height) {
+            var result = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+            var bmpData = result.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+            try {
+                CopyTightBgraBufferToBitmapData(pixels, width, height, bmpData);
+            } finally {
+                result.UnlockBits(bmpData);
+            }
+            return result;
+        }
 
         private static int _invalidationCount = 0;
         private static void OnFileChanged(object sender, System.IO.FileSystemEventArgs e) {
@@ -529,7 +569,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             _cachedPong?.Dispose();
             _cachedPing = null;
             _cachedPong = null;
-            _cachedResultBuffer = null;
         }
 
         // CPU-only pixel loading (thread-safe, parallelizable)
@@ -603,7 +642,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     Bitmap safe = bitmap.PixelFormat == PixelFormat.Format32bppArgb ? bitmap : bitmap.Clone(new Rectangle(0, 0, bitmap.Width, bitmap.Height), PixelFormat.Format32bppArgb);
                     var bmpData = safe.LockBits(new Rectangle(0, 0, safe.Width, safe.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
                     result.Pixels = new byte[safe.Width * safe.Height * 4];
-                    Marshal.Copy(bmpData.Scan0, result.Pixels, 0, result.Pixels.Length);
+                    CopyBitmapDataToTightBgraBuffer(bmpData, safe.Width, safe.Height, result.Pixels);
                     safe.UnlockBits(bmpData);
                     if (safe != bitmap) safe.Dispose();
                     result.Width = safe.Width;
@@ -674,6 +713,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public static Bitmap MergeMultipleImagesGpuFromPaths(System.Collections.Generic.List<string> paths, int width, int height) {
             var device = GraphicsDevice.GetDefault();
             int totalPixels = width * height;
+            byte[] resultPixels = new byte[totalPixels * 4];
             var sw = System.Diagnostics.Stopwatch.StartNew();
 
             long[] cpuTimes = new long[paths.Count];
@@ -734,7 +774,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     _cachedPong = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
                     _cachedWidth = width;
                     _cachedHeight = height;
-                    _cachedResultBuffer = new byte[totalPixels * 4];
                 }
                 var ping = _cachedPing;
                 var pong = _cachedPong;
@@ -742,13 +781,15 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 // Phase 3: Batched GPU merge — all dispatches recorded into one command list
                 bool isPing = true;
                 using (var context = device.CreateComputeContext()) {
+                    // Clear reused ping/pong so a prior export cannot leak into this merge
+                    context.For(totalPixels, new ClearShader(ping, width, height));
+
                     // Initialize base layer
                     if (textures.Length > 0 && textures[0].Tex != null) {
                         var ld = textures[0];
                         if (ld.Width == width && ld.Height == height) {
                             context.For(totalPixels, new CopyShader(ld.Tex, ping, width, height));
                         } else {
-                            context.For(totalPixels, new ClearShader(ping, width, height));
                             context.For(totalPixels, new MergeImagesPingPongShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height));
                             isPing = false;
                         }
@@ -778,9 +819,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
                 // Only GPU→CPU transfer: the final merged result (unavoidable for disk write)
                 if (isPing) {
-                    ping.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(_cachedResultBuffer));
+                    ping.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(resultPixels));
                 } else {
-                    pong.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(_cachedResultBuffer));
+                    pong.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(resultPixels));
                 }
                 long phase4Ms = sw.ElapsedMilliseconds;
                 sw.Restart();
@@ -823,12 +864,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 } catch {}
             } // release GPU lock
 
-            Bitmap result = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-            var bmpDataResult = result.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
-            Marshal.Copy(_cachedResultBuffer, 0, bmpDataResult.Scan0, _cachedResultBuffer.Length);
-            result.UnlockBits(bmpDataResult);
-
-            return result;
+            return CreateBitmapFromTightBgraBytes(resultPixels, width, height);
         }
 
         public static Bitmap MergeAlphaToRGBGpuFromPaths(string rgbPath, string alphaPath, int destWidth, int destHeight, bool invertAlpha) {
@@ -840,6 +876,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             if (!cpuRgb.CacheHit) cpuRgb = LoadPixelsCpu(rgbPath);
             if (!cpuAlpha.CacheHit) cpuAlpha = LoadPixelsCpu(alphaPath);
 
+            byte[] resultPixels = new byte[totalPixels * 4];
             lock (_gpuLock) {
                 var rgbTex = UploadToVram(device, cpuRgb);
                 var alphaTex = UploadToVram(device, cpuAlpha);
@@ -851,7 +888,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     _cachedPong = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
                     _cachedWidth = destWidth;
                     _cachedHeight = destHeight;
-                    _cachedResultBuffer = new byte[totalPixels * 4];
                 }
                 var output = _cachedPing;
 
@@ -866,15 +902,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 if (!rgbTex.IsCached && rgbTex.Texture != null) rgbTex.Texture.Dispose();
                 if (!alphaTex.IsCached && alphaTex.Texture != null) alphaTex.Texture.Dispose();
 
-                output.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(_cachedResultBuffer));
+                output.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(resultPixels));
             }
 
-            Bitmap result = new Bitmap(destWidth, destHeight, PixelFormat.Format32bppArgb);
-            var bmpDataResult = result.LockBits(new Rectangle(0, 0, destWidth, destHeight), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
-            Marshal.Copy(_cachedResultBuffer, 0, bmpDataResult.Scan0, _cachedResultBuffer.Length);
-            result.UnlockBits(bmpDataResult);
-
-            return result;
+            return CreateBitmapFromTightBgraBytes(resultPixels, destWidth, destHeight);
         }
 
         public static Bitmap MergeMultipleImagesGpu(Bitmap[] layers, int width, int height) {
