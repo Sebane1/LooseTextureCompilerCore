@@ -1292,6 +1292,7 @@ namespace FFXIVLooseTextureCompiler
 
         public void CleanGeneratedAssets(string path)
         {
+            if (!Directory.Exists(path)) return;
             foreach (string file in Directory.EnumerateFiles(path))
             {
                 if (file.Contains("_generated"))
