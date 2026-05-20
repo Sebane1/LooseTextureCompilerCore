@@ -1290,6 +1290,164 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             return result;
         }
+
+        /// <summary>
+        /// GPU-accelerated frame compositing for animated layers.
+        /// Stamps a frame image onto a base texture at a specific pixel position with opacity,
+        /// and returns raw BGRA pixel bytes suitable for direct .tex file writing.
+        /// GPU textures are cached and reused across consecutive calls for maximum throughput.
+        /// </summary>
+        private static ReadOnlyTexture2D<Bgra32, float4> _stampBase;
+        private static ReadOnlyTexture2D<Bgra32, float4> _stampFrame;
+        private static ReadWriteTexture2D<Bgra32, float4> _stampOutput;
+        private static int _stampBaseW, _stampBaseH, _stampFrameW, _stampFrameH;
+        private static bool _stampBaseUploaded;
+        private static readonly object _stampLock = new object();
+
+        public static byte[] CompositeFrameGpu(
+            byte[] basePixels, int baseW, int baseH,
+            byte[] framePixels, int frameW, int frameH,
+            int stampX, int stampY, int stampW, int stampH,
+            float opacity)
+        {
+            lock (_stampLock)
+            {
+                var device = GraphicsDevice.GetDefault();
+                int totalPixels = baseW * baseH;
+
+                // Allocate/reallocate base + output only when dimensions change
+                if (_stampBase == null || _stampBaseW != baseW || _stampBaseH != baseH)
+                {
+                    _stampBase?.Dispose();
+                    _stampOutput?.Dispose();
+                    _stampBase = device.AllocateReadOnlyTexture2D<Bgra32, float4>(baseW, baseH);
+                    _stampOutput = device.AllocateReadWriteTexture2D<Bgra32, float4>(baseW, baseH);
+                    _stampBaseW = baseW;
+                    _stampBaseH = baseH;
+                    _stampBaseUploaded = false;
+                }
+
+                // Upload base only once (it's the same for every frame in a sequence)
+                if (!_stampBaseUploaded)
+                {
+                    _stampBase.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(basePixels));
+                    _stampBaseUploaded = true;
+                }
+
+                // Allocate/reallocate frame texture only when frame dimensions change
+                if (_stampFrame == null || _stampFrameW != frameW || _stampFrameH != frameH)
+                {
+                    _stampFrame?.Dispose();
+                    _stampFrame = device.AllocateReadOnlyTexture2D<Bgra32, float4>(frameW, frameH);
+                    _stampFrameW = frameW;
+                    _stampFrameH = frameH;
+                }
+
+                // Upload frame pixels
+                _stampFrame.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(framePixels));
+
+                // Dispatch shader
+                device.For(totalPixels, new StampFrameShader(
+                    _stampBase, _stampFrame, _stampOutput,
+                    baseW, baseH, frameW, frameH,
+                    stampX, stampY, stampW, stampH, opacity));
+
+                // Read back
+                byte[] result = new byte[totalPixels * 4];
+                _stampOutput.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(result));
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// Call after a batch of CompositeFrameGpu calls to release cached GPU resources.
+        /// </summary>
+        public static void ReleaseStampResources()
+        {
+            lock (_stampLock)
+            {
+                _stampBase?.Dispose(); _stampBase = null;
+                _stampFrame?.Dispose(); _stampFrame = null;
+                _stampOutput?.Dispose(); _stampOutput = null;
+                _stampBaseUploaded = false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// GPU shader that stamps a source frame onto a base texture at a specific pixel position.
+    /// Supports opacity and bilinear-ish nearest-neighbor scaling of the frame to the stamp region.
+    /// </summary>
+    [ThreadGroupSize(1024, 1, 1)]
+    [GeneratedComputeShaderDescriptor]
+    public readonly partial struct StampFrameShader : IComputeShader {
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Base;
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Frame;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+        public readonly int BaseW;
+        public readonly int BaseH;
+        public readonly int FrameW;
+        public readonly int FrameH;
+        public readonly int StampX;
+        public readonly int StampY;
+        public readonly int StampW;
+        public readonly int StampH;
+        public readonly float Opacity;
+
+        public StampFrameShader(
+            ReadOnlyTexture2D<Bgra32, float4> baseT,
+            ReadOnlyTexture2D<Bgra32, float4> frame,
+            ReadWriteTexture2D<Bgra32, float4> output,
+            int baseW, int baseH, int frameW, int frameH,
+            int stampX, int stampY, int stampW, int stampH,
+            float opacity) {
+            Base = baseT;
+            Frame = frame;
+            Output = output;
+            BaseW = baseW;
+            BaseH = baseH;
+            FrameW = frameW;
+            FrameH = frameH;
+            StampX = stampX;
+            StampY = stampY;
+            StampW = stampW;
+            StampH = stampH;
+            Opacity = opacity;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            if (idx >= BaseW * BaseH) return;
+
+            int y = idx / BaseW;
+            int x = idx % BaseW;
+            int2 pos = new int2(x, y);
+
+            float4 basePixel = Base[pos];
+
+            // Check if this pixel is inside the stamp region
+            if (x >= StampX && x < StampX + StampW && y >= StampY && y < StampY + StampH) {
+                // Map to frame coordinates
+                float u = (float)(x - StampX) / (float)StampW;
+                float v = (float)(y - StampY) / (float)StampH;
+                int srcX = Hlsl.Clamp((int)(u * FrameW), 0, FrameW - 1);
+                int srcY = Hlsl.Clamp((int)(v * FrameH), 0, FrameH - 1);
+
+                float4 framePixel = Frame[new int2(srcX, srcY)];
+                float topA = framePixel.W * Opacity;
+
+                // Alpha composite: frame over base
+                float outB = framePixel.X * topA + basePixel.X * (1.0f - topA);
+                float outG = framePixel.Y * topA + basePixel.Y * (1.0f - topA);
+                float outR = framePixel.Z * topA + basePixel.Z * (1.0f - topA);
+                float outA = basePixel.W; // Preserve base alpha
+
+                Output[pos] = new float4(outB, outG, outR, outA);
+            } else {
+                // Outside stamp region: pass through base
+                Output[pos] = basePixel;
+            }
+        }
     }
 }
 
