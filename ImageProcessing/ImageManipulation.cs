@@ -1391,7 +1391,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return ComputeSharpLayering.MergeMultipleImagesGpu(validImages.ToArray(), maxX, maxY);
         }
 
-        public static string MergeImageLayers(List<string> images, List<string> uvs, string targetUV, string ouputPath, float scale = 1.0f) {
+        public static string MergeImageLayers(List<string> images, List<string> uvs, string targetUV, string ouputPath, float scale = 1.0f, System.Collections.Generic.List<System.Numerics.Vector4> tints = null) {
             int maxX = 0;
             int maxY = 0;
             List<string> validPaths = new List<string>();
@@ -1493,7 +1493,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     System.Diagnostics.Stopwatch totalTimer = System.Diagnostics.Stopwatch.StartNew();
 
                     System.Diagnostics.Stopwatch gpuTimer = System.Diagnostics.Stopwatch.StartNew();
-                    Bitmap outputBitmap = ComputeSharpLayering.MergeMultipleImagesGpuFromPaths(validPaths, maxX, maxY);
+                    Bitmap outputBitmap = ComputeSharpLayering.MergeMultipleImagesGpuFromPaths(validPaths, maxX, maxY, tints);
                     gpuTimer.Stop();
                     bench.AppendLine($"GPU Load+Merge (unified): {gpuTimer.ElapsedMilliseconds}ms");
                     
