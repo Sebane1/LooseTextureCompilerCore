@@ -1903,7 +1903,7 @@ namespace FFXIVLooseTextureCompiler
                                     }
                                     if (!string.IsNullOrEmpty(alphaOverride))
                                     {
-                                        Bitmap layered = ImageManipulation.LayerImages(output, output, alphaOverride, invertAlpha, dontInvertAlphaOverride);
+                                        Bitmap layered = ImageManipulation.LayerImages(output, output, alphaOverride, invertAlpha, false);
                                         output.Dispose();
                                         output = layered;
                                     }
