@@ -1482,8 +1482,15 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 maxY = Math.Max(1, (int)(maxY * scale));
             }
 
-            if (validPaths.Count == 1 && (scale == 1.0f || scale <= 0.0f)) {
-                // Fast path for single images with no scaling - bypass entirely!
+            bool hasTints = false;
+            if (tints != null) {
+                for (int t = 0; t < tints.Count && t < validPaths.Count; t++) {
+                    if (tints[t] != System.Numerics.Vector4.One) { hasTints = true; break; }
+                }
+            }
+
+            if (validPaths.Count == 1 && (scale == 1.0f || scale <= 0.0f) && !hasTints) {
+                // Fast path for single images with no scaling and no tinting - bypass entirely!
                 return validPaths[0];
             } else {
                 bool gpuSuccess = false;

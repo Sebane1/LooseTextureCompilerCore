@@ -32,6 +32,7 @@ namespace FFXIVLooseTextureCompiler
     public class TextureProcessor
     {
         public bool ExportBc7 { get; set; } = false;
+        private static long _generationCounter = 0;
         private ConcurrentDictionary<string, TextureSet> _redirectionCache;
         private ConcurrentDictionary<string, TextureSet> _mtrlCache;
         private ConcurrentDictionary<string, Bitmap> _normalCache;
@@ -359,6 +360,7 @@ namespace FFXIVLooseTextureCompiler
                 _glowCache = new ConcurrentDictionary<string, Bitmap>();
                 _xnormalCache = new ConcurrentDictionary<string, string>();
                 _redirectionCache = new ConcurrentDictionary<string, TextureSet>();
+                Interlocked.Increment(ref _generationCounter);
                 _mtrlCache = new ConcurrentDictionary<string, TextureSet>();
                 _xnormal = new XNormal();
                 _xnormal.XNormalPathOverride = xNormalPathOverride;
@@ -385,7 +387,7 @@ namespace FFXIVLooseTextureCompiler
                         List<string> uvs = new List<string>();
                         List<System.Numerics.Vector4> tints = new List<System.Numerics.Vector4>();
                         images.Add(textureSet.Base);
-                        tints.Add(System.Numerics.Vector4.One);
+                        tints.Add(textureSet.BaseTint);
                         if (string.IsNullOrEmpty(textureSet.BaseUV))
                         {
                             if (ImageManipulation.HasTextIdentifiers(textureSet.Base))
@@ -978,7 +980,8 @@ namespace FFXIVLooseTextureCompiler
                 (textureSet.FinalNormal ?? "").GetHashCode().ToString() +
                 (textureSet.FinalMask ?? "").GetHashCode().ToString() +
                 (textureSet.Glow ?? "").GetHashCode().ToString() +
-                (textureSet.Material != null ? textureSet.Material.GetHashCode().ToString() : "0") + backupHash).GetHashCode().ToString();
+                (textureSet.Material != null ? textureSet.Material.GetHashCode().ToString() : "0") + backupHash +
+                _generationCounter.ToString()).GetHashCode().ToString();
         }
 
         public string RedirectToDisk(string path)
