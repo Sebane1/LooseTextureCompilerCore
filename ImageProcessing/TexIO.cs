@@ -245,6 +245,12 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
         {
             if (VirtualFileSystem.TryGetValue(path, out MemoryFile file))
             {
+                if (file.Width <= 0 || file.Height <= 0)
+                {
+                    var item = new Bitmap(4096, 4096);
+                    using (var g = Graphics.FromImage(item)) g.Clear(Color.Transparent);
+                    return item;
+                }
                 Bitmap bitmap = new Bitmap(file.Width, file.Height, PixelFormat.Format32bppArgb);
                 LockBitmap lockBitmap = new LockBitmap(bitmap);
                 lockBitmap.LockBits();
@@ -290,7 +296,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             if (string.IsNullOrEmpty(inputFile) || (!File.Exists(inputFile) && !inputFile.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)))
             {
                 var item = new Bitmap(4096, 4096);
-                Graphics.FromImage(item).Clear(Color.Transparent);
+                using (var g = Graphics.FromImage(item))
+                {
+                    g.Clear(Color.Transparent);
+                }
                 return item;
             }
 

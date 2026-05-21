@@ -532,6 +532,54 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
     [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
+    public readonly partial struct MergeAlphaChannelToRGBScalingShader : IComputeShader {
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Rgb;
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Alpha;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+        public readonly int DestWidth;
+        public readonly int DestHeight;
+        public readonly int AlphaWidth;
+        public readonly int AlphaHeight;
+        public readonly int InvertAlpha;
+
+        public MergeAlphaChannelToRGBScalingShader(ReadOnlyTexture2D<Bgra32, float4> rgb, ReadOnlyTexture2D<Bgra32, float4> alpha, ReadWriteTexture2D<Bgra32, float4> output, int destWidth, int destHeight, int alphaWidth, int alphaHeight, int invertAlpha) {
+            Rgb = rgb;
+            Alpha = alpha;
+            Output = output;
+            DestWidth = destWidth;
+            DestHeight = destHeight;
+            AlphaWidth = alphaWidth;
+            AlphaHeight = alphaHeight;
+            InvertAlpha = invertAlpha;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            if (idx >= DestWidth * DestHeight) return;
+
+            int y = idx / DestWidth;
+            int x = idx % DestWidth;
+            int2 pos = new int2(x, y);
+
+            float4 rgbPixel = Rgb[pos];
+            
+            float alphaXf = (float)x / DestWidth * AlphaWidth;
+            float alphaYf = (float)y / DestHeight * AlphaHeight;
+            int alphaX = Hlsl.Clamp((int)alphaXf, 0, AlphaWidth - 1);
+            int alphaY = Hlsl.Clamp((int)alphaYf, 0, AlphaHeight - 1);
+            float4 alphaPixel = Alpha[new int2(alphaX, alphaY)];
+            
+            float alphaVal = alphaPixel.W;
+            if (InvertAlpha == 1) {
+                alphaVal = 1.0f - alphaVal;
+            }
+
+            Output[pos] = new float4(rgbPixel.X, rgbPixel.Y, rgbPixel.Z, alphaVal);
+        }
+    }
+
+    [ThreadGroupSize(1024, 1, 1)]
+    [GeneratedComputeShaderDescriptor]
     public readonly partial struct ClearShader : IComputeShader {
         public readonly ReadWriteTexture2D<Bgra32, float4> Output;
         public readonly int Width;
@@ -1077,6 +1125,86 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             result.UnlockBits(bmpDataResult);
 
             return result;
+        }
+
+        public static Bitmap MergeAlphaChannelToRGBGpuFromPaths(string rgbPath, string alphaPath, int destWidth, int destHeight, bool invertAlpha) {
+            var device = GraphicsDevice.GetDefault();
+            int totalPixels = destWidth * destHeight;
+
+            var cpuRgb = LoadPixelsCpu(rgbPath);
+            var cpuAlpha = LoadPixelsCpu(alphaPath);
+            if (!cpuRgb.CacheHit) cpuRgb = LoadPixelsCpu(rgbPath);
+            if (!cpuAlpha.CacheHit) cpuAlpha = LoadPixelsCpu(alphaPath);
+
+            lock (_gpuLock) {
+                var rgbTex = UploadToVram(device, cpuRgb);
+                var alphaTex = UploadToVram(device, cpuAlpha);
+
+                if (_cachedPing == null || _cachedWidth != destWidth || _cachedHeight != destHeight) {
+                    _cachedPing?.Dispose();
+                    _cachedPong?.Dispose();
+                    _cachedPing = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
+                    _cachedPong = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
+                    _cachedWidth = destWidth;
+                    _cachedHeight = destHeight;
+                    _cachedResultBuffer = new byte[totalPixels * 4];
+                }
+                var output = _cachedPing;
+
+                using (var context = device.CreateComputeContext()) {
+                    context.For(totalPixels, new MergeAlphaChannelToRGBScalingShader(
+                        rgbTex.Texture, alphaTex.Texture, output, 
+                        destWidth, destHeight, 
+                        alphaTex.Width, alphaTex.Height, 
+                        invertAlpha ? 1 : 0));
+                }
+
+                if (!rgbTex.IsCached && rgbTex.Texture != null) rgbTex.Texture.Dispose();
+                if (!alphaTex.IsCached && alphaTex.Texture != null) alphaTex.Texture.Dispose();
+
+                output.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(_cachedResultBuffer));
+            }
+
+            Bitmap result = new Bitmap(destWidth, destHeight, PixelFormat.Format32bppArgb);
+            var bmpDataResult = result.LockBits(new Rectangle(0, 0, destWidth, destHeight), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+            Marshal.Copy(_cachedResultBuffer, 0, bmpDataResult.Scan0, _cachedResultBuffer.Length);
+            result.UnlockBits(bmpDataResult);
+
+            return result;
+        }
+
+        public static (int Width, int Height) GetImageDimensions(string path) {
+            if (string.IsNullOrEmpty(path)) return (0, 0);
+            if (path.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+                if (TexIO.VirtualFileSystem.TryGetValue(path, out var memFile)) {
+                    return (memFile.Width, memFile.Height);
+                }
+            } else if (path.EndsWith(".tex", StringComparison.OrdinalIgnoreCase)) {
+                try {
+                    using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read)) {
+                        var scratch = global::Penumbra.LTCImport.Textures.PenumbraTexFileParser.Parse(stream);
+                        return (scratch.Meta.Width, scratch.Meta.Height);
+                    }
+                } catch {}
+            } else {
+                try {
+                    var cachedDims = GetDimensions(path);
+                    if (cachedDims.Width > 0 && cachedDims.Height > 0) {
+                        return cachedDims;
+                    }
+                    var info = SixLabors.ImageSharp.Image.Identify(path);
+                    if (info != null) {
+                        return (info.Width, info.Height);
+                    }
+                } catch {}
+            }
+            try {
+                using (var bitmap = TexIO.ResolveBitmap(path)) {
+                    return (bitmap.Width, bitmap.Height);
+                }
+            } catch {
+                return (0, 0);
+            }
         }
 
         public static Bitmap MergeMultipleImagesGpu(Bitmap[] layers, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints = null) {

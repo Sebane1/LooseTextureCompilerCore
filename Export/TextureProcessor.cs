@@ -2354,6 +2354,11 @@ namespace FFXIVLooseTextureCompiler
                     
                     long setupMs = sw.ElapsedMilliseconds;
                     sw.Restart();
+                    if (width <= 0 || height <= 0)
+                    {
+                        width = 4096;
+                        height = 4096;
+                    }
                     Bitmap result = ComputeSharpLayering.MergeMultipleImagesGpuFromPaths(paths, width, height);
                     long compositeMs = sw.ElapsedMilliseconds;
                     sw.Stop();
