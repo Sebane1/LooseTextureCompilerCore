@@ -1024,7 +1024,7 @@ namespace FFXIVLooseTextureCompiler
             bool outputGenerated = false;
             if (!string.IsNullOrEmpty(textureSet.FinalMask) && !string.IsNullOrEmpty(textureSet.InternalMaskPath))
             {
-                if (!string.IsNullOrEmpty(textureSet.FinalBase) && !textureSet.InternalMaskPath.Contains("/eye/")
+                if (!string.IsNullOrEmpty(textureSet.FinalBase) && !textureSet.InternalMaskPath.Contains("/eye/") && string.IsNullOrEmpty(textureSet.BackupTexturePaths.Mask)
                     && (textureSet.InternalMaskPath.Contains("obj/face") || textureSet.InternalMaskPath.Contains("obj/body")))
                 {
                     if (!skipTexExport)
@@ -1847,7 +1847,7 @@ namespace FFXIVLooseTextureCompiler
                             }
 
                             Bitmap toProcess = image ?? bitmap;
-                            Bitmap generatedMulti = ImageManipulation.ConvertBaseToDawntrailSkinMulti(toProcess);
+                            Bitmap generatedMulti = ComputeSharpLayering.ConvertBaseToDawntrailSkinMultiGpu(toProcess);
                             if (image != null) image.Dispose();
 
                             Bitmap mask = generatedMulti;
@@ -2129,7 +2129,7 @@ namespace FFXIVLooseTextureCompiler
                             }
 
                             Bitmap toProcess = image ?? bitmap;
-                            Bitmap generatedMulti = ImageManipulation.ConvertBaseToDawntrailSkinMulti(toProcess);
+                            Bitmap generatedMulti = ComputeSharpLayering.ConvertBaseToDawntrailSkinMultiGpu(toProcess);
                             if (image != null) image.Dispose();
 
                             Bitmap mask = generatedMulti;

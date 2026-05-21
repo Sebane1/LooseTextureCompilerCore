@@ -1163,12 +1163,33 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap ConvertBaseToDawntrailSkinMulti(Bitmap image) {
-            Bitmap inverted = ImageManipulation.InvertImage(image);
-            Bitmap alpha = new Bitmap(image.Width, image.Height);
-            Bitmap blueChannel = new Bitmap(image.Width, image.Height);
-            Graphics.FromImage(alpha).Clear(Color.White);
-            Graphics.FromImage(blueChannel).Clear(Color.FromArgb(152, 152, 152));
-            return MergeGrayscalesToRGBA(ExtractRed(image), ImageManipulation.InvertImage(ExtractBlue(image)), blueChannel, alpha);
+            Bitmap output = new Bitmap(image.Width, image.Height, PixelFormat.Format32bppArgb);
+            
+            Rectangle rect = new Rectangle(0, 0, image.Width, image.Height);
+            System.Drawing.Imaging.BitmapData srcData = image.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            System.Drawing.Imaging.BitmapData dstData = output.LockBits(rect, System.Drawing.Imaging.ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+
+            unsafe {
+                byte* srcPtr = (byte*)srcData.Scan0;
+                byte* dstPtr = (byte*)dstData.Scan0;
+                int bytes = Math.Abs(srcData.Stride) * image.Height;
+                
+                // Format32bppArgb is actually BGRA in memory (Blue, Green, Red, Alpha)
+                for (int i = 0; i < bytes; i += 4) {
+                    byte b = srcPtr[i];
+                    byte r = srcPtr[i + 2];
+                    
+                    dstPtr[i] = 152;            // Blue = 152
+                    dstPtr[i + 1] = (byte)(255 - b); // Green = Inverted Blue
+                    dstPtr[i + 2] = r;          // Red = Original Red
+                    dstPtr[i + 3] = 255;        // Alpha = 255
+                }
+            }
+            
+            image.UnlockBits(srcData);
+            output.UnlockBits(dstData);
+            
+            return output;
         }
 
         public static void ConvertImageToAsymEyeMaps(string filename1, string filename2, string output) {

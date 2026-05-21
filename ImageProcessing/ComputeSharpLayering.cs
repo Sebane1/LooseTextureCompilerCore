@@ -201,6 +201,43 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
     [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
+    public readonly partial struct DawntrailSkinMultiShader : IComputeShader {
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Input;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+        public readonly int Width;
+        public readonly int Height;
+
+        public DawntrailSkinMultiShader(
+            ReadOnlyTexture2D<Bgra32, float4> input, 
+            ReadWriteTexture2D<Bgra32, float4> output, 
+            int width, int height) {
+            Input = input;
+            Output = output;
+            Width = width;
+            Height = height;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            if (idx >= Width * Height) return;
+
+            int y = idx / Width;
+            int x = idx % Width;
+            int2 pos = new int2(x, y);
+
+            float4 pixel = Input[pos];
+            
+            float outB = 152.0f / 255.0f;
+            float outG = 1.0f - pixel.X;
+            float outR = pixel.Z;
+            float outA = 1.0f;
+
+            Output[pos] = new float4(outB, outG, outR, outA);
+        }
+    }
+
+    [ThreadGroupSize(1024, 1, 1)]
+    [GeneratedComputeShaderDescriptor]
     public readonly partial struct MergeImagesPingPongShader : IComputeShader {
         public readonly ReadWriteTexture2D<Bgra32, float4> BottomLayer;
         public readonly ReadOnlyTexture2D<Bgra32, float4> TopLayer;
@@ -851,7 +888,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         if (FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
                             _cpuPixelCache[path] = (result.Pixels, result.Width, result.Height);
                             _lastAccess[path] = DateTime.UtcNow;
-                            AuditVram();
                         }
                         return result;
                     }
@@ -898,7 +934,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 _cpuPixelCache[path] = (result.Pixels, result.Width, result.Height);
                 _lastAccess[path] = DateTime.UtcNow;
                 if (result.IsPhysicalFile) WatchDirectory(path);
-                AuditVram();
             }
 
             return result;
@@ -932,7 +967,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 _vramCache[cpuData.Path] = (texture, cpuData.Width, cpuData.Height);
                 _lastAccess[cpuData.Path] = DateTime.UtcNow;
                 if (cpuData.IsPhysicalFile) WatchDirectory(cpuData.Path);
-                AuditVram();
                 return (texture, true, cpuData.Width, cpuData.Height);
             }
 
@@ -1068,6 +1102,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     pong.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(_cachedResultBuffer));
                 }
                 long phase4Ms = sw.ElapsedMilliseconds;
+                AuditVram();
                 sw.Restart();
 
                 var detailedLog = new System.Text.StringBuilder();
@@ -1151,6 +1186,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     if (!alphaTex.IsCached && alphaTex.Texture != null) alphaTex.Texture.Dispose();
 
                     output.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(_cachedResultBuffer));
+                    AuditVram();
                 } catch (Exception ex) {
                     System.Diagnostics.Debug.WriteLine($"[MergeAlphaToRGBGpuFromPaths] GPU failed, CPU fallback: {ex.Message}");
                     if (_cachedResultBuffer == null || _cachedResultBuffer.Length < totalPixels * 4) {
@@ -1229,6 +1265,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     if (!alphaTex.IsCached && alphaTex.Texture != null) alphaTex.Texture.Dispose();
 
                     output.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(_cachedResultBuffer));
+                    AuditVram();
                 } catch (Exception ex) {
                     System.Diagnostics.Debug.WriteLine($"[MergeAlphaChannelToRGBGpuFromPaths] GPU failed, CPU fallback: {ex.Message}");
                     if (_cachedResultBuffer == null || _cachedResultBuffer.Length < totalPixels * 4) {
@@ -1380,6 +1417,47 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             return result;
         }
+        public static Bitmap ConvertBaseToDawntrailSkinMultiGpu(Bitmap image) {
+            try {
+                int width = image.Width;
+                int height = image.Height;
+
+                Bitmap safeImage = image.PixelFormat == PixelFormat.Format32bppArgb ? image : image.Clone(new Rectangle(0, 0, width, height), PixelFormat.Format32bppArgb);
+
+                using (var device = GraphicsDevice.GetDefault()) {
+                    using (var lockImage = new LockBitmap(safeImage)) {
+                        lockImage.LockBits();
+                        byte[] imageBytes = lockImage.Pixels;
+                        lockImage.UnlockBits();
+                        
+                        if (safeImage != image) safeImage.Dispose();
+                        
+                        using (var inputTex = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height)) {
+                            inputTex.CopyFrom(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, Bgra32>(imageBytes));
+
+                            using (var outputTex = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height)) {
+                                using (var context = device.CreateComputeContext()) {
+                                    context.For(width * height, new DawntrailSkinMultiShader(inputTex, outputTex, width, height));
+                                }
+
+                                byte[] resultPixels = new byte[width * height * 4];
+                                outputTex.CopyTo(System.Runtime.InteropServices.MemoryMarshal.Cast<byte, Bgra32>(resultPixels));
+
+                                Bitmap result = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+                                var bd = result.LockBits(new Rectangle(0, 0, width, height), System.Drawing.Imaging.ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+                                System.Runtime.InteropServices.Marshal.Copy(resultPixels, 0, bd.Scan0, resultPixels.Length);
+                                result.UnlockBits(bd);
+                                return result;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                System.Diagnostics.Debug.WriteLine($"[GPU] ConvertBaseToDawntrailSkinMultiGpu failed: {ex.Message}");
+                return ImageManipulation.ConvertBaseToDawntrailSkinMulti(image);
+            }
+        }
+
         public static Bitmap LayerImagesGpu(Bitmap bottomLayer, Bitmap topLayer) {
             var device = GraphicsDevice.GetDefault();
             int width = bottomLayer.Width;
