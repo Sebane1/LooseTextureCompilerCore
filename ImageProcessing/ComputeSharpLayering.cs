@@ -686,12 +686,16 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         private static System.Collections.Concurrent.ConcurrentDictionary<string, DateTime> _lastAccess = new();
         private const int MAX_CACHE_SIZE = 15;
 
+        private static readonly object _gpuLock = new object();
+
         public static void AuditVram() {
             if (_vramCache.Count > MAX_CACHE_SIZE) {
                 var oldest = System.Linq.Enumerable.ToList(System.Linq.Enumerable.Select(System.Linq.Enumerable.Take(System.Linq.Enumerable.OrderBy(_lastAccess, kvp => kvp.Value), _vramCache.Count - MAX_CACHE_SIZE), kvp => kvp.Key));
                 foreach (var path in oldest) {
                     if (_vramCache.TryRemove(path, out var entry)) {
-                        entry.Texture.Dispose();
+                        lock (_gpuLock) {
+                            entry.Texture.Dispose();
+                        }
                     }
                     _cpuPixelCache.TryRemove(path, out _);
                     _lastAccess.TryRemove(path, out _);
@@ -712,7 +716,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         private static int _cachedWidth;
         private static int _cachedHeight;
         private static byte[] _cachedResultBuffer;
-        private static readonly object _gpuLock = new object();
 
         private static int _invalidationCount = 0;
         private static void OnFileChanged(object sender, System.IO.FileSystemEventArgs e) {
@@ -724,7 +727,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             // Only invalidate if this file is actually in one of our caches
             bool wasCached = false;
             if (_vramCache.TryRemove(fullPath, out var entry)) {
-                entry.Texture.Dispose();
+                lock (_gpuLock) {
+                    entry.Texture.Dispose();
+                }
                 wasCached = true;
             }
             if (_cpuPixelCache.TryRemove(fullPath, out _)) {
@@ -759,21 +764,23 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static void ClearCache() {
-            foreach (var kvp in _vramCache) {
-                kvp.Value.Texture.Dispose();
+            lock (_gpuLock) {
+                foreach (var kvp in _vramCache) {
+                    kvp.Value.Texture.Dispose();
+                }
+                _vramCache.Clear();
+                _cpuPixelCache.Clear();
+                _invalidatedPaths.Clear();
+                foreach (var kvp in _watchers) {
+                    kvp.Value.Dispose();
+                }
+                _watchers.Clear();
+                _cachedPing?.Dispose();
+                _cachedPong?.Dispose();
+                _cachedPing = null;
+                _cachedPong = null;
+                _cachedResultBuffer = null;
             }
-            _vramCache.Clear();
-            _cpuPixelCache.Clear();
-            _invalidatedPaths.Clear();
-            foreach (var kvp in _watchers) {
-                kvp.Value.Dispose();
-            }
-            _watchers.Clear();
-            _cachedPing?.Dispose();
-            _cachedPong?.Dispose();
-            _cachedPing = null;
-            _cachedPong = null;
-            _cachedResultBuffer = null;
         }
 
         // CPU-only pixel loading (thread-safe, parallelizable)
