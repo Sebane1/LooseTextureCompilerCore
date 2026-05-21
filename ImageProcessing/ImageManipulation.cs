@@ -58,7 +58,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Color uvMapTest = source.GetPixel(0, 0);
             Color uvMapTest2 = source.GetPixel(image.Width - 1, image.Height - 1);
             source.UnlockBits();
-            if (uvMapTest.B == 255 && uvMapTest2.B == 255 && uvMapTest.R != 255 && uvMapTest2.R != 255 && uvMapTest.G != 255 && uvMapTest2.G != 255) {
+            if (uvMapTest.B >= 250 && uvMapTest2.B >= 250 && 
+                uvMapTest.R >= 100 && uvMapTest.R <= 155 && uvMapTest2.R >= 100 && uvMapTest2.R <= 155 && 
+                uvMapTest.G >= 100 && uvMapTest.G <= 155 && uvMapTest2.G >= 100 && uvMapTest2.G <= 155) {
                 return UVMapType.Normal;
             } else if (uvMapTest.B == 152 && uvMapTest2.B == 152) {
                 return UVMapType.Mask;

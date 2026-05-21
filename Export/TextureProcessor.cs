@@ -1756,11 +1756,12 @@ namespace FFXIVLooseTextureCompiler
             string normalCorrection, bool modifier, string alphaOverride, bool invertAlpha)
         {
             Bitmap output;
+            string cacheKey = $"{inputFile}|{modifierMap}|{normalCorrection}|{modifier}|{alphaOverride}|{invertAlpha}";
             lock (_normalCache)
             {
-                if (_normalCache.ContainsKey(inputFile))
+                if (_normalCache.ContainsKey(cacheKey))
                 {
-                    output = _normalCache[inputFile];
+                    output = _normalCache[cacheKey];
                 }
                 else
                 {
@@ -1794,7 +1795,7 @@ namespace FFXIVLooseTextureCompiler
                                 output.Dispose();
                                 output = layered;
                             }
-                            AddToBitmapCache(_normalCache, inputFile, output);
+                            AddToBitmapCache(_normalCache, cacheKey, output);
                         }
                     }
                 }
@@ -1814,11 +1815,12 @@ namespace FFXIVLooseTextureCompiler
 
         private Bitmap ExportTypeMaskAsBitmap(string inputFile, string layeringImage, ExportType exportType, string modifierMap)
         {
+            string cacheKey = $"{inputFile}|{layeringImage}|{exportType}|{modifierMap}";
             lock (_maskCache)
             {
-                if (_maskCache.ContainsKey(inputFile))
+                if (_maskCache.ContainsKey(cacheKey))
                 {
-                    return TexIO.NewBitmap(_maskCache[inputFile]);
+                    return TexIO.NewBitmap(_maskCache[cacheKey]);
                 }
                 else
                 {
@@ -1857,7 +1859,7 @@ namespace FFXIVLooseTextureCompiler
                                 }
                                 generatedMulti.Dispose();
                             }
-                            AddToBitmapCache(_maskCache, inputFile, mask);
+                            AddToBitmapCache(_maskCache, cacheKey, mask);
                             return TexIO.NewBitmap(mask);
                         }
                     }

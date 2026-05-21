@@ -69,28 +69,21 @@ namespace LooseTextureCompilerCore.ProjectCreation
                 uVMapType = UVMapType.Base;
                 foundStringIdentifier = true;
             }
-
-            if (fileNameWithoutExtension.Contains("norm") || fileNameWithoutExtension.EndsWith("_n") || fileNameWithoutExtension.Contains("_n_"))
+            else if (fileNameWithoutExtension.Contains("norm") || fileNameWithoutExtension.EndsWith("_n") || fileNameWithoutExtension.Contains("_n_"))
             {
                 uVMapType = UVMapType.Normal;
                 foundStringIdentifier = true;
             }
-
-            if (fileNameWithoutExtension.Contains("mask") || fileNameWithoutExtension.EndsWith("_m") || fileNameWithoutExtension.Contains("_m_"))
+            else if (fileNameWithoutExtension.Contains("mask") || fileNameWithoutExtension.EndsWith("_m") || fileNameWithoutExtension.Contains("_m_"))
             {
                 uVMapType = UVMapType.Mask;
                 foundStringIdentifier = true;
             }
-
-            if (fileNameWithoutExtension.Contains("glow") || fileNameWithoutExtension.EndsWith("_g") || fileNameWithoutExtension.Contains("_g_"))
+            else if (fileNameWithoutExtension.Contains("glow") || fileNameWithoutExtension.EndsWith("_g") || fileNameWithoutExtension.Contains("_g_"))
             {
                 uVMapType = UVMapType.Glow;
                 foundStringIdentifier = true;
             }
-
-
-
-
 
             if (!foundStringIdentifier)
             {
