@@ -251,7 +251,14 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                     using (var g = Graphics.FromImage(item)) g.Clear(Color.Transparent);
                     return item;
                 }
-                Bitmap bitmap = new Bitmap(file.Width, file.Height, PixelFormat.Format32bppArgb);
+                Bitmap bitmap;
+                try {
+                    bitmap = new Bitmap(file.Width, file.Height, PixelFormat.Format32bppArgb);
+                } catch {
+                    var fallback = new Bitmap(4096, 4096);
+                    using (var g = Graphics.FromImage(fallback)) g.Clear(Color.Transparent);
+                    return fallback;
+                }
                 if (file.Data != null && file.Data.Length == file.Width * file.Height * 4)
                 {
                     LockBitmap lockBitmap = new LockBitmap(bitmap);
@@ -265,7 +272,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                 }
                 return bitmap;
             }
-            return new Bitmap(4096, 4096);
+            var blank = new Bitmap(4096, 4096);
+            using (var g = Graphics.FromImage(blank)) g.Clear(Color.Transparent);
+            return blank;
         }
         public static void SaveRawBitmap(Bitmap bitmap, string path)
         {
@@ -355,7 +364,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                     }
                 }
             }
-            return new Bitmap(4096, 4096);
+            var finalFallback = new Bitmap(4096, 4096);
+            using (var g = Graphics.FromImage(finalFallback)) g.Clear(Color.Transparent);
+            return finalFallback;
         }
         public static Bitmap SafeLoad(string path, bool noAlpha = false)
         {

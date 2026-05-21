@@ -89,7 +89,7 @@ namespace FFXIVLooseTextureCompiler
 
         private void AddToBitmapCache(ConcurrentDictionary<string, Bitmap> cache, string key, Bitmap bitmap)
         {
-            if (cache.Count >= 250)
+            if (cache.Count >= 15)
             {
                 string firstKey = cache.Keys.First();
                 if (cache.TryRemove(firstKey, out Bitmap old) && old != null) old.Dispose();
