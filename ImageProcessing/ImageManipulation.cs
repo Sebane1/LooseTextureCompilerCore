@@ -1531,15 +1531,37 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
                 if (!gpuSuccess) {
                     using (var outputImage = new SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(maxX, maxY)) {
+                        int t = 0;
                         foreach (var image in validPaths) {
                             using (var bitmap = TexIO.ResolveBitmap(image)) {
                                 using (var layer = TexIO.BitmapToImageSharp(bitmap)) {
                                     if (layer.Width != maxX || layer.Height != maxY) {
                                         layer.Mutate(o => o.Resize(new SixLabors.ImageSharp.Size(maxX, maxY)));
                                     }
+                                    if (tints != null && t < tints.Count && tints[t] != System.Numerics.Vector4.One) {
+                                        var tint = tints[t];
+                                        layer.ProcessPixelRows(accessor => {
+                                            for (int y = 0; y < accessor.Height; y++) {
+                                                var row = accessor.GetRowSpan(y);
+                                                for (int x = 0; x < row.Length; x++) {
+                                                    var pixel = row[x];
+                                                    float r = (pixel.R / 255f) * tint.X;
+                                                    float g = (pixel.G / 255f) * tint.Y;
+                                                    float b = (pixel.B / 255f) * tint.Z;
+                                                    float a = (pixel.A / 255f) * tint.W;
+                                                    row[x] = new SixLabors.ImageSharp.PixelFormats.Rgba32(
+                                                        (byte)Math.Clamp(r * 255f, 0, 255),
+                                                        (byte)Math.Clamp(g * 255f, 0, 255),
+                                                        (byte)Math.Clamp(b * 255f, 0, 255),
+                                                        (byte)Math.Clamp(a * 255f, 0, 255));
+                                                }
+                                            }
+                                        });
+                                    }
                                     outputImage.Mutate(o => o.DrawImage(layer, new SixLabors.ImageSharp.Point(0, 0), PixelColorBlendingMode.Normal, 1f));
                                 }
                             }
+                            t++;
                         }
                         var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder() {
                             TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
