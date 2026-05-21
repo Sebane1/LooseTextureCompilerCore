@@ -1055,7 +1055,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         if (ld.Width == width && ld.Height == height && !hasTint) {
                             context.For(totalPixels, new CopyShader(ld.Tex, ping, width, height));
                         } else {
-                            float4 tint = tints != null && 0 < tints.Count ? new float4(tints[0].Z, tints[0].Y, tints[0].X, tints[0].W) : new float4(1,1,1,1);
+                            float4 tint = tints != null && 0 < tints.Count ? new float4(tints[0].X, tints[0].Y, tints[0].Z, tints[0].W) : new float4(1,1,1,1);
                             context.For(totalPixels, new ClearShader(ping, width, height));
                             if (hasTint) context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
                             else context.For(totalPixels, new MergeImagesPingPongShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height));
@@ -1068,7 +1068,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         var ld = textures[i];
                         if (ld.Tex == null) continue;
 
-                        float4 tint = tints != null && i < tints.Count ? new float4(tints[i].Z, tints[i].Y, tints[i].X, tints[i].W) : new float4(1,1,1,1);
+                        float4 tint = tints != null && i < tints.Count ? new float4(tints[i].X, tints[i].Y, tints[i].Z, tints[i].W) : new float4(1,1,1,1);
                         bool hasTint = (tint.X != 1.0f || tint.Y != 1.0f || tint.Z != 1.0f || tint.W != 1.0f);
                         if (!hasTint) {
                             if (isPing) {
