@@ -798,7 +798,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             result.IsPhysicalFile = !path.StartsWith("memory://", StringComparison.OrdinalIgnoreCase);
 
             // Fast path: if file is in CPU pixel cache and not invalidated, return cached pixels
-            if (result.IsPhysicalFile && FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
+            if (FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
                 bool inCache = _cpuPixelCache.TryGetValue(path, out var cpuCached);
                 bool invalidated = _invalidatedPaths.ContainsKey(path);
                 if (inCache && !invalidated) {
@@ -809,7 +809,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     result.Height = cpuCached.Height;
                     return result;
                 }
-                if (!inCache && _cpuPixelCache.Count > 0) {
+                if (!inCache && _cpuPixelCache.Count > 0 && result.IsPhysicalFile) {
                     // Find if same filename exists under a different full path
                     string lookupName = System.IO.Path.GetFileName(path);
                     string matchingCachedPath = "";
@@ -826,6 +826,24 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 _invalidatedPaths.TryRemove(path, out _);
             }
 
+            // Direct memory file fast path: read directly from VirtualFileSystem and bypass all file check/GDI+ decode routines
+            if (!result.IsPhysicalFile) {
+                if (TexIO.VirtualFileSystem.TryGetValue(path, out var file)) {
+                    if (file.Data != null && file.Width > 0 && file.Height > 0) {
+                        result.Pixels = new byte[file.Data.Length];
+                        Array.Copy(file.Data, result.Pixels, file.Data.Length);
+                        result.Width = file.Width;
+                        result.Height = file.Height;
+                        if (FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
+                            _cpuPixelCache[path] = (result.Pixels, result.Width, result.Height);
+                            _lastAccess[path] = DateTime.UtcNow;
+                            AuditVram();
+                        }
+                        return result;
+                    }
+                }
+            }
+
             // Cache miss or invalidated — validate file exists before decoding
             if (!TexIO.Exists(path))
                 return result;
@@ -834,8 +852,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             if (path.EndsWith(".tex", StringComparison.OrdinalIgnoreCase) || 
                 path.EndsWith(".dds", StringComparison.OrdinalIgnoreCase) ||
                 path.EndsWith(".ltct", StringComparison.OrdinalIgnoreCase) ||
-                path.EndsWith(".raw", StringComparison.OrdinalIgnoreCase) ||
-                path.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+                path.EndsWith(".raw", StringComparison.OrdinalIgnoreCase)) {
                 using (var bitmap = TexIO.ResolveBitmap(path)) {
                     Bitmap safe = bitmap.PixelFormat == PixelFormat.Format32bppArgb ? bitmap : bitmap.Clone(new Rectangle(0, 0, bitmap.Width, bitmap.Height), PixelFormat.Format32bppArgb);
                     var bmpData = safe.LockBits(new Rectangle(0, 0, safe.Width, safe.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
@@ -863,10 +880,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
 
             // Store in CPU pixel cache for fast buffer packing on future calls
-            if (result.Pixels != null && result.IsPhysicalFile && FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
+            if (result.Pixels != null && FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
                 _cpuPixelCache[path] = (result.Pixels, result.Width, result.Height);
                 _lastAccess[path] = DateTime.UtcNow;
-                WatchDirectory(path);
+                if (result.IsPhysicalFile) WatchDirectory(path);
                 AuditVram();
             }
 
@@ -885,7 +902,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
 
             // Slow path: cache miss — dispose stale entry if present
-            if (cpuData.IsPhysicalFile && FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
+            if (FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
                 if (_vramCache.TryRemove(cpuData.Path, out var staleEntry)) {
                     staleEntry.Texture.Dispose();
                 }
@@ -897,10 +914,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             var texture = device.AllocateReadOnlyTexture2D<Bgra32, float4>(cpuData.Width, cpuData.Height);
             texture.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(cpuData.Pixels));
 
-            if (cpuData.IsPhysicalFile && FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
+            if (FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
                 _vramCache[cpuData.Path] = (texture, cpuData.Width, cpuData.Height);
                 _lastAccess[cpuData.Path] = DateTime.UtcNow;
-                WatchDirectory(cpuData.Path);
+                if (cpuData.IsPhysicalFile) WatchDirectory(cpuData.Path);
                 AuditVram();
                 return (texture, true, cpuData.Width, cpuData.Height);
             }
@@ -920,18 +937,22 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             var cpuLayers = new CpuLayerData[paths.Count];
             bool allCached = true;
             for (int i = 0; i < paths.Count; i++) {
-                var layerSw = System.Diagnostics.Stopwatch.StartNew();
-                cpuLayers[i] = LoadPixelsCpu(paths[i]);
-                cpuTimes[i] = layerSw.ElapsedMilliseconds;
-                if (!cpuLayers[i].CacheHit && !string.IsNullOrEmpty(cpuLayers[i].Path)) {
+                bool isLoaded = false;
+                if (FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
+                    bool inCpuCache = _cpuPixelCache.ContainsKey(paths[i]) && !_invalidatedPaths.ContainsKey(paths[i]);
+                    if (inCpuCache) {
+                        cpuLayers[i] = LoadPixelsCpu(paths[i]);
+                        isLoaded = true;
+                    }
+                }
+                if (!isLoaded) {
                     allCached = false;
-                    break;
                 }
             }
 
             if (!allCached) {
                 System.Threading.Tasks.Parallel.For(0, paths.Count, i => {
-                    if (!cpuLayers[i].CacheHit) {
+                    if (cpuLayers[i].Pixels == null) {
                         var layerSw = System.Diagnostics.Stopwatch.StartNew();
                         cpuLayers[i] = LoadPixelsCpu(paths[i]);
                         cpuTimes[i] = layerSw.ElapsedMilliseconds;
@@ -1087,8 +1108,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             var cpuRgb = LoadPixelsCpu(rgbPath);
             var cpuAlpha = LoadPixelsCpu(alphaPath);
-            if (!cpuRgb.CacheHit) cpuRgb = LoadPixelsCpu(rgbPath);
-            if (!cpuAlpha.CacheHit) cpuAlpha = LoadPixelsCpu(alphaPath);
 
             lock (_gpuLock) {
                 var rgbTex = UploadToVram(device, cpuRgb);
@@ -1133,8 +1152,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             var cpuRgb = LoadPixelsCpu(rgbPath);
             var cpuAlpha = LoadPixelsCpu(alphaPath);
-            if (!cpuRgb.CacheHit) cpuRgb = LoadPixelsCpu(rgbPath);
-            if (!cpuAlpha.CacheHit) cpuAlpha = LoadPixelsCpu(alphaPath);
 
             lock (_gpuLock) {
                 var rgbTex = UploadToVram(device, cpuRgb);

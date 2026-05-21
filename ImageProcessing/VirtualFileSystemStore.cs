@@ -65,6 +65,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             _files[key] = value;
             _lastAccessUtcTicks[key] = DateTime.UtcNow.Ticks;
             Interlocked.Add(ref _totalBytes, EstimateBytes(value));
+            ComputeSharpLayering.InvalidateCache(key);
             TrimToMaxBytes();
         }
 
@@ -90,9 +91,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                     return;
 
                 var victims = _lastAccessUtcTicks
-                    .OrderBy(kvp => kvp.Value)
-                    .Select(kvp => kvp.Key)
-                    .ToList();
+                     .OrderBy(kvp => kvp.Value)
+                     .Select(kvp => kvp.Key)
+                     .ToList();
 
                 int removed = 0;
                 foreach (string key in victims)
@@ -104,6 +105,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                     {
                         Interlocked.Add(ref _totalBytes, -EstimateBytes(removedFile));
                         _lastAccessUtcTicks.TryRemove(key, out _);
+                        ComputeSharpLayering.InvalidateCache(key);
                         removed++;
                     }
                 }

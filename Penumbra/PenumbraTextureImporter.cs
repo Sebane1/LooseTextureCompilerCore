@@ -85,29 +85,36 @@ public static class PenumbraTextureImporter {
         }
     }
 
-    public static bool BitmapToTex(System.Drawing.Bitmap file, out byte[] texData, bool exportBc7 = false, bool useGpu = true) {
-        using (var lockBmp = new FFXIVLooseTextureCompiler.ImageProcessing.LockBitmap(file)) {
-            lockBmp.LockBits();
-            int width = file.Width;
-            int height = file.Height;
+    public static unsafe bool BitmapToTex(System.Drawing.Bitmap file, out byte[] texData, bool exportBc7 = false, bool useGpu = true) {
+        int width = file.Width;
+        int height = file.Height;
+        int totalPixels = width * height;
 
+        var bmpData = file.LockBits(new System.Drawing.Rectangle(0, 0, width, height), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+        try {
             if (exportBc7) {
-                byte[] rgbaPixels = new byte[lockBmp.Pixels.Length];
-                System.Buffer.BlockCopy(lockBmp.Pixels, 0, rgbaPixels, 0, lockBmp.Pixels.Length);
-                
-                // Convert BGRA (Bitmap) to RGBA for OtterTex
-                for (int i = 0; i < rgbaPixels.Length; i += 4) {
-                    (rgbaPixels[i], rgbaPixels[i + 2]) = (rgbaPixels[i + 2], rgbaPixels[i]);
+                byte[] rgbaPixels = new byte[totalPixels * 4];
+                byte* src = (byte*)bmpData.Scan0;
+                fixed (byte* dst = rgbaPixels) {
+                    for (int i = 0; i < totalPixels * 4; i += 4) {
+                        dst[i]     = src[i + 2]; // R
+                        dst[i + 1] = src[i + 1]; // G
+                        dst[i + 2] = src[i];     // B
+                        dst[i + 3] = src[i + 3]; // A
+                    }
                 }
-
                 if (RgbaBytesToTex(rgbaPixels, width, height, out texData, true, useGpu)) return true;
             }
 
             // Uncompressed path: Bitmap is already BGRA, which matches uncompressed .tex
-            texData = new byte[80 + width * height * 4];
+            texData = new byte[80 + totalPixels * 4];
             WriteHeader(texData, width, height);
-            System.Buffer.BlockCopy(lockBmp.Pixels, 0, texData, 80, lockBmp.Pixels.Length);
+            fixed (byte* dst = &texData[80]) {
+                System.Buffer.MemoryCopy((void*)bmpData.Scan0, dst, totalPixels * 4, totalPixels * 4);
+            }
             return true;
+        } finally {
+            file.UnlockBits(bmpData);
         }
     }
 }

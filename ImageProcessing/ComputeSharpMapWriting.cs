@@ -212,97 +212,121 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
     /// </summary>
     public static class ComputeSharpMapWriting {
 
-        private static (byte[] filePixels, byte[] glowPixels, int width, int height) PrepareInputs(Bitmap file, Bitmap glow) {
-            int width = file.Width;
-            int height = file.Height;
-
-            byte[] filePixels;
-            using (var fileLock = new LockBitmap(file)) {
-                fileLock.LockBits();
-                filePixels = new byte[fileLock.Pixels.Length];
-                Array.Copy(fileLock.Pixels, filePixels, filePixels.Length);
+        private static unsafe void UploadToReadOnlyTexture(Bitmap bitmap, ReadOnlyTexture2D<Bgra32, float4> gpuTex) {
+            int width = bitmap.Width;
+            int height = bitmap.Height;
+            var bmpData = bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            try {
+                var span = new ReadOnlySpan<Bgra32>((void*)bmpData.Scan0, width * height);
+                gpuTex.CopyFrom(span);
+            } finally {
+                bitmap.UnlockBits(bmpData);
             }
-
-            byte[] glowPixels;
-            using (var resizedGlow = new Bitmap(glow, width, height)) {
-                using (var glowLock = new LockBitmap(resizedGlow)) {
-                    glowLock.LockBits();
-                    glowPixels = new byte[glowLock.Pixels.Length];
-                    Array.Copy(glowLock.Pixels, glowPixels, glowPixels.Length);
-                }
-            }
-
-            return (filePixels, glowPixels, width, height);
         }
 
-        private static Bitmap DownloadResult(ReadWriteTexture2D<Bgra32, float4> gpuOutput, int width, int height) {
-            int totalPixels = width * height;
-            byte[] resultPixels = new byte[totalPixels * 4];
-            gpuOutput.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(resultPixels));
-
+        private static unsafe Bitmap DownloadResult(ReadWriteTexture2D<Bgra32, float4> gpuOutput, int width, int height) {
             Bitmap result = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-            var bmpData = result.LockBits(new Rectangle(0, 0, width, height),
-                ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
-            Marshal.Copy(resultPixels, 0, bmpData.Scan0, resultPixels.Length);
-            result.UnlockBits(bmpData);
+            var bmpData = result.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+            try {
+                var span = new Span<Bgra32>((void*)bmpData.Scan0, width * height);
+                gpuOutput.CopyTo(span);
+            } finally {
+                result.UnlockBits(bmpData);
+            }
             return result;
         }
 
         public static Bitmap CalculateBaseGpu(Bitmap file, Bitmap glow) {
-            var (filePixels, glowPixels, width, height) = PrepareInputs(file, glow);
+            int width = file.Width;
+            int height = file.Height;
             var device = GraphicsDevice.GetDefault();
             int totalPixels = width * height;
 
             using var gpuFile = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
             using var gpuGlow = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
             using var gpuOutput = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
-            gpuFile.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(filePixels));
-            gpuGlow.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(glowPixels));
+
+            UploadToReadOnlyTexture(file, gpuFile);
+
+            if (glow.Width == width && glow.Height == height) {
+                UploadToReadOnlyTexture(glow, gpuGlow);
+            } else {
+                using (var resizedGlow = new Bitmap(glow, width, height)) {
+                    UploadToReadOnlyTexture(resizedGlow, gpuGlow);
+                }
+            }
 
             device.For(totalPixels, new CalculateBaseShader(gpuFile, gpuGlow, gpuOutput, width));
             return DownloadResult(gpuOutput, width, height);
         }
 
         public static Bitmap CalculateMultiGpu(Bitmap file, Bitmap glow) {
-            var (filePixels, glowPixels, width, height) = PrepareInputs(file, glow);
+            int width = file.Width;
+            int height = file.Height;
             var device = GraphicsDevice.GetDefault();
             int totalPixels = width * height;
 
             using var gpuFile = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
             using var gpuGlow = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
             using var gpuOutput = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
-            gpuFile.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(filePixels));
-            gpuGlow.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(glowPixels));
+
+            UploadToReadOnlyTexture(file, gpuFile);
+
+            if (glow.Width == width && glow.Height == height) {
+                UploadToReadOnlyTexture(glow, gpuGlow);
+            } else {
+                using (var resizedGlow = new Bitmap(glow, width, height)) {
+                    UploadToReadOnlyTexture(resizedGlow, gpuGlow);
+                }
+            }
 
             device.For(totalPixels, new CalculateMultiShader(gpuFile, gpuGlow, gpuOutput, width));
             return DownloadResult(gpuOutput, width, height);
         }
 
         public static Bitmap CalculateEyeMultiGpu(Bitmap file, Bitmap glow) {
-            var (filePixels, glowPixels, width, height) = PrepareInputs(file, glow);
+            int width = file.Width;
+            int height = file.Height;
             var device = GraphicsDevice.GetDefault();
             int totalPixels = width * height;
 
             using var gpuFile = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
             using var gpuGlow = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
             using var gpuOutput = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
-            gpuFile.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(filePixels));
-            gpuGlow.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(glowPixels));
+
+            UploadToReadOnlyTexture(file, gpuFile);
+
+            if (glow.Width == width && glow.Height == height) {
+                UploadToReadOnlyTexture(glow, gpuGlow);
+            } else {
+                using (var resizedGlow = new Bitmap(glow, width, height)) {
+                    UploadToReadOnlyTexture(resizedGlow, gpuGlow);
+                }
+            }
 
             device.For(totalPixels, new CalculateEyeMultiShader(gpuFile, gpuGlow, gpuOutput, width));
             return DownloadResult(gpuOutput, width, height);
         }
 
         public static Bitmap TransplantDataGpu(Bitmap file, Bitmap glow) {
-            var (filePixels, glowPixels, width, height) = PrepareInputs(file, glow);
+            int width = file.Width;
+            int height = file.Height;
             var device = GraphicsDevice.GetDefault();
             int totalPixels = width * height;
 
             using var gpuFile = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
             using var gpuGlow = device.AllocateReadOnlyTexture2D<Bgra32, float4>(width, height);
             using var gpuOutput = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
-            gpuFile.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(filePixels));
-            gpuGlow.CopyFrom(MemoryMarshal.Cast<byte, Bgra32>(glowPixels));
+
+            UploadToReadOnlyTexture(file, gpuFile);
+
+            if (glow.Width == width && glow.Height == height) {
+                UploadToReadOnlyTexture(glow, gpuGlow);
+            } else {
+                using (var resizedGlow = new Bitmap(glow, width, height)) {
+                    UploadToReadOnlyTexture(resizedGlow, gpuGlow);
+                }
+            }
 
             device.For(totalPixels, new TransplantDataShader(gpuFile, gpuGlow, gpuOutput, width));
             return DownloadResult(gpuOutput, width, height);

@@ -252,10 +252,17 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                     return item;
                 }
                 Bitmap bitmap = new Bitmap(file.Width, file.Height, PixelFormat.Format32bppArgb);
-                LockBitmap lockBitmap = new LockBitmap(bitmap);
-                lockBitmap.LockBits();
-                Array.Copy(file.Data, lockBitmap.Pixels, file.Data.Length);
-                lockBitmap.UnlockBits();
+                if (file.Data != null && file.Data.Length == file.Width * file.Height * 4)
+                {
+                    LockBitmap lockBitmap = new LockBitmap(bitmap);
+                    lockBitmap.LockBits();
+                    Array.Copy(file.Data, lockBitmap.Pixels, file.Data.Length);
+                    lockBitmap.UnlockBits();
+                }
+                else
+                {
+                    using (var g = Graphics.FromImage(bitmap)) g.Clear(Color.Transparent);
+                }
                 return bitmap;
             }
             return new Bitmap(4096, 4096);
