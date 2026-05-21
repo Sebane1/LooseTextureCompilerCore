@@ -1029,7 +1029,8 @@ namespace FFXIVLooseTextureCompiler
                 {
                     if (!skipTexExport)
                     {
-                        Task.Run(() => ExportTex(textureSet.FinalMask, maskDiskPath, ExportType.DTMask, "", textureSet.FinalBase));
+                        string maskUnderlay = (textureSet.BackupTexturePaths != null) ? (textureSet.BackupTexturePaths.Mask ?? "") : "";
+                        Task.Run(() => ExportTex(textureSet.FinalMask, maskDiskPath, ExportType.DTMask, "", textureSet.FinalBase, maskUnderlay));
                     }
                 }
                 else if (textureSet.InternalMaskPath.Contains("etc_") || textureSet.InternalMaskPath.Contains("hair"))
@@ -1043,7 +1044,8 @@ namespace FFXIVLooseTextureCompiler
                 {
                     if (!skipTexExport)
                     {
-                        Task.Run(() => ExportTex(textureSet.FinalMask, maskDiskPath, ExportType.None));
+                        string maskUnderlay = (textureSet.BackupTexturePaths != null) ? (textureSet.BackupTexturePaths.Mask ?? "") : "";
+                        Task.Run(() => ExportTex(textureSet.FinalMask, maskDiskPath, ExportType.None, "", "", maskUnderlay));
                     }
                 }
                 outputGenerated = true;
@@ -1458,7 +1460,7 @@ namespace FFXIVLooseTextureCompiler
                                 }
                                 break;
                             case ExportType.DTMask:
-                                using (Bitmap dtResult = ExportTypeDTMaskAsBitmap(inputFile, modifierMap))
+                                using (Bitmap dtResult = ExportTypeDTMaskAsBitmap(inputFile, modifierMap, layeringImage))
                                 {
                                     if (dtResult != null) ScaleAndConvertToTex(dtResult, out data, actualExportBc7, actualUseGpu);
                                     else _asyncBenchLog.Enqueue($"  [Tex Error] ExportType.DTMask '{Path.GetFileName(outputFile)}' returned null bitmap!");
@@ -1701,9 +1703,9 @@ namespace FFXIVLooseTextureCompiler
             return null;
         }
 
-        private Bitmap ExportTypeDTMaskAsBitmap(string inputFile, string mask)
+        private Bitmap ExportTypeDTMaskAsBitmap(string inputFile, string mask, string layeringImage = "")
         {
-            string descriminator = inputFile + mask + "glowMulti";
+            string descriminator = inputFile + mask + layeringImage + "glowMulti";
             lock (_glowCache)
             {
                 if (_glowCache.ContainsKey(descriminator))
@@ -1719,6 +1721,27 @@ namespace FFXIVLooseTextureCompiler
                             using (Bitmap maskBitmap = ResolveBitmapScaled(mask))
                             {
                                 Bitmap maskChannelMap = MapWriting.CalculateMulti(bitmap, maskBitmap);
+
+                                if (!string.IsNullOrEmpty(layeringImage))
+                                {
+                                    string fullLayerPath = Path.Combine(_basePath, layeringImage);
+                                    if (File.Exists(fullLayerPath))
+                                    {
+                                        using (Bitmap underlayMask = ResolveBitmapScaled(fullLayerPath))
+                                        {
+                                            Bitmap blendedMask = new Bitmap(underlayMask.Width, underlayMask.Height, PixelFormat.Format32bppArgb);
+                                            using (Graphics g = Graphics.FromImage(blendedMask))
+                                            {
+                                                g.Clear(Color.Transparent);
+                                                g.DrawImage(underlayMask, 0, 0, underlayMask.Width, underlayMask.Height);
+                                                g.DrawImage(maskChannelMap, 0, 0, underlayMask.Width, underlayMask.Height);
+                                            }
+                                            maskChannelMap.Dispose();
+                                            maskChannelMap = blendedMask;
+                                        }
+                                    }
+                                }
+
                                 AddToBitmapCache(_glowCache, descriminator, maskChannelMap);
                                 return TexIO.NewBitmap(maskChannelMap);
                             }
