@@ -973,8 +973,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return (texture, false, cpuData.Width, cpuData.Height);
         }
 
+        private static bool _gpuUnavailable = false;
+
         public static Bitmap MergeMultipleImagesGpuFromPaths(System.Collections.Generic.List<string> paths, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints = null) {
-            var device = GraphicsDevice.GetDefault();
             int totalPixels = width * height;
             var sw = System.Diagnostics.Stopwatch.StartNew();
 
@@ -1016,123 +1017,201 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
             sw.Restart();
 
-            // All GPU work serialized
-            lock (_gpuLock) {
-                // Phase 2: Upload to VRAM (sequential, single-threaded)
-                var textures = new (ReadOnlyTexture2D<Bgra32, float4> Tex, bool IsCached, int Width, int Height)[paths.Count];
-                int vramHits = 0, vramMisses = 0;
-                for (int i = 0; i < paths.Count; i++) {
-                    var layerSw = System.Diagnostics.Stopwatch.StartNew();
-                    textures[i] = UploadToVram(device, cpuLayers[i]);
-                    vramTimes[i] = layerSw.ElapsedMilliseconds;
-                    
-                    if (textures[i].IsCached && cpuLayers[i].CacheHit) vramHits++; 
-                    else if (textures[i].Tex != null) vramMisses++;
-                }
-                long phase2Ms = sw.ElapsedMilliseconds;
-                sw.Restart();
+            // Skip GPU entirely if we already know it's unavailable (e.g. Linux/Wine)
+            if (_gpuUnavailable) {
+                return MergeLayersCpuFallback(cpuLayers, width, height, tints);
+            }
 
-                // Reuse cached ping/pong working textures if dimensions match
-                if (_cachedPing == null || _cachedWidth != width || _cachedHeight != height) {
-                    _cachedPing?.Dispose();
-                    _cachedPong?.Dispose();
-                    _cachedPing = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
-                    _cachedPong = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
-                    _cachedWidth = width;
-                    _cachedHeight = height;
-                    _cachedResultBuffer = new byte[totalPixels * 4];
-                }
-                var ping = _cachedPing;
-                var pong = _cachedPong;
+            try {
+                var device = GraphicsDevice.GetDefault();
 
-                // Phase 3: Batched GPU merge — all dispatches recorded into one command list
-                bool isPing = true;
-                using (var context = device.CreateComputeContext()) {
-                    // Initialize base layer
-                    if (textures.Length > 0 && textures[0].Tex != null) {
-                        var ld = textures[0];
-                        float4 tint = tints != null && 0 < tints.Count ? new float4(tints[0].X, tints[0].Y, tints[0].Z, tints[0].W) : new float4(1,1,1,1);
-                        context.For(totalPixels, new ClearShader(ping, width, height));
-                        context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
-                        isPing = false;
+                // All GPU work serialized
+                lock (_gpuLock) {
+                    // Phase 2: Upload to VRAM (sequential, single-threaded)
+                    var textures = new (ReadOnlyTexture2D<Bgra32, float4> Tex, bool IsCached, int Width, int Height)[paths.Count];
+                    int vramHits = 0, vramMisses = 0;
+                    for (int i = 0; i < paths.Count; i++) {
+                        var layerSw = System.Diagnostics.Stopwatch.StartNew();
+                        textures[i] = UploadToVram(device, cpuLayers[i]);
+                        vramTimes[i] = layerSw.ElapsedMilliseconds;
+                        
+                        if (textures[i].IsCached && cpuLayers[i].CacheHit) vramHits++; 
+                        else if (textures[i].Tex != null) vramMisses++;
                     }
+                    long phase2Ms = sw.ElapsedMilliseconds;
+                    sw.Restart();
 
-                    // Merge remaining layers — all recorded, no fence waits between them
-                    for (int i = 1; i < textures.Length; i++) {
-                        var ld = textures[i];
-                        if (ld.Tex == null) continue;
+                    // Reuse cached ping/pong working textures if dimensions match
+                    if (_cachedPing == null || _cachedWidth != width || _cachedHeight != height) {
+                        _cachedPing?.Dispose();
+                        _cachedPong?.Dispose();
+                        _cachedPing = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
+                        _cachedPong = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
+                        _cachedWidth = width;
+                        _cachedHeight = height;
+                        _cachedResultBuffer = new byte[totalPixels * 4];
+                    }
+                    var ping = _cachedPing;
+                    var pong = _cachedPong;
 
-                        float4 tint = tints != null && i < tints.Count ? new float4(tints[i].X, tints[i].Y, tints[i].Z, tints[i].W) : new float4(1,1,1,1);
-                        if (isPing) {
+                    // Phase 3: Batched GPU merge — all dispatches recorded into one command list
+                    bool isPing = true;
+                    using (var context = device.CreateComputeContext()) {
+                        // Initialize base layer
+                        if (textures.Length > 0 && textures[0].Tex != null) {
+                            var ld = textures[0];
+                            float4 tint = tints != null && 0 < tints.Count ? new float4(tints[0].X, tints[0].Y, tints[0].Z, tints[0].W) : new float4(1,1,1,1);
+                            context.For(totalPixels, new ClearShader(ping, width, height));
                             context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
-                        } else {
-                            context.For(totalPixels, new MergeImagesPingPongTintedShader(pong, ld.Tex, ping, width, height, ld.Width, ld.Height, tint));
+                            isPing = false;
                         }
-                        isPing = !isPing;
+
+                        // Merge remaining layers — all recorded, no fence waits between them
+                        for (int i = 1; i < textures.Length; i++) {
+                            var ld = textures[i];
+                            if (ld.Tex == null) continue;
+
+                            float4 tint = tints != null && i < tints.Count ? new float4(tints[i].X, tints[i].Y, tints[i].Z, tints[i].W) : new float4(1,1,1,1);
+                            if (isPing) {
+                                context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
+                            } else {
+                                context.For(totalPixels, new MergeImagesPingPongTintedShader(pong, ld.Tex, ping, width, height, ld.Width, ld.Height, tint));
+                            }
+                            isPing = !isPing;
+                        }
+                    } // ComputeContext disposes here — submits ALL dispatches as one command list, ONE fence wait
+                    long phase3Ms = sw.ElapsedMilliseconds;
+                    sw.Restart();
+
+                    // Dispose non-cached textures
+                    for (int i = 0; i < textures.Length; i++) {
+                        if (!textures[i].IsCached && textures[i].Tex != null)
+                            textures[i].Tex.Dispose();
                     }
-                } // ComputeContext disposes here — submits ALL dispatches as one command list, ONE fence wait
-                long phase3Ms = sw.ElapsedMilliseconds;
-                sw.Restart();
 
-                // Dispose non-cached textures
-                for (int i = 0; i < textures.Length; i++) {
-                    if (!textures[i].IsCached && textures[i].Tex != null)
-                        textures[i].Tex.Dispose();
+                    // Only GPU→CPU transfer: the final merged result (unavoidable for disk write)
+                    if (isPing) {
+                        ping.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(_cachedResultBuffer));
+                    } else {
+                        pong.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(_cachedResultBuffer));
+                    }
+                    long phase4Ms = sw.ElapsedMilliseconds;
+                    AuditVram();
+                    sw.Restart();
+
+                    var detailedLog = new System.Text.StringBuilder();
+                    detailedLog.AppendLine($"--- Detailed GPU Merge Benchmark ({paths.Count} layers) ---");
+                    detailedLog.AppendLine($"Total Phase 1 (CPU Load): {phase1Ms}ms");
+                    for (int i = 0; i < paths.Count; i++) {
+                        if (string.IsNullOrEmpty(paths[i])) continue;
+                        string hitMiss = cpuLayers[i].CacheHit ? "HIT" : "MISS";
+                        string pName = System.IO.Path.GetFileName(paths[i]);
+                        detailedLog.AppendLine($"  [{i:D2}] CPU Load ({hitMiss}): {cpuTimes[i]}ms - {pName}");
+                    }
+                    detailedLog.AppendLine($"Total Phase 2 (VRAM Upload): {phase2Ms}ms");
+                    for (int i = 0; i < paths.Count; i++) {
+                        if (string.IsNullOrEmpty(paths[i])) continue;
+                        string hitMiss = (textures[i].IsCached && cpuLayers[i].CacheHit) ? "HIT" : "MISS";
+                        string pName = System.IO.Path.GetFileName(paths[i]);
+                        detailedLog.AppendLine($"  [{i:D2}] VRAM Upload ({hitMiss}): {vramTimes[i]}ms - {pName}");
+                    }
+                    detailedLog.AppendLine($"Phase 3 (GPU Merge Dispatches): {phase3Ms}ms");
+                    detailedLog.AppendLine($"Phase 4 (Readback to CPU): {phase4Ms}ms");
+                    detailedLog.AppendLine($"Cache State: CPU={_cpuPixelCache.Count}, VRAM={_vramCache.Count}");
+                    detailedLog.AppendLine();
+
+                    // Safe to do inside _gpuLock because it guarantees serial writes from this method
+                    try { 
+                        string logPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Benchmark.txt");
+                        bool locked = true;
+                        int retries = 5;
+                        while (locked && retries > 0) {
+                            try {
+                                System.IO.File.AppendAllText(logPath, detailedLog.ToString());
+                                locked = false;
+                            } catch (System.IO.IOException) {
+                                System.Threading.Thread.Sleep(5);
+                                retries--;
+                            }
+                        }
+                    } catch {}
+                } // release GPU lock
+
+                Bitmap result = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+                var bmpDataResult = result.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+                Marshal.Copy(_cachedResultBuffer, 0, bmpDataResult.Scan0, _cachedResultBuffer.Length);
+                result.UnlockBits(bmpDataResult);
+
+                return result;
+            } catch (Exception ex) {
+                // GPU unavailable (e.g. Linux/Wine without DirectX 12 compute support)
+                _gpuUnavailable = true;
+                System.Diagnostics.Debug.WriteLine($"[MergeMultipleImagesGpuFromPaths] GPU unavailable, using CPU fallback: {ex.Message}");
+                try { System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Benchmark.txt"), 
+                    $"[GPU UNAVAILABLE] Falling back to CPU compositing: {ex.Message}\r\n"); } catch {}
+                return MergeLayersCpuFallback(cpuLayers, width, height, tints);
+            }
+        }
+
+        /// <summary>
+        /// CPU-based alpha composite fallback for systems without DirectX 12 compute (Linux/Wine).
+        /// Uses pre-loaded CpuLayerData from phase 1 — no extra file I/O needed.
+        /// </summary>
+        private static Bitmap MergeLayersCpuFallback(CpuLayerData[] cpuLayers, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints) {
+            byte[] output = new byte[width * height * 4];
+
+            for (int layerIdx = 0; layerIdx < cpuLayers.Length; layerIdx++) {
+                var layer = cpuLayers[layerIdx];
+                if (layer.Pixels == null || layer.Width <= 0 || layer.Height <= 0) continue;
+
+                float tR = 1f, tG = 1f, tB = 1f, tA = 1f;
+                if (tints != null && layerIdx < tints.Count) {
+                    tR = tints[layerIdx].X; tG = tints[layerIdx].Y; tB = tints[layerIdx].Z; tA = tints[layerIdx].W;
                 }
 
-                // Only GPU→CPU transfer: the final merged result (unavoidable for disk write)
-                if (isPing) {
-                    ping.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(_cachedResultBuffer));
-                } else {
-                    pong.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(_cachedResultBuffer));
-                }
-                long phase4Ms = sw.ElapsedMilliseconds;
-                AuditVram();
-                sw.Restart();
+                float scaleX = (float)layer.Width / width;
+                float scaleY = (float)layer.Height / height;
 
-                var detailedLog = new System.Text.StringBuilder();
-                detailedLog.AppendLine($"--- Detailed GPU Merge Benchmark ({paths.Count} layers) ---");
-                detailedLog.AppendLine($"Total Phase 1 (CPU Load): {phase1Ms}ms");
-                for (int i = 0; i < paths.Count; i++) {
-                    if (string.IsNullOrEmpty(paths[i])) continue;
-                    string hitMiss = cpuLayers[i].CacheHit ? "HIT" : "MISS";
-                    string pName = System.IO.Path.GetFileName(paths[i]);
-                    detailedLog.AppendLine($"  [{i:D2}] CPU Load ({hitMiss}): {cpuTimes[i]}ms - {pName}");
-                }
-                detailedLog.AppendLine($"Total Phase 2 (VRAM Upload): {phase2Ms}ms");
-                for (int i = 0; i < paths.Count; i++) {
-                    if (string.IsNullOrEmpty(paths[i])) continue;
-                    string hitMiss = (textures[i].IsCached && cpuLayers[i].CacheHit) ? "HIT" : "MISS";
-                    string pName = System.IO.Path.GetFileName(paths[i]);
-                    detailedLog.AppendLine($"  [{i:D2}] VRAM Upload ({hitMiss}): {vramTimes[i]}ms - {pName}");
-                }
-                detailedLog.AppendLine($"Phase 3 (GPU Merge Dispatches): {phase3Ms}ms");
-                detailedLog.AppendLine($"Phase 4 (Readback to CPU): {phase4Ms}ms");
-                detailedLog.AppendLine($"Cache State: CPU={_cpuPixelCache.Count}, VRAM={_vramCache.Count}");
-                detailedLog.AppendLine();
+                System.Threading.Tasks.Parallel.For(0, height, y => {
+                    int srcY = Math.Clamp((int)(y * scaleY), 0, layer.Height - 1);
+                    for (int x = 0; x < width; x++) {
+                        int srcX = Math.Clamp((int)(x * scaleX), 0, layer.Width - 1);
 
-                // Safe to do inside _gpuLock because it guarantees serial writes from this method
-                try { 
-                    string logPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Benchmark.txt");
-                    bool locked = true;
-                    int retries = 5;
-                    while (locked && retries > 0) {
-                        try {
-                            System.IO.File.AppendAllText(logPath, detailedLog.ToString());
-                            locked = false;
-                        } catch (System.IO.IOException) {
-                            System.Threading.Thread.Sleep(5);
-                            retries--;
+                        int destIdx = (y * width + x) * 4;
+                        int srcIdx = (srcY * layer.Width + srcX) * 4;
+
+                        // BGRA byte order
+                        float topB = (layer.Pixels[srcIdx] / 255f) * tB;
+                        float topG = (layer.Pixels[srcIdx + 1] / 255f) * tG;
+                        float topR = (layer.Pixels[srcIdx + 2] / 255f) * tR;
+                        float topA = (layer.Pixels[srcIdx + 3] / 255f) * tA;
+
+                        if (topA <= 0f) continue;
+
+                        float accB = output[destIdx] / 255f;
+                        float accG = output[destIdx + 1] / 255f;
+                        float accR = output[destIdx + 2] / 255f;
+                        float accA = output[destIdx + 3] / 255f;
+
+                        float outA = topA + accA * (1f - topA);
+                        if (outA > 0f) {
+                            float outR = (topR * topA + accR * accA * (1f - topA)) / outA;
+                            float outG = (topG * topA + accG * accA * (1f - topA)) / outA;
+                            float outB = (topB * topA + accB * accA * (1f - topA)) / outA;
+
+                            output[destIdx] = (byte)Math.Clamp((int)(outB * 255f + 0.5f), 0, 255);
+                            output[destIdx + 1] = (byte)Math.Clamp((int)(outG * 255f + 0.5f), 0, 255);
+                            output[destIdx + 2] = (byte)Math.Clamp((int)(outR * 255f + 0.5f), 0, 255);
+                            output[destIdx + 3] = (byte)Math.Clamp((int)(outA * 255f + 0.5f), 0, 255);
                         }
                     }
-                } catch {}
-            } // release GPU lock
+                });
+            }
 
             Bitmap result = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-            var bmpDataResult = result.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
-            Marshal.Copy(_cachedResultBuffer, 0, bmpDataResult.Scan0, _cachedResultBuffer.Length);
-            result.UnlockBits(bmpDataResult);
-
+            var bmpData = result.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+            Marshal.Copy(output, 0, bmpData.Scan0, output.Length);
+            result.UnlockBits(bmpData);
             return result;
         }
 
