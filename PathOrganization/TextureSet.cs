@@ -11,6 +11,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private string _baseUV = "";
         private List<string> _baseOverlays = new List<string>();
         private List<string> _baseOverlayUVs = new List<string>();
+        private List<System.Numerics.Vector4> _baseOverlayTints = new List<System.Numerics.Vector4>();
         private string _normal = "";
         private string _normalUV = "";
         private List<string> _normalOverlays = new List<string>();
@@ -40,7 +41,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private BackupTexturePaths _backupTexturePaths;
         public bool IsChildSet {
             get {
-                return TextureSetName.Contains("[IsChild]");
+                return (TextureSetName ?? "").Contains("[IsChild]");
             }
         }
 
@@ -51,7 +52,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
 
         Dictionary<string, ulong> _hashes = new Dictionary<string, ulong>();
 
-        public string TextureSetName { get => _textureSetName; set => _textureSetName = value; }
+        public string TextureSetName { get => _textureSetName ?? ""; set => _textureSetName = value ?? ""; }
 
         #region Obsolete Properties 
         [Obsolete("This property is only here for backwards compatibility, please use TextureSetName instead.")]
@@ -148,11 +149,11 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public string GroupName {
             get {
                 if (string.IsNullOrEmpty(_groupName)) {
-                    _groupName = _textureSetName;
+                    _groupName = TextureSetName;
                 }
-                return _groupName;
+                return _groupName ?? "";
             }
-            set => _groupName = value;
+            set => _groupName = value ?? "";
         }
 
         public bool IgnoreMaskGeneration { get => _ignoreMaskGeneration; set => _ignoreMaskGeneration = value; }
@@ -167,6 +168,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public bool InvertNormalAlpha { get => _invertNormalAlpha; set => _invertNormalAlpha = value; }
         public List<string> BaseOverlays { get { if (_baseOverlays == null) { _baseOverlays = new List<string>(); } return _baseOverlays; } set => _baseOverlays = value; }
         public List<string> BaseOverlayUVs { get { if (_baseOverlayUVs == null) { _baseOverlayUVs = new List<string>(); } return _baseOverlayUVs; } set => _baseOverlayUVs = value; }
+        public List<System.Numerics.Vector4> BaseOverlayTints { get { if (_baseOverlayTints == null) { _baseOverlayTints = new List<System.Numerics.Vector4>(); } return _baseOverlayTints; } set => _baseOverlayTints = value; }
         public List<string> NormalOverlays { get { if (_normalOverlays == null) { _normalOverlays = new List<string>(); } return _normalOverlays; } set => _normalOverlays = value; }
         public List<string> NormalOverlayUVs { get { if (_normalOverlayUVs == null) { _normalOverlayUVs = new List<string>(); } return _normalOverlayUVs; } set => _normalOverlayUVs = value; }
         public List<string> MaskOverlays { get { if (_maskOverlays == null) { _maskOverlays = new List<string>(); } return _maskOverlays; } set => _maskOverlays = value; }

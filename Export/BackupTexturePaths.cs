@@ -75,13 +75,13 @@ namespace FFXIVLooseTextureCompiler.Export
         private string? _maskPath;
 
         [JsonIgnore]
-        public string Base { get => _path + _baseTexture; }
+        public string Base { get => (_path ?? "") + (_baseTexture ?? ""); }
         [JsonIgnore]
-        public string BaseSecondary { get => !string.IsNullOrEmpty(_baseTextureSecondary) ? _path + _baseTextureSecondary : Base; }
+        public string BaseSecondary { get => !string.IsNullOrEmpty(_baseTextureSecondary) ? (_path ?? "") + _baseTextureSecondary : Base; }
         [JsonIgnore]
-        public string Normal { get => _normPath + _normal; }
+        public string Normal { get => (_normPath ?? "") + (_normal ?? ""); }
         [JsonIgnore]
-        public string Mask { get => !string.IsNullOrEmpty(_mask) ? _maskPath + _mask : ""; }
+        public string Mask { get => !string.IsNullOrEmpty(_mask) ? (_maskPath ?? "") + _mask : ""; }
         [JsonIgnore]
         public bool NeedsNormal => string.IsNullOrEmpty(_normal);
         [JsonIgnore]

@@ -268,6 +268,195 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
     [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
+    public readonly partial struct MergeImagesPingPongTintedShader : IComputeShader {
+        public readonly ReadWriteTexture2D<Bgra32, float4> BottomLayer;
+        public readonly ReadOnlyTexture2D<Bgra32, float4> TopLayer;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+        public readonly int DestWidth;
+        public readonly int DestHeight;
+        public readonly int SrcWidth;
+        public readonly int SrcHeight;
+        public readonly float4 Tint;
+
+        public MergeImagesPingPongTintedShader(
+            ReadWriteTexture2D<Bgra32, float4> bottomLayer, 
+            ReadOnlyTexture2D<Bgra32, float4> topLayer, 
+            ReadWriteTexture2D<Bgra32, float4> output, 
+            int destWidth, int destHeight, int srcWidth, int srcHeight, float4 tint) {
+            BottomLayer = bottomLayer;
+            TopLayer = topLayer;
+            Output = output;
+            DestWidth = destWidth;
+            DestHeight = destHeight;
+            SrcWidth = srcWidth;
+            SrcHeight = srcHeight;
+            Tint = tint;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            if (idx >= DestWidth * DestHeight) return;
+
+            int y = idx / DestWidth;
+            int x = idx % DestWidth;
+            int2 pos = new int2(x, y);
+
+            float4 bottomPixel = BottomLayer[pos];
+            float srcAspect = (float)SrcWidth / (float)SrcHeight;
+            float scaledWidth = (float)DestHeight * srcAspect;
+            float scaledHeight = (float)DestHeight;
+            
+            float srcXf = (float)x / scaledWidth * SrcWidth;
+            float srcYf = (float)y / scaledHeight * SrcHeight;
+
+            float4 topPixel = float4.Zero;
+            
+            if (srcXf >= 0.0f && srcXf < (float)SrcWidth && srcYf >= 0.0f && srcYf < (float)SrcHeight) {
+                int srcX = Hlsl.Clamp((int)srcXf, 0, SrcWidth - 1);
+                int srcY = Hlsl.Clamp((int)srcYf, 0, SrcHeight - 1);
+                topPixel = TopLayer[new int2(srcX, srcY)] * Tint;
+            }
+
+            float topA = topPixel.W;
+            float bottomA = bottomPixel.W;
+            float outA = topA + bottomA * (1.0f - topA);
+            
+            float outR = 0;
+            float outG = 0;
+            float outB = 0;
+            
+            if (outA > 0) {
+                outR = (topPixel.Z * topA + bottomPixel.Z * bottomA * (1.0f - topA)) / outA;
+                outG = (topPixel.Y * topA + bottomPixel.Y * bottomA * (1.0f - topA)) / outA;
+                outB = (topPixel.X * topA + bottomPixel.X * bottomA * (1.0f - topA)) / outA;
+            }
+
+            Output[pos] = new float4(outB, outG, outR, outA);
+        }
+    }
+
+    [ThreadGroupSize(1024, 1, 1)]
+    [GeneratedComputeShaderDescriptor]
+    public readonly partial struct MergeGlowImagesPingPongShader : IComputeShader {
+        public readonly ReadWriteTexture2D<Bgra32, float4> BottomLayer;
+        public readonly ReadOnlyTexture2D<Bgra32, float4> TopLayer;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+        public readonly int DestWidth;
+        public readonly int DestHeight;
+        public readonly int SrcWidth;
+        public readonly int SrcHeight;
+
+        public MergeGlowImagesPingPongShader(
+            ReadWriteTexture2D<Bgra32, float4> bottomLayer, 
+            ReadOnlyTexture2D<Bgra32, float4> topLayer, 
+            ReadWriteTexture2D<Bgra32, float4> output, 
+            int destWidth, int destHeight, int srcWidth, int srcHeight) {
+            BottomLayer = bottomLayer;
+            TopLayer = topLayer;
+            Output = output;
+            DestWidth = destWidth;
+            DestHeight = destHeight;
+            SrcWidth = srcWidth;
+            SrcHeight = srcHeight;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            if (idx >= DestWidth * DestHeight) return;
+
+            int y = idx / DestWidth;
+            int x = idx % DestWidth;
+            int2 pos = new int2(x, y);
+
+            float4 bottomPixel = BottomLayer[pos];
+            float srcAspect = (float)SrcWidth / (float)SrcHeight;
+            float scaledWidth = (float)DestHeight * srcAspect;
+            float scaledHeight = (float)DestHeight;
+            
+            float srcXf = (float)x / scaledWidth * SrcWidth;
+            float srcYf = (float)y / scaledHeight * SrcHeight;
+
+            float4 topPixel = float4.Zero;
+            
+            if (srcXf >= 0.0f && srcXf < (float)SrcWidth && srcYf >= 0.0f && srcYf < (float)SrcHeight) {
+                int srcX = Hlsl.Clamp((int)srcXf, 0, SrcWidth - 1);
+                int srcY = Hlsl.Clamp((int)srcYf, 0, SrcHeight - 1);
+                topPixel = TopLayer[new int2(srcX, srcY)];
+            }
+
+            // Glow blending: pick the brightest pixel instead of alpha blending
+            float outB = Hlsl.Max(bottomPixel.X, topPixel.X);
+            float outG = Hlsl.Max(bottomPixel.Y, topPixel.Y);
+            float outR = Hlsl.Max(bottomPixel.Z, topPixel.Z);
+            float outA = 1.0f; // Glow maps are opaque
+
+            Output[pos] = new float4(outB, outG, outR, outA);
+        }
+    }
+
+    [ThreadGroupSize(1024, 1, 1)]
+    [GeneratedComputeShaderDescriptor]
+    public readonly partial struct MergeGlowImagesPingPongTintedShader : IComputeShader {
+        public readonly ReadWriteTexture2D<Bgra32, float4> BottomLayer;
+        public readonly ReadOnlyTexture2D<Bgra32, float4> TopLayer;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+        public readonly int DestWidth;
+        public readonly int DestHeight;
+        public readonly int SrcWidth;
+        public readonly int SrcHeight;
+        public readonly float4 Tint;
+
+        public MergeGlowImagesPingPongTintedShader(
+            ReadWriteTexture2D<Bgra32, float4> bottomLayer, 
+            ReadOnlyTexture2D<Bgra32, float4> topLayer, 
+            ReadWriteTexture2D<Bgra32, float4> output, 
+            int destWidth, int destHeight, int srcWidth, int srcHeight, float4 tint) {
+            BottomLayer = bottomLayer;
+            TopLayer = topLayer;
+            Output = output;
+            DestWidth = destWidth;
+            DestHeight = destHeight;
+            SrcWidth = srcWidth;
+            SrcHeight = srcHeight;
+            Tint = tint;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            if (idx >= DestWidth * DestHeight) return;
+
+            int y = idx / DestWidth;
+            int x = idx % DestWidth;
+            int2 pos = new int2(x, y);
+
+            float4 bottomPixel = BottomLayer[pos];
+            float srcAspect = (float)SrcWidth / (float)SrcHeight;
+            float scaledWidth = (float)DestHeight * srcAspect;
+            float scaledHeight = (float)DestHeight;
+            
+            float srcXf = (float)x / scaledWidth * SrcWidth;
+            float srcYf = (float)y / scaledHeight * SrcHeight;
+
+            float4 topPixel = float4.Zero;
+            
+            if (srcXf >= 0.0f && srcXf < (float)SrcWidth && srcYf >= 0.0f && srcYf < (float)SrcHeight) {
+                int srcX = Hlsl.Clamp((int)srcXf, 0, SrcWidth - 1);
+                int srcY = Hlsl.Clamp((int)srcYf, 0, SrcHeight - 1);
+                topPixel = TopLayer[new int2(srcX, srcY)] * Tint;
+            }
+
+            // Glow blending: pick the brightest pixel instead of alpha blending
+            float outB = Hlsl.Max(bottomPixel.X, topPixel.X);
+            float outG = Hlsl.Max(bottomPixel.Y, topPixel.Y);
+            float outR = Hlsl.Max(bottomPixel.Z, topPixel.Z);
+            float outA = 1.0f; // Glow maps are opaque
+
+            Output[pos] = new float4(outB, outG, outR, outA);
+        }
+    }
+
+    [ThreadGroupSize(1024, 1, 1)]
+    [GeneratedComputeShaderDescriptor]
     public readonly partial struct CopyShader : IComputeShader {
         public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
         public readonly ReadWriteTexture2D<Bgra32, float4> Destination;
@@ -333,6 +522,54 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             float4 alphaPixel = Alpha[new int2(alphaX, alphaY)];
             
             float alphaVal = alphaPixel.Z;
+            if (InvertAlpha == 1) {
+                alphaVal = 1.0f - alphaVal;
+            }
+
+            Output[pos] = new float4(rgbPixel.X, rgbPixel.Y, rgbPixel.Z, alphaVal);
+        }
+    }
+
+    [ThreadGroupSize(1024, 1, 1)]
+    [GeneratedComputeShaderDescriptor]
+    public readonly partial struct MergeAlphaChannelToRGBScalingShader : IComputeShader {
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Rgb;
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Alpha;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+        public readonly int DestWidth;
+        public readonly int DestHeight;
+        public readonly int AlphaWidth;
+        public readonly int AlphaHeight;
+        public readonly int InvertAlpha;
+
+        public MergeAlphaChannelToRGBScalingShader(ReadOnlyTexture2D<Bgra32, float4> rgb, ReadOnlyTexture2D<Bgra32, float4> alpha, ReadWriteTexture2D<Bgra32, float4> output, int destWidth, int destHeight, int alphaWidth, int alphaHeight, int invertAlpha) {
+            Rgb = rgb;
+            Alpha = alpha;
+            Output = output;
+            DestWidth = destWidth;
+            DestHeight = destHeight;
+            AlphaWidth = alphaWidth;
+            AlphaHeight = alphaHeight;
+            InvertAlpha = invertAlpha;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            if (idx >= DestWidth * DestHeight) return;
+
+            int y = idx / DestWidth;
+            int x = idx % DestWidth;
+            int2 pos = new int2(x, y);
+
+            float4 rgbPixel = Rgb[pos];
+            
+            float alphaXf = (float)x / DestWidth * AlphaWidth;
+            float alphaYf = (float)y / DestHeight * AlphaHeight;
+            int alphaX = Hlsl.Clamp((int)alphaXf, 0, AlphaWidth - 1);
+            int alphaY = Hlsl.Clamp((int)alphaYf, 0, AlphaHeight - 1);
+            float4 alphaPixel = Alpha[new int2(alphaX, alphaY)];
+            
+            float alphaVal = alphaPixel.W;
             if (InvertAlpha == 1) {
                 alphaVal = 1.0f - alphaVal;
             }
@@ -671,7 +908,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return (texture, false, cpuData.Width, cpuData.Height);
         }
 
-        public static Bitmap MergeMultipleImagesGpuFromPaths(System.Collections.Generic.List<string> paths, int width, int height) {
+        public static Bitmap MergeMultipleImagesGpuFromPaths(System.Collections.Generic.List<string> paths, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints = null, bool isGlow = false) {
             var device = GraphicsDevice.GetDefault();
             int totalPixels = width * height;
             var sw = System.Diagnostics.Stopwatch.StartNew();
@@ -745,11 +982,18 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     // Initialize base layer
                     if (textures.Length > 0 && textures[0].Tex != null) {
                         var ld = textures[0];
-                        if (ld.Width == width && ld.Height == height) {
+                        if (ld.Width == width && ld.Height == height && (tints == null || tints.Count == 0 || tints[0] == System.Numerics.Vector4.One)) {
                             context.For(totalPixels, new CopyShader(ld.Tex, ping, width, height));
                         } else {
+                            float4 tint = tints != null && 0 < tints.Count ? new float4(tints[0].X, tints[0].Y, tints[0].Z, tints[0].W) : new float4(1,1,1,1);
                             context.For(totalPixels, new ClearShader(ping, width, height));
-                            context.For(totalPixels, new MergeImagesPingPongShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height));
+                            if (tint.X == 1.0f && tint.Y == 1.0f && tint.Z == 1.0f && tint.W == 1.0f) {
+                                if (isGlow) context.For(totalPixels, new MergeGlowImagesPingPongShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height));
+                                else context.For(totalPixels, new MergeImagesPingPongShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height));
+                            } else {
+                                if (isGlow) context.For(totalPixels, new MergeGlowImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
+                                else context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
+                            }
                             isPing = false;
                         }
                     }
@@ -759,10 +1003,23 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         var ld = textures[i];
                         if (ld.Tex == null) continue;
 
-                        if (isPing) {
-                            context.For(totalPixels, new MergeImagesPingPongShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height));
+                        float4 tint = tints != null && i < tints.Count ? new float4(tints[i].X, tints[i].Y, tints[i].Z, tints[i].W) : new float4(1,1,1,1);
+                        if (tint.X == 1.0f && tint.Y == 1.0f && tint.Z == 1.0f && tint.W == 1.0f) {
+                            if (isPing) {
+                                if (isGlow) context.For(totalPixels, new MergeGlowImagesPingPongShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height));
+                                else context.For(totalPixels, new MergeImagesPingPongShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height));
+                            } else {
+                                if (isGlow) context.For(totalPixels, new MergeGlowImagesPingPongShader(pong, ld.Tex, ping, width, height, ld.Width, ld.Height));
+                                else context.For(totalPixels, new MergeImagesPingPongShader(pong, ld.Tex, ping, width, height, ld.Width, ld.Height));
+                            }
                         } else {
-                            context.For(totalPixels, new MergeImagesPingPongShader(pong, ld.Tex, ping, width, height, ld.Width, ld.Height));
+                            if (isPing) {
+                                if (isGlow) context.For(totalPixels, new MergeGlowImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
+                                else context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
+                            } else {
+                                if (isGlow) context.For(totalPixels, new MergeGlowImagesPingPongTintedShader(pong, ld.Tex, ping, width, height, ld.Width, ld.Height, tint));
+                                else context.For(totalPixels, new MergeImagesPingPongTintedShader(pong, ld.Tex, ping, width, height, ld.Width, ld.Height, tint));
+                            }
                         }
                         isPing = !isPing;
                     }
@@ -877,7 +1134,87 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return result;
         }
 
-        public static Bitmap MergeMultipleImagesGpu(Bitmap[] layers, int width, int height) {
+        public static Bitmap MergeAlphaChannelToRGBGpuFromPaths(string rgbPath, string alphaPath, int destWidth, int destHeight, bool invertAlpha) {
+            var device = GraphicsDevice.GetDefault();
+            int totalPixels = destWidth * destHeight;
+
+            var cpuRgb = LoadPixelsCpu(rgbPath);
+            var cpuAlpha = LoadPixelsCpu(alphaPath);
+            if (!cpuRgb.CacheHit) cpuRgb = LoadPixelsCpu(rgbPath);
+            if (!cpuAlpha.CacheHit) cpuAlpha = LoadPixelsCpu(alphaPath);
+
+            lock (_gpuLock) {
+                var rgbTex = UploadToVram(device, cpuRgb);
+                var alphaTex = UploadToVram(device, cpuAlpha);
+
+                if (_cachedPing == null || _cachedWidth != destWidth || _cachedHeight != destHeight) {
+                    _cachedPing?.Dispose();
+                    _cachedPong?.Dispose();
+                    _cachedPing = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
+                    _cachedPong = device.AllocateReadWriteTexture2D<Bgra32, float4>(destWidth, destHeight);
+                    _cachedWidth = destWidth;
+                    _cachedHeight = destHeight;
+                    _cachedResultBuffer = new byte[totalPixels * 4];
+                }
+                var output = _cachedPing;
+
+                using (var context = device.CreateComputeContext()) {
+                    context.For(totalPixels, new MergeAlphaChannelToRGBScalingShader(
+                        rgbTex.Texture, alphaTex.Texture, output, 
+                        destWidth, destHeight, 
+                        alphaTex.Width, alphaTex.Height, 
+                        invertAlpha ? 1 : 0));
+                }
+
+                if (!rgbTex.IsCached && rgbTex.Texture != null) rgbTex.Texture.Dispose();
+                if (!alphaTex.IsCached && alphaTex.Texture != null) alphaTex.Texture.Dispose();
+
+                output.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(_cachedResultBuffer));
+            }
+
+            Bitmap result = new Bitmap(destWidth, destHeight, PixelFormat.Format32bppArgb);
+            var bmpDataResult = result.LockBits(new Rectangle(0, 0, destWidth, destHeight), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+            Marshal.Copy(_cachedResultBuffer, 0, bmpDataResult.Scan0, _cachedResultBuffer.Length);
+            result.UnlockBits(bmpDataResult);
+
+            return result;
+        }
+
+        public static (int Width, int Height) GetImageDimensions(string path) {
+            if (string.IsNullOrEmpty(path)) return (0, 0);
+            if (path.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+                if (TexIO.VirtualFileSystem.TryGetValue(path, out var memFile)) {
+                    return (memFile.Width, memFile.Height);
+                }
+            } else if (path.EndsWith(".tex", StringComparison.OrdinalIgnoreCase)) {
+                try {
+                    using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read)) {
+                        var scratch = global::Penumbra.LTCImport.Textures.PenumbraTexFileParser.Parse(stream);
+                        return (scratch.Meta.Width, scratch.Meta.Height);
+                    }
+                } catch {}
+            } else {
+                try {
+                    var cachedDims = GetDimensions(path);
+                    if (cachedDims.Width > 0 && cachedDims.Height > 0) {
+                        return cachedDims;
+                    }
+                    var info = SixLabors.ImageSharp.Image.Identify(path);
+                    if (info != null) {
+                        return (info.Width, info.Height);
+                    }
+                } catch {}
+            }
+            try {
+                using (var bitmap = TexIO.ResolveBitmap(path)) {
+                    return (bitmap.Width, bitmap.Height);
+                }
+            } catch {
+                return (0, 0);
+            }
+        }
+
+        public static Bitmap MergeMultipleImagesGpu(Bitmap[] layers, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints = null, bool isGlow = false) {
             var device = GraphicsDevice.GetDefault();
             int totalPixels = width * height;
 
@@ -918,10 +1255,23 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     safeTop.UnlockBits(bmpDataTop);
                     if (safeTop != topLayer) safeTop.Dispose();
 
-                    if (isPing) {
-                        device.For(totalPixels, new MergeImagesPingPongShader(ping, gpuTop, pong, width, height, topLayer.Width, topLayer.Height));
+                    float4 tint = tints != null && i < tints.Count ? new float4(tints[i].X, tints[i].Y, tints[i].Z, tints[i].W) : new float4(1,1,1,1);
+                    if (tint.X == 1.0f && tint.Y == 1.0f && tint.Z == 1.0f && tint.W == 1.0f) {
+                        if (isPing) {
+                            if (isGlow) device.For(totalPixels, new MergeGlowImagesPingPongShader(ping, gpuTop, pong, width, height, topLayer.Width, topLayer.Height));
+                            else device.For(totalPixels, new MergeImagesPingPongShader(ping, gpuTop, pong, width, height, topLayer.Width, topLayer.Height));
+                        } else {
+                            if (isGlow) device.For(totalPixels, new MergeGlowImagesPingPongShader(pong, gpuTop, ping, width, height, topLayer.Width, topLayer.Height));
+                            else device.For(totalPixels, new MergeImagesPingPongShader(pong, gpuTop, ping, width, height, topLayer.Width, topLayer.Height));
+                        }
                     } else {
-                        device.For(totalPixels, new MergeImagesPingPongShader(pong, gpuTop, ping, width, height, topLayer.Width, topLayer.Height));
+                        if (isPing) {
+                            if (isGlow) device.For(totalPixels, new MergeGlowImagesPingPongTintedShader(ping, gpuTop, pong, width, height, topLayer.Width, topLayer.Height, tint));
+                            else device.For(totalPixels, new MergeImagesPingPongTintedShader(ping, gpuTop, pong, width, height, topLayer.Width, topLayer.Height, tint));
+                        } else {
+                            if (isGlow) device.For(totalPixels, new MergeGlowImagesPingPongTintedShader(pong, gpuTop, ping, width, height, topLayer.Width, topLayer.Height, tint));
+                            else device.For(totalPixels, new MergeImagesPingPongTintedShader(pong, gpuTop, ping, width, height, topLayer.Width, topLayer.Height, tint));
+                        }
                     }
                 }
                 isPing = !isPing;

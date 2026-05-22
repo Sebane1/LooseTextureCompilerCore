@@ -383,7 +383,9 @@ namespace FFXIVLooseTextureCompiler
                     {
                         List<string> images = new List<string>();
                         List<string> uvs = new List<string>();
+                        List<System.Numerics.Vector4> tints = new List<System.Numerics.Vector4>();
                         images.Add(textureSet.Base);
+                        tints.Add(System.Numerics.Vector4.One);
                         if (string.IsNullOrEmpty(textureSet.BaseUV))
                         {
                             if (ImageManipulation.HasTextIdentifiers(textureSet.Base))
@@ -410,6 +412,7 @@ namespace FFXIVLooseTextureCompiler
                         for (int j = 0; j < textureSet.BaseOverlays.Count; j++)
                         {
                             images.Add(textureSet.BaseOverlays[j]);
+                            tints.Add(j < textureSet.BaseOverlayTints.Count ? textureSet.BaseOverlayTints[j] : System.Numerics.Vector4.One);
                             if (j < textureSet.BaseOverlayUVs.Count && !string.IsNullOrEmpty(textureSet.BaseOverlayUVs[j]))
                             {
                                 if (textureSet.BaseOverlayUVs[j].ToLower() == "auto")
@@ -430,7 +433,7 @@ namespace FFXIVLooseTextureCompiler
                                 uvs.Add("");
                             }
                         }
-                        textureSet.FinalBase = ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalBase, ExportScale);
+                        textureSet.FinalBase = ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalBase, ExportScale, tints);
                         alreadyCalculatedBases[textureSet.FinalBase] = "";
                     }
 
@@ -598,7 +601,7 @@ namespace FFXIVLooseTextureCompiler
                                 uvs.Add("");
                             }
                         }
-                        textureSet.FinalGlow = ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalGlow, ExportScale);
+                        textureSet.FinalGlow = ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalGlow, ExportScale, null, true);
                         alreadyCalculatedGlows[textureSet.FinalGlow] = "";
                     }
 
@@ -656,11 +659,12 @@ namespace FFXIVLooseTextureCompiler
                 OnProgressReport?.Invoke(this, "Export To Penumbra");
                 foreach (List<TextureSet> textureSets in groups.Values)
                 {
-                    int choiceOption = groupOptionTypes.ContainsKey(textureSets[0].GroupName)
-                    ? (groupOptionTypes[textureSets[0].GroupName] == 0
-                    ? generationType : groupOptionTypes[textureSets[0].GroupName] - 1)
+                    string groupName = textureSets[0].GroupName ?? "Unknown";
+                    int choiceOption = (groupOptionTypes != null && groupOptionTypes.ContainsKey(groupName))
+                    ? (groupOptionTypes[groupName] == 0
+                    ? generationType : groupOptionTypes[groupName] - 1)
                     : generationType;
-                    Group group = new Group(textureSets[0].GroupName.Replace(@"/", "-").Replace(@"\", "-"), "", 0,
+                    Group group = new Group(groupName.Replace(@"/", "-").Replace(@"\", "-"), "", 0,
                         (choiceOption == 2 && textureSets.Count > 1) ? "Single" : "Multi", 0);
                     Option option = null;
                     Option baseTextureOption = null;
@@ -795,10 +799,15 @@ namespace FFXIVLooseTextureCompiler
                                         !string.IsNullOrEmpty(textureSet.Glow) ||
                                         !string.IsNullOrEmpty(textureSet.Material))
                                     {
-                                        option = new Option(textureSet.TextureSetName == textureSet.GroupName || choiceOption == 3 ? "Enable"
-                                        : textureSet.TextureSetName + (textureSet.ChildSets.Count > 0 ? " (Universal)" : ""), 0);
-                                        group.Options.Add(option);
-                                        alreadySetOption = true;
+                                        if (group.Options.Count == 0 || !alreadySetOption)
+                                        {
+                                            string textureSetName = textureSet.TextureSetName ?? "Unknown";
+                                            string optionName = textureSetName == textureSet.GroupName || choiceOption == 3 ? "Enable"
+                                            : textureSetName + (textureSet.ChildSets != null && textureSet.ChildSets.Count > 0 ? " (Universal)" : "");
+                                            option = new Option(optionName, 0);
+                                            group.Options.Add(option);
+                                            alreadySetOption = true;
+                                        }
                                     }
                                 }
                                 if (!string.IsNullOrEmpty(textureSet.FinalBase) && !string.IsNullOrEmpty(textureSet.InternalBasePath))
@@ -809,6 +818,11 @@ namespace FFXIVLooseTextureCompiler
                                     benchLog.AppendLine($"  [TextureSet: {textureSet.TextureSetName}] BaseLogic: {sw.ElapsedMilliseconds}ms");
                                     if (result)
                                     {
+                                        if (option == null)
+                                        {
+                                            option = new Option(textureSet.TextureSetName ?? "Unknown", 0);
+                                            group.Options.Add(option);
+                                        }
                                         option.Files[textureSet.InternalBasePath] =
                                            baseTextureDiskPath.Replace(modPath + "\\", null);
                                     }
@@ -829,6 +843,11 @@ namespace FFXIVLooseTextureCompiler
                                     benchLog.AppendLine($"  [TextureSet: {textureSet.TextureSetName}] NormalLogic: {sw.ElapsedMilliseconds}ms");
                                     if (result)
                                     {
+                                        if (option == null)
+                                        {
+                                            option = new Option(textureSet.TextureSetName ?? "Unknown", 0);
+                                            group.Options.Add(option);
+                                        }
                                         option.Files[textureSet.InternalNormalPath] =
                                             normalDiskPath.Replace(modPath + "\\", null);
                                     }
@@ -849,6 +868,11 @@ namespace FFXIVLooseTextureCompiler
                                     benchLog.AppendLine($"  [TextureSet: {textureSet.TextureSetName}] MaskLogic: {sw.ElapsedMilliseconds}ms");
                                     if (result)
                                     {
+                                        if (option == null)
+                                        {
+                                            option = new Option(textureSet.TextureSetName ?? "Unknown", 0);
+                                            group.Options.Add(option);
+                                        }
                                         option.Files[textureSet.InternalMaskPath] =
                                            maskDiskPath.Replace(modPath + "\\", null);
                                     }
@@ -871,6 +895,11 @@ namespace FFXIVLooseTextureCompiler
                                     benchLog.AppendLine($"  [TextureSet: {textureSet.TextureSetName}] MaterialLogic: {sw.ElapsedMilliseconds}ms");
                                     if (result)
                                     {
+                                        if (option == null)
+                                        {
+                                            option = new Option(textureSet.TextureSetName ?? "Unknown", 0);
+                                            group.Options.Add(option);
+                                        }
                                         option.Files[textureSet.InternalMaterialPath] =
                                            materialDiskPath.Replace(modPath + "\\", null);
                                         Trace.WriteLine($"[Glow Debug] Export: MaterialLogic succeeded, added to option files: '{textureSet.InternalMaterialPath}' -> '{materialDiskPath.Replace(modPath + "\\", null)}'");
@@ -944,12 +973,12 @@ namespace FFXIVLooseTextureCompiler
                     backupHash = (textureSet.BackupTexturePaths.Base + textureSet.BackupTexturePaths.BaseSecondary).GetHashCode().ToString();
                 }
             }
-            return (textureSet.FinalBase.GetHashCode().ToString() +
-                textureSet.GroupName.GetHashCode().ToString() +
-                textureSet.FinalNormal.GetHashCode().ToString() +
-                textureSet.FinalMask.GetHashCode().ToString() +
-                textureSet.Glow.GetHashCode().ToString() +
-                textureSet.Material.GetHashCode().ToString() + backupHash).GetHashCode().ToString();
+            return ((textureSet.FinalBase ?? "").GetHashCode().ToString() +
+                (textureSet.GroupName ?? "").GetHashCode().ToString() +
+                (textureSet.FinalNormal ?? "").GetHashCode().ToString() +
+                (textureSet.FinalMask ?? "").GetHashCode().ToString() +
+                (textureSet.Glow ?? "").GetHashCode().ToString() +
+                (textureSet.Material != null ? textureSet.Material.GetHashCode().ToString() : "0") + backupHash).GetHashCode().ToString();
         }
 
         public string RedirectToDisk(string path)
@@ -967,7 +996,16 @@ namespace FFXIVLooseTextureCompiler
             }
             else
             {
-                outputOption = inputOption;
+                if (inputOption != null)
+                {
+                    outputOption = inputOption;
+                }
+                else
+                {
+                    outputOption = new Option((textureSets.Count > 1 ? textureSet.TextureSetName + " " : "")
+                    + name, 0);
+                    group.Options.Add(outputOption);
+                }
             }
             if (!outputOption.Files.ContainsKey(path))
             {

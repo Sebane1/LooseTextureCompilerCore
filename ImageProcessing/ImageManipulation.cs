@@ -655,53 +655,78 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int enforcedSize = 2048;
             string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
                 : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\mask.png");
+            if (!File.Exists(template)) {
+                throw new FileNotFoundException(
+                    $"Eye mask template not found at '{template}'. " +
+                    "Please ensure the application's 'res' folder is intact.", template);
+            }
             Bitmap canvas = new Bitmap(enforcedSize, enforcedSize, PixelFormat.Format32bppArgb);
-            Bitmap newEye = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 0.8f, 1.5f, 1);
-
-            Graphics graphics = Graphics.FromImage(canvas);
-            graphics.Clear(Color.Black);
-            Bitmap white = new Bitmap(enforcedSize, enforcedSize);
-            Bitmap black = new Bitmap(enforcedSize, enforcedSize);
-            graphics = Graphics.FromImage(white);
-            graphics.Clear(Color.White);
-            graphics = Graphics.FromImage(black);
-            graphics.Clear(Color.Black);
-            var bitmapTemplate = new Bitmap(template);
-            graphics = Graphics.FromImage(canvas);
-            var mergedImage = MergeGrayscalesToRGBA(new Bitmap(newEye), new Bitmap(black, image.Width, image.Height),
-                new Bitmap(white, image.Width, image.Height), new Bitmap(white, image.Width, image.Height));
-            float size = scaleTexture ? ((float)enforcedSize * 0.4096f) : enforcedSize;
-            graphics.DrawImage(mergedImage,
-
-               (enforcedSize / 2) - (size / 2), (enforcedSize / 2) - (size / 2),
-               size, size);
-            graphics.DrawImage(bitmapTemplate, 0, 0, enforcedSize, enforcedSize);
-
-            return MergeGrayscalesToRGBA(new Bitmap(canvas), new Bitmap(new Bitmap(canvas), enforcedSize, enforcedSize),
-                ImageManipulation.InvertImage(ExtractAlpha(new Bitmap(bitmapTemplate, enforcedSize, enforcedSize))), new Bitmap(white));
+            using (Bitmap newEye = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 0.8f, 1.5f, 1))
+            using (Bitmap white = new Bitmap(enforcedSize, enforcedSize))
+            using (Bitmap black = new Bitmap(enforcedSize, enforcedSize))
+            using (Bitmap bitmapTemplate = new Bitmap(template)) {
+                using (Graphics graphics = Graphics.FromImage(canvas)) {
+                    graphics.Clear(Color.Black);
+                }
+                using (Graphics graphics = Graphics.FromImage(white)) {
+                    graphics.Clear(Color.White);
+                }
+                using (Graphics graphics = Graphics.FromImage(black)) {
+                    graphics.Clear(Color.Black);
+                }
+                using (Bitmap scaledBlack = new Bitmap(black, image.Width, image.Height))
+                using (Bitmap scaledWhite1 = new Bitmap(white, image.Width, image.Height))
+                using (Bitmap scaledWhite2 = new Bitmap(white, image.Width, image.Height))
+                using (Bitmap mergedImage = MergeGrayscalesToRGBA(new Bitmap(newEye), scaledBlack,
+                    scaledWhite1, scaledWhite2)) {
+                    float size = scaleTexture ? ((float)enforcedSize * 0.4096f) : enforcedSize;
+                    using (Graphics graphics = Graphics.FromImage(canvas)) {
+                        graphics.DrawImage(mergedImage,
+                           (enforcedSize / 2) - (size / 2), (enforcedSize / 2) - (size / 2),
+                           size, size);
+                        graphics.DrawImage(bitmapTemplate, 0, 0, enforcedSize, enforcedSize);
+                    }
+                }
+                using (Bitmap canvasCopy = new Bitmap(canvas))
+                using (Bitmap canvasCopy2 = new Bitmap(canvas, enforcedSize, enforcedSize))
+                using (Bitmap templateScaled = new Bitmap(bitmapTemplate, enforcedSize, enforcedSize))
+                using (Bitmap invertedAlpha = ImageManipulation.InvertImage(ExtractAlpha(templateScaled)))
+                using (Bitmap whiteCopy = new Bitmap(white)) {
+                    Bitmap result = MergeGrayscalesToRGBA(canvasCopy, canvasCopy2, invertedAlpha, whiteCopy);
+                    canvas.Dispose();
+                    return result;
+                }
+            }
         }
 
         public static Bitmap BitmapToEyeBaseDawntrail(Bitmap image, bool scaleTexture, string baseDirectory = null) {
             int enforcedSize = 2048;
             string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
                 : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\diffuse.png");
+            if (!File.Exists(template)) {
+                throw new FileNotFoundException(
+                    $"Eye diffuse template not found at '{template}'. " +
+                    "Please ensure the application's 'res' folder is intact.", template);
+            }
             Bitmap canvas = new Bitmap(enforcedSize, enforcedSize, PixelFormat.Format32bppArgb);
-            Bitmap newEye = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 1.0f, 1.1f, 1);
-
-            Graphics graphics = Graphics.FromImage(canvas);
-            graphics.Clear(Color.Black);
-            Bitmap white = new Bitmap(enforcedSize, enforcedSize);
-            graphics = Graphics.FromImage(white);
-            graphics.Clear(Color.White);
-
-            graphics = Graphics.FromImage(canvas);
-            float size = scaleTexture ? ((float)enforcedSize * 0.4096f) : enforcedSize;
-            graphics.DrawImage(new Bitmap(newEye),
-               (enforcedSize / 2) - (size / 2), (enforcedSize / 2) - (size / 2),
-                size, size);
-            graphics.DrawImage(new Bitmap(template), 0, 0, enforcedSize, enforcedSize);
-            newEye.Dispose();
-            white.Dispose();
+            using (Bitmap newEye = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 1.0f, 1.1f, 1))
+            using (Bitmap white = new Bitmap(enforcedSize, enforcedSize))
+            using (Bitmap bitmapTemplate = new Bitmap(template)) {
+                using (Graphics graphics = Graphics.FromImage(canvas)) {
+                    graphics.Clear(Color.Black);
+                }
+                using (Graphics graphics = Graphics.FromImage(white)) {
+                    graphics.Clear(Color.White);
+                }
+                float size = scaleTexture ? ((float)enforcedSize * 0.4096f) : enforcedSize;
+                using (Bitmap newEyeCopy = new Bitmap(newEye))
+                using (Graphics graphics = Graphics.FromImage(canvas)) {
+                    graphics.DrawImage(newEyeCopy,
+                       (enforcedSize / 2) - (size / 2), (enforcedSize / 2) - (size / 2),
+                        size, size);
+                    graphics.DrawImage(bitmapTemplate, 0, 0, enforcedSize, enforcedSize);
+                }
+            }
             return canvas;
         }
 
@@ -1247,18 +1272,28 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int enforcedSize = 2048;
             string template = Path.Combine(!string.IsNullOrEmpty(baseDirectory) ? baseDirectory
                 : GlobalPathStorage.OriginalBaseDirectory, "res\\textures\\eyes\\normaldt.png");
+            if (!File.Exists(template)) {
+                throw new FileNotFoundException(
+                    $"Eye normal template not found at '{template}'. " +
+                    "Please ensure the application's 'res' folder is intact.", template);
+            }
             Bitmap canvas = new Bitmap(enforcedSize, enforcedSize, PixelFormat.Format32bppArgb);
-            Bitmap normal = Normal.Calculate(InvertImage(Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 0.8f, 1.5f, 1)));
-
-            Graphics graphics = Graphics.FromImage(canvas);
-            graphics.Clear(Color.Black);
-
-            graphics = Graphics.FromImage(canvas);
-            float size = scaleTexture ? ((float)enforcedSize * 0.4096f) : enforcedSize;
-            graphics.DrawImage(TexIO.NewBitmap(normal),
-               (enforcedSize / 2) - (size / 2), (enforcedSize / 2) - (size / 2),
-                size, size);
-            graphics.DrawImage(TexIO.ResolveBitmap(template), 0, 0, enforcedSize, enforcedSize);
+            using (Bitmap brightened = Brightness.BrightenImage(Grayscale.MakeGrayscale(image), 0.8f, 1.5f, 1))
+            using (Bitmap inverted = InvertImage(brightened))
+            using (Bitmap normal = Normal.Calculate(inverted)) {
+                using (Graphics graphics = Graphics.FromImage(canvas)) {
+                    graphics.Clear(Color.Black);
+                }
+                float size = scaleTexture ? ((float)enforcedSize * 0.4096f) : enforcedSize;
+                using (Bitmap normalCopy = TexIO.NewBitmap(normal))
+                using (Bitmap templateBitmap = TexIO.ResolveBitmap(template))
+                using (Graphics graphics = Graphics.FromImage(canvas)) {
+                    graphics.DrawImage(normalCopy,
+                       (enforcedSize / 2) - (size / 2), (enforcedSize / 2) - (size / 2),
+                        size, size);
+                    graphics.DrawImage(templateBitmap, 0, 0, enforcedSize, enforcedSize);
+                }
+            }
             return canvas;
         }
 
@@ -1391,7 +1426,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return ComputeSharpLayering.MergeMultipleImagesGpu(validImages.ToArray(), maxX, maxY);
         }
 
-        public static string MergeImageLayers(List<string> images, List<string> uvs, string targetUV, string ouputPath, float scale = 1.0f) {
+        public static string MergeImageLayers(List<string> images, List<string> uvs, string targetUV, string ouputPath, float scale = 1.0f, System.Collections.Generic.List<System.Numerics.Vector4> tints = null, bool isGlow = false) {
             int maxX = 0;
             int maxY = 0;
             List<string> validPaths = new List<string>();
@@ -1493,7 +1528,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     System.Diagnostics.Stopwatch totalTimer = System.Diagnostics.Stopwatch.StartNew();
 
                     System.Diagnostics.Stopwatch gpuTimer = System.Diagnostics.Stopwatch.StartNew();
-                    Bitmap outputBitmap = ComputeSharpLayering.MergeMultipleImagesGpuFromPaths(validPaths, maxX, maxY);
+                    Bitmap outputBitmap = ComputeSharpLayering.MergeMultipleImagesGpuFromPaths(validPaths, maxX, maxY, tints, isGlow);
                     gpuTimer.Stop();
                     bench.AppendLine($"GPU Load+Merge (unified): {gpuTimer.ElapsedMilliseconds}ms");
                     

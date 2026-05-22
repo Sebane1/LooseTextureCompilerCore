@@ -372,6 +372,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                 var options = new ResizeOptions
                 {
                     Size = new SixLabors.ImageSharp.Size(width, height),
+                    Mode = ResizeMode.Stretch,
                     PremultiplyAlpha = false
                 };
                 newImage.Mutate(i => i.Resize(options));
