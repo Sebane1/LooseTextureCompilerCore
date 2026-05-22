@@ -1051,7 +1051,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     // Initialize base layer
                     if (textures.Length > 0 && textures[0].Tex != null) {
                         var ld = textures[0];
-                        float4 tint = tints != null && 0 < tints.Count ? new float4(tints[0].Z, tints[0].Y, tints[0].X, tints[0].W) : new float4(1,1,1,1);
+                        float4 tint = tints != null && 0 < tints.Count ? new float4(tints[0].X, tints[0].Y, tints[0].Z, tints[0].W) : new float4(1,1,1,1);
                         context.For(totalPixels, new ClearShader(ping, width, height));
                         context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
                         isPing = false;
@@ -1062,7 +1062,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         var ld = textures[i];
                         if (ld.Tex == null) continue;
 
-                        float4 tint = tints != null && i < tints.Count ? new float4(tints[i].Z, tints[i].Y, tints[i].X, tints[i].W) : new float4(1,1,1,1);
+                        float4 tint = tints != null && i < tints.Count ? new float4(tints[i].X, tints[i].Y, tints[i].Z, tints[i].W) : new float4(1,1,1,1);
                         if (isPing) {
                             context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
                         } else {
