@@ -129,8 +129,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int2 pos = new int2(x, y);
 
             float4 pixel = Source[pos];
-            // Bgra32 maps to X=B, Y=G, Z=R, W=A
-            Output[pos] = new float4(pixel.Z, pixel.Z, pixel.Z, 1.0f);
+            // Bgra32 maps to X=R, Y=G, Z=B, W=A via HLSL
+            Output[pos] = new float4(pixel.X, pixel.X, pixel.X, 1.0f);
         }
     }
 
@@ -178,7 +178,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int2 pos = new int2(x, y);
 
             float4 pixel = Source[pos];
-            Output[pos] = new float4(pixel.X, pixel.X, pixel.X, 1.0f);
+            Output[pos] = new float4(pixel.Z, pixel.Z, pixel.Z, 1.0f);
         }
     }
 
@@ -202,8 +202,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int2 pos = new int2(x, y);
 
             float4 pixel = Source[pos];
-            // Since it's grayscale, we can use Z (R) for all channels including Alpha
-            Output[pos] = new float4(pixel.Z, pixel.Z, pixel.Z, pixel.Z);
+            // Since it's grayscale, we can use X (R) for all channels including Alpha
+            Output[pos] = new float4(pixel.X, pixel.X, pixel.X, pixel.X);
         }
     }
 
@@ -233,13 +233,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int2 pos = new int2(x, y);
 
             // Since input textures are grayscale, their R, G, and B are identical. 
-            // Bgra32 maps to X=B, Y=G, Z=R, W=A. So we use Z (R channel) for consistency.
-            float r = Red[pos].Z;
-            float g = Green[pos].Z;
-            float b = Blue[pos].Z;
-            float a = Alpha[pos].Z;
+            // Bgra32 maps to X=R, Y=G, Z=B, W=A. So we use X (R channel) for consistency.
+            float r = Red[pos].X;
+            float g = Green[pos].X;
+            float b = Blue[pos].X;
+            float a = Alpha[pos].X;
 
-            Output[pos] = new float4(b, g, r, a);
+            Output[pos] = new float4(r, g, b, a);
         }
     }
 
