@@ -58,7 +58,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             Color uvMapTest = source.GetPixel(0, 0);
             Color uvMapTest2 = source.GetPixel(image.Width - 1, image.Height - 1);
             source.UnlockBits();
-            if (uvMapTest.B == 255 && uvMapTest2.B == 255 && uvMapTest.R != 255 && uvMapTest2.R != 255 && uvMapTest.G != 255 && uvMapTest2.G != 255) {
+            if (uvMapTest.B >= 250 && uvMapTest2.B >= 250 && 
+                uvMapTest.R >= 100 && uvMapTest.R <= 155 && uvMapTest2.R >= 100 && uvMapTest2.R <= 155 && 
+                uvMapTest.G >= 100 && uvMapTest.G <= 155 && uvMapTest2.G >= 100 && uvMapTest2.G <= 155) {
                 return UVMapType.Normal;
             } else if (uvMapTest.B == 152 && uvMapTest2.B == 152) {
                 return UVMapType.Mask;
@@ -1186,12 +1188,33 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap ConvertBaseToDawntrailSkinMulti(Bitmap image) {
-            Bitmap inverted = ImageManipulation.InvertImage(image);
-            Bitmap alpha = new Bitmap(image.Width, image.Height);
-            Bitmap blueChannel = new Bitmap(image.Width, image.Height);
-            Graphics.FromImage(alpha).Clear(Color.White);
-            Graphics.FromImage(blueChannel).Clear(Color.FromArgb(152, 152, 152));
-            return MergeGrayscalesToRGBA(ExtractRed(image), ImageManipulation.InvertImage(ExtractBlue(image)), blueChannel, alpha);
+            Bitmap output = new Bitmap(image.Width, image.Height, PixelFormat.Format32bppArgb);
+            
+            Rectangle rect = new Rectangle(0, 0, image.Width, image.Height);
+            System.Drawing.Imaging.BitmapData srcData = image.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            System.Drawing.Imaging.BitmapData dstData = output.LockBits(rect, System.Drawing.Imaging.ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+
+            unsafe {
+                byte* srcPtr = (byte*)srcData.Scan0;
+                byte* dstPtr = (byte*)dstData.Scan0;
+                int bytes = Math.Abs(srcData.Stride) * image.Height;
+                
+                // Format32bppArgb is actually BGRA in memory (Blue, Green, Red, Alpha)
+                for (int i = 0; i < bytes; i += 4) {
+                    byte b = srcPtr[i];
+                    byte r = srcPtr[i + 2];
+                    
+                    dstPtr[i] = 152;            // Blue = 152
+                    dstPtr[i + 1] = (byte)(255 - b); // Green = Inverted Blue
+                    dstPtr[i + 2] = r;          // Red = Original Red
+                    dstPtr[i + 3] = 255;        // Alpha = 255
+                }
+            }
+            
+            image.UnlockBits(srcData);
+            output.UnlockBits(dstData);
+            
+            return output;
         }
 
         public static void ConvertImageToAsymEyeMaps(string filename1, string filename2, string output) {
@@ -1426,10 +1449,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return ComputeSharpLayering.MergeMultipleImagesGpu(validImages.ToArray(), maxX, maxY);
         }
 
-        public static string MergeImageLayers(List<string> images, List<string> uvs, string targetUV, string ouputPath, float scale = 1.0f, System.Collections.Generic.List<System.Numerics.Vector4> tints = null, bool isGlow = false) {
+        public static string MergeImageLayers(List<string> images, List<string> uvs, string targetUV, string ouputPath, float scale = 1.0f, System.Collections.Generic.List<System.Numerics.Vector4> tints = null) {
             int maxX = 0;
             int maxY = 0;
             List<string> validPaths = new List<string>();
+            List<System.Numerics.Vector4> validTints = new List<System.Numerics.Vector4>();
             for (int i = 0; i < images.Count; i++) {
                 var image = images[i];
                 if (!string.IsNullOrEmpty(image) && (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(image) || image.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))) {
@@ -1469,6 +1493,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     }
 
                     validPaths.Add(pathToLoad);
+                    if (tints != null && i < tints.Count) {
+                        validTints.Add(tints[i]);
+                    } else if (tints != null) {
+                        validTints.Add(System.Numerics.Vector4.One);
+                    }
                                         int width = 0, height = 0;
                     if (pathToLoad.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
                         if (TexIO.VirtualFileSystem.TryGetValue(pathToLoad, out var memFile)) {
@@ -1517,8 +1546,16 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 maxY = Math.Max(1, (int)(maxY * scale));
             }
 
-            if (validPaths.Count == 1 && (scale == 1.0f || scale <= 0.0f)) {
-                // Fast path for single images with no scaling - bypass entirely!
+            bool hasTints = false;
+            if (tints != null) {
+                tints = validTints;
+                for (int t = 0; t < tints.Count && t < validPaths.Count; t++) {
+                    if (tints[t] != System.Numerics.Vector4.One) { hasTints = true; break; }
+                }
+            }
+
+            if (validPaths.Count == 1 && (scale == 1.0f || scale <= 0.0f) && !hasTints) {
+                // Fast path for single images with no scaling and no tinting - bypass entirely!
                 return validPaths[0];
             } else {
                 bool gpuSuccess = false;
@@ -1528,7 +1565,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     System.Diagnostics.Stopwatch totalTimer = System.Diagnostics.Stopwatch.StartNew();
 
                     System.Diagnostics.Stopwatch gpuTimer = System.Diagnostics.Stopwatch.StartNew();
-                    Bitmap outputBitmap = ComputeSharpLayering.MergeMultipleImagesGpuFromPaths(validPaths, maxX, maxY, tints, isGlow);
+                    Bitmap outputBitmap = ComputeSharpLayering.MergeMultipleImagesGpuFromPaths(validPaths, maxX, maxY, tints);
                     gpuTimer.Stop();
                     bench.AppendLine($"GPU Load+Merge (unified): {gpuTimer.ElapsedMilliseconds}ms");
                     
@@ -1557,15 +1594,37 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
                 if (!gpuSuccess) {
                     using (var outputImage = new SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(maxX, maxY)) {
+                        int t = 0;
                         foreach (var image in validPaths) {
                             using (var bitmap = TexIO.ResolveBitmap(image)) {
                                 using (var layer = TexIO.BitmapToImageSharp(bitmap)) {
                                     if (layer.Width != maxX || layer.Height != maxY) {
                                         layer.Mutate(o => o.Resize(new SixLabors.ImageSharp.Size(maxX, maxY)));
                                     }
+                                    if (tints != null && t < tints.Count && tints[t] != System.Numerics.Vector4.One) {
+                                        var tint = tints[t];
+                                        layer.ProcessPixelRows(accessor => {
+                                            for (int y = 0; y < accessor.Height; y++) {
+                                                var row = accessor.GetRowSpan(y);
+                                                for (int x = 0; x < row.Length; x++) {
+                                                    var pixel = row[x];
+                                                    float r = (pixel.R / 255f) * tint.X;
+                                                    float g = (pixel.G / 255f) * tint.Y;
+                                                    float b = (pixel.B / 255f) * tint.Z;
+                                                    float a = (pixel.A / 255f) * tint.W;
+                                                    row[x] = new SixLabors.ImageSharp.PixelFormats.Rgba32(
+                                                        (byte)Math.Clamp(r * 255f, 0, 255),
+                                                        (byte)Math.Clamp(g * 255f, 0, 255),
+                                                        (byte)Math.Clamp(b * 255f, 0, 255),
+                                                        (byte)Math.Clamp(a * 255f, 0, 255));
+                                                }
+                                            }
+                                        });
+                                    }
                                     outputImage.Mutate(o => o.DrawImage(layer, new SixLabors.ImageSharp.Point(0, 0), PixelColorBlendingMode.Normal, 1f));
                                 }
                             }
+                            t++;
                         }
                         var encoder = new SixLabors.ImageSharp.Formats.Png.PngEncoder() {
                             TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,

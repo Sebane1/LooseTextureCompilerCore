@@ -12,6 +12,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private List<string> _baseOverlays = new List<string>();
         private List<string> _baseOverlayUVs = new List<string>();
         private List<System.Numerics.Vector4> _baseOverlayTints = new List<System.Numerics.Vector4>();
+        private System.Numerics.Vector4 _baseTint = System.Numerics.Vector4.One;
         private string _normal = "";
         private string _normalUV = "";
         private List<string> _normalOverlays = new List<string>();
@@ -169,6 +170,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public List<string> BaseOverlays { get { if (_baseOverlays == null) { _baseOverlays = new List<string>(); } return _baseOverlays; } set => _baseOverlays = value; }
         public List<string> BaseOverlayUVs { get { if (_baseOverlayUVs == null) { _baseOverlayUVs = new List<string>(); } return _baseOverlayUVs; } set => _baseOverlayUVs = value; }
         public List<System.Numerics.Vector4> BaseOverlayTints { get { if (_baseOverlayTints == null) { _baseOverlayTints = new List<System.Numerics.Vector4>(); } return _baseOverlayTints; } set => _baseOverlayTints = value; }
+        public System.Numerics.Vector4 BaseTint { get => _baseTint; set => _baseTint = value; }
         public List<string> NormalOverlays { get { if (_normalOverlays == null) { _normalOverlays = new List<string>(); } return _normalOverlays; } set => _normalOverlays = value; }
         public List<string> NormalOverlayUVs { get { if (_normalOverlayUVs == null) { _normalOverlayUVs = new List<string>(); } return _normalOverlayUVs; } set => _normalOverlayUVs = value; }
         public List<string> MaskOverlays { get { if (_maskOverlays == null) { _maskOverlays = new List<string>(); } return _maskOverlays; } set => _maskOverlays = value; }

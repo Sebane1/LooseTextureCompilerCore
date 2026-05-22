@@ -162,7 +162,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             public byte[] Data;
         }
 
-        public static System.Collections.Concurrent.ConcurrentDictionary<string, MemoryFile> VirtualFileSystem = new System.Collections.Concurrent.ConcurrentDictionary<string, MemoryFile>();
+        public static VirtualFileSystemStore VirtualFileSystem = new VirtualFileSystemStore();
 
         public static void SaveVFS(string path)
         {
@@ -190,6 +190,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             if (!File.Exists(path)) return;
             try
             {
+                VirtualFileSystem.Clear();
                 using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
                 using (BinaryReader br = new BinaryReader(fs))
                 {
@@ -218,7 +219,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             file.Data = new byte[lockBitmap.Pixels.Length];
             Array.Copy(lockBitmap.Pixels, file.Data, lockBitmap.Pixels.Length);
             lockBitmap.UnlockBits();
-            VirtualFileSystem[path] = file;
+            VirtualFileSystem.Set(path, file);
         }
 
         public static void WriteMemoryFile(string path, byte[] data, int width, int height)
@@ -227,7 +228,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             file.Width = width;
             file.Height = height;
             file.Data = data;
-            VirtualFileSystem[path] = file;
+            VirtualFileSystem.Set(path, file);
         }
 
         public static bool Exists(string path)
@@ -244,14 +245,36 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
         {
             if (VirtualFileSystem.TryGetValue(path, out MemoryFile file))
             {
-                Bitmap bitmap = new Bitmap(file.Width, file.Height, PixelFormat.Format32bppArgb);
-                LockBitmap lockBitmap = new LockBitmap(bitmap);
-                lockBitmap.LockBits();
-                Array.Copy(file.Data, lockBitmap.Pixels, file.Data.Length);
-                lockBitmap.UnlockBits();
+                if (file.Width <= 0 || file.Height <= 0)
+                {
+                    var item = new Bitmap(4096, 4096);
+                    using (var g = Graphics.FromImage(item)) g.Clear(Color.Transparent);
+                    return item;
+                }
+                Bitmap bitmap;
+                try {
+                    bitmap = new Bitmap(file.Width, file.Height, PixelFormat.Format32bppArgb);
+                } catch {
+                    var fallback = new Bitmap(4096, 4096);
+                    using (var g = Graphics.FromImage(fallback)) g.Clear(Color.Transparent);
+                    return fallback;
+                }
+                if (file.Data != null && file.Data.Length == file.Width * file.Height * 4)
+                {
+                    LockBitmap lockBitmap = new LockBitmap(bitmap);
+                    lockBitmap.LockBits();
+                    Array.Copy(file.Data, lockBitmap.Pixels, file.Data.Length);
+                    lockBitmap.UnlockBits();
+                }
+                else
+                {
+                    using (var g = Graphics.FromImage(bitmap)) g.Clear(Color.Transparent);
+                }
                 return bitmap;
             }
-            return new Bitmap(4096, 4096);
+            var blank = new Bitmap(4096, 4096);
+            using (var g = Graphics.FromImage(blank)) g.Clear(Color.Transparent);
+            return blank;
         }
         public static void SaveRawBitmap(Bitmap bitmap, string path)
         {
@@ -289,7 +312,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             if (string.IsNullOrEmpty(inputFile) || (!File.Exists(inputFile) && !inputFile.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)))
             {
                 var item = new Bitmap(4096, 4096);
-                Graphics.FromImage(item).Clear(Color.Transparent);
+                using (var g = Graphics.FromImage(item))
+                {
+                    g.Clear(Color.Transparent);
+                }
                 return item;
             }
 
@@ -338,7 +364,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                     }
                 }
             }
-            return new Bitmap(4096, 4096);
+            var finalFallback = new Bitmap(4096, 4096);
+            using (var g = Graphics.FromImage(finalFallback)) g.Clear(Color.Transparent);
+            return finalFallback;
         }
         public static Bitmap SafeLoad(string path, bool noAlpha = false)
         {

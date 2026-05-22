@@ -35,9 +35,23 @@ namespace LooseTextureCompilerCore.ProjectCreation
 }";
             if (jsonFilePath != null)
             {
-                using (StreamWriter writer = new StreamWriter(jsonFilePath))
+                int retries = 50;
+                while (retries > 0)
                 {
-                    writer.WriteLine(jsonText);
+                    try
+                    {
+                        using (StreamWriter writer = new StreamWriter(jsonFilePath))
+                        {
+                            writer.WriteLine(jsonText);
+                        }
+                        break;
+                    }
+                    catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                    {
+                        retries--;
+                        if (retries == 0) throw;
+                        Thread.Sleep(50);
+                    }
                 }
             }
         }
@@ -55,28 +69,21 @@ namespace LooseTextureCompilerCore.ProjectCreation
                 uVMapType = UVMapType.Base;
                 foundStringIdentifier = true;
             }
-
-            if (fileNameWithoutExtension.Contains("norm") || fileNameWithoutExtension.EndsWith("_n") || fileNameWithoutExtension.Contains("_n_"))
+            else if (fileNameWithoutExtension.Contains("norm") || fileNameWithoutExtension.EndsWith("_n") || fileNameWithoutExtension.Contains("_n_"))
             {
                 uVMapType = UVMapType.Normal;
                 foundStringIdentifier = true;
             }
-
-            if (fileNameWithoutExtension.Contains("mask") || fileNameWithoutExtension.EndsWith("_m") || fileNameWithoutExtension.Contains("_m_"))
+            else if (fileNameWithoutExtension.Contains("mask") || fileNameWithoutExtension.EndsWith("_m") || fileNameWithoutExtension.Contains("_m_"))
             {
                 uVMapType = UVMapType.Mask;
                 foundStringIdentifier = true;
             }
-
-            if (fileNameWithoutExtension.Contains("glow") || fileNameWithoutExtension.EndsWith("_g") || fileNameWithoutExtension.Contains("_g_"))
+            else if (fileNameWithoutExtension.Contains("glow") || fileNameWithoutExtension.EndsWith("_g") || fileNameWithoutExtension.Contains("_g_"))
             {
                 uVMapType = UVMapType.Glow;
                 foundStringIdentifier = true;
             }
-
-
-
-
 
             if (!foundStringIdentifier)
             {
@@ -116,9 +123,23 @@ namespace LooseTextureCompilerCore.ProjectCreation
 }";
             if (metaFilePath != null)
             {
-                using (StreamWriter writer = new StreamWriter(metaFilePath))
+                int retries = 50;
+                while (retries > 0)
                 {
-                    writer.WriteLine(metaText);
+                    try
+                    {
+                        using (StreamWriter writer = new StreamWriter(metaFilePath))
+                        {
+                            writer.WriteLine(metaText);
+                        }
+                        break;
+                    }
+                    catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                    {
+                        retries--;
+                        if (retries == 0) throw;
+                        Thread.Sleep(50);
+                    }
                 }
             }
         }
@@ -141,6 +162,21 @@ namespace LooseTextureCompilerCore.ProjectCreation
         Genders gender, RaceInfo.RaceTypes race, RaceInfo.SubRaceTypes subRace, FaceScales auraScales, bool asym)
         {
             return CreateFaceTextureSet((int)faceType, (int)facePart, faceExtra, (int)gender, (int)race, (int)subRace, (int)auraScales, asym);
+        }
+
+        public static TextureSet CreateEquipmentTextureSet(string displayName, string internalBasePath,
+            string internalNormalPath = "", string internalMaskPath = "", string internalMaterialPath = "")
+        {
+            var textureSet = new TextureSet
+            {
+                TextureSetName = displayName,
+                InternalBasePath = internalBasePath ?? "",
+                InternalNormalPath = internalNormalPath ?? "",
+                InternalMaskPath = internalMaskPath ?? "",
+                InternalMaterialPath = internalMaterialPath ?? "",
+            };
+            textureSet.IgnoreMultiGeneration = false;
+            return textureSet;
         }
 
         public static TextureSet CreateFaceTextureSet(int faceType, int facePart, int faceExtra,
