@@ -380,6 +380,12 @@ namespace FFXIVLooseTextureCompiler
                     OnProgressReport?.Invoke(this, "Merging Layers " + textureSet.TextureSetName);
                     string targetUV = ImageManipulation.IdentifyTargetUV(textureSet.InternalBasePath);
 
+                    // Non-playable items (minions, etc.) — skip all UV conversion
+                    if (textureSet.NotAPlayableItem)
+                    {
+                        targetUV = "";
+                    }
+
                     if (!alreadyCalculatedBases.ContainsKey(textureSet.FinalBase) &&
                         (!string.IsNullOrEmpty(textureSet.Base) || textureSet.BaseOverlays.Count > 0))
                     {
@@ -1022,6 +1028,15 @@ namespace FFXIVLooseTextureCompiler
         private bool MaskLogic(TextureSet textureSet, string maskDiskPath, bool skipTexExport)
         {
             bool outputGenerated = false;
+            // Non-playable items: skip all mask processing, straight pass-through.
+            if (textureSet.NotAPlayableItem)
+            {
+                if (!string.IsNullOrEmpty(textureSet.FinalMask) && !skipTexExport)
+                {
+                    Task.Run(() => ExportTex(textureSet.FinalMask, maskDiskPath, ExportType.DontManipulate));
+                }
+                return !string.IsNullOrEmpty(textureSet.FinalMask);
+            }
             if (!string.IsNullOrEmpty(textureSet.FinalMask) && !string.IsNullOrEmpty(textureSet.InternalMaskPath))
             {
                 if (!string.IsNullOrEmpty(textureSet.FinalBase) && !textureSet.InternalMaskPath.Contains("/eye/") && string.IsNullOrEmpty(textureSet.BackupTexturePaths.Mask)
@@ -1170,6 +1185,16 @@ namespace FFXIVLooseTextureCompiler
         private bool NormalLogic(TextureSet textureSet, string normalDiskPath, bool skipTexExport)
         {
             bool outputGenerated = false;
+            // Non-playable items (minions, etc.): skip all normal generation/merging.
+            // Just convert the normal PNG straight to .tex with no processing.
+            if (textureSet.NotAPlayableItem)
+            {
+                if (!string.IsNullOrEmpty(textureSet.FinalNormal) && !skipTexExport)
+                {
+                    Task.Run(() => ExportTex(textureSet.FinalNormal, normalDiskPath, ExportType.DontManipulate));
+                }
+                return !string.IsNullOrEmpty(textureSet.FinalNormal);
+            }
             if (!string.IsNullOrEmpty(textureSet.FinalNormal) && !string.IsNullOrEmpty(textureSet.InternalNormalPath))
             {
                 if (_generateNormals && !textureSet.IgnoreNormalGeneration && !string.IsNullOrEmpty(textureSet.FinalBase))
@@ -1267,8 +1292,18 @@ namespace FFXIVLooseTextureCompiler
         {
             bool outputGenerated = false;
             if (textureSet == null) return false;
+            // Non-playable items (minions, etc.): skip underlay/UV logic.
+            // The base is already pre-composited — just convert straight to .tex.
+            if (textureSet.NotAPlayableItem)
+            {
+                if (!string.IsNullOrEmpty(textureSet.FinalBase) && !skipTexExport)
+                {
+                    Task.Run(() => ExportTex(textureSet.FinalBase, baseTextureDiskPath, ExportType.DontManipulate));
+                }
+                return !string.IsNullOrEmpty(textureSet.FinalBase);
+            }
             string underlay = "";
-            if (textureSet.BackupTexturePaths != null)
+            if (textureSet.BackupTexturePaths != null && !textureSet.NotAPlayableItem)
             {
                 if (!textureSet.BackupTexturePaths.IsFace)
                 {

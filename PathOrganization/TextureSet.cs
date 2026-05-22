@@ -26,6 +26,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private string _internalNormalPath = "";
         private string _internalMaskPath = "";
         private string _normalMask = "";
+        private bool _notAPlayableItem = false;
         private string _glow = "";
         private string _glowUV = "";
         private List<string> _glowOverlays = new List<string>();
@@ -186,6 +187,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private string _finalGlowOverride = null;
         public string FinalGlow { get => _finalGlowOverride ?? CreateFinalGlowPath(); set => _finalGlowOverride = value; }
         public Dictionary<string, ulong> Hashes { get => _hashes; set => _hashes = value; }
+        public bool NotAPlayableItem { get => _notAPlayableItem; set => _notAPlayableItem = value; }
+
         private int _cleanupVersion = 0;
 
         public override string ToString() {
