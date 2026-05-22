@@ -1418,6 +1418,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int maxX = 0;
             int maxY = 0;
             List<string> validPaths = new List<string>();
+            List<System.Numerics.Vector4> validTints = new List<System.Numerics.Vector4>();
             for (int i = 0; i < images.Count; i++) {
                 var image = images[i];
                 if (!string.IsNullOrEmpty(image) && (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(image) || image.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))) {
@@ -1457,6 +1458,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     }
 
                     validPaths.Add(pathToLoad);
+                    if (tints != null && i < tints.Count) {
+                        validTints.Add(tints[i]);
+                    } else if (tints != null) {
+                        validTints.Add(System.Numerics.Vector4.One);
+                    }
                                         int width = 0, height = 0;
                     if (pathToLoad.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
                         if (TexIO.VirtualFileSystem.TryGetValue(pathToLoad, out var memFile)) {
@@ -1507,6 +1513,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             bool hasTints = false;
             if (tints != null) {
+                tints = validTints;
                 for (int t = 0; t < tints.Count && t < validPaths.Count; t++) {
                     if (tints[t] != System.Numerics.Vector4.One) { hasTints = true; break; }
                 }
