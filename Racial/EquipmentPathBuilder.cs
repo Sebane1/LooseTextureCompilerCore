@@ -60,6 +60,66 @@ namespace FFXIVLooseTextureCompiler.Racial
             yield return $"chara/human/{raceCode}/obj/equipment/{equipSetId}/model/{raceCode}{equipSetId}_{slotSuffix}.mdl";
         }
 
+        public static IEnumerable<string> BuildHairTextureCandidates(string raceCode, string hairId, string variant = "01")
+        {
+            string core = $"{raceCode}{hairId}_hir";
+            string prefix = $"chara/human/{raceCode}/obj/hair/{hairId}/texture/";
+
+            foreach (string mapSuffix in new[] { "d", "n", "m", "base", "norm", "mask" })
+            {
+                yield return $"{prefix}v{variant}_{core}_{mapSuffix}.tex";
+                yield return $"{prefix}{core}_{mapSuffix}.tex";
+            }
+        }
+
+        public static IEnumerable<string> BuildHairMtrlCandidates(string raceCode, string hairId, string variant = "0001")
+        {
+            string core = $"{raceCode}{hairId}_hir";
+            string[] letters = new[] { "a", "b", "c", "d" };
+            foreach (var letter in letters)
+            {
+                yield return $"chara/human/{raceCode}/obj/hair/{hairId}/material/v{variant}/mt_{core}_{letter}.mtrl";
+                yield return $"chara/human/{raceCode}/obj/hair/{hairId}/material/mt_{core}_{letter}.mtrl";
+            }
+            yield return $"chara/human/{raceCode}/obj/hair/{hairId}/material/v{variant}/mt_{core}.mtrl";
+            yield return $"chara/human/{raceCode}/obj/hair/{hairId}/material/mt_{core}.mtrl";
+        }
+
+        public static IEnumerable<string> BuildHairModelCandidates(string raceCode, string hairId)
+        {
+            yield return $"chara/human/{raceCode}/obj/hair/{hairId}/model/{raceCode}{hairId}_hir.mdl";
+        }
+
+        public static IEnumerable<string> BuildTailTextureCandidates(string raceCode, string tailId, string variant = "01")
+        {
+            string core = $"{raceCode}{tailId}_til";
+            string prefix = $"chara/human/{raceCode}/obj/tail/{tailId}/texture/";
+
+            foreach (string mapSuffix in new[] { "d", "n", "m", "base", "norm", "mask" })
+            {
+                yield return $"{prefix}v{variant}_{core}_{mapSuffix}.tex";
+                yield return $"{prefix}{core}_{mapSuffix}.tex";
+            }
+        }
+
+        public static IEnumerable<string> BuildTailMtrlCandidates(string raceCode, string tailId, string variant = "0001")
+        {
+            string core = $"{raceCode}{tailId}_til";
+            string[] letters = new[] { "a", "b", "c", "d" };
+            foreach (var letter in letters)
+            {
+                yield return $"chara/human/{raceCode}/obj/tail/{tailId}/material/v{variant}/mt_{core}_{letter}.mtrl";
+                yield return $"chara/human/{raceCode}/obj/tail/{tailId}/material/mt_{core}_{letter}.mtrl";
+            }
+            yield return $"chara/human/{raceCode}/obj/tail/{tailId}/material/v{variant}/mt_{core}.mtrl";
+            yield return $"chara/human/{raceCode}/obj/tail/{tailId}/material/mt_{core}.mtrl";
+        }
+
+        public static IEnumerable<string> BuildTailModelCandidates(string raceCode, string tailId)
+        {
+            yield return $"chara/human/{raceCode}/obj/tail/{tailId}/model/{raceCode}{tailId}_til.mdl";
+        }
+
         public static string GuessNormalPath(string basePath)
         {
             if (string.IsNullOrEmpty(basePath)) return "";
