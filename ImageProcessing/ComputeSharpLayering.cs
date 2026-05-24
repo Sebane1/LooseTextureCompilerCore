@@ -976,6 +976,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         private static bool _gpuUnavailable = false;
 
         public static Bitmap MergeMultipleImagesGpuFromPaths(System.Collections.Generic.List<string> paths, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints = null) {
+            if (width <= 0 || height <= 0) {
+                System.Diagnostics.Debug.WriteLine($"[MergeMultipleImagesGpuFromPaths] Invalid dimensions: {width}x{height}. Clearing cache and returning 1x1 fallback.");
+                ClearCache();
+                return new Bitmap(1, 1, PixelFormat.Format32bppArgb);
+            }
             int totalPixels = width * height;
             var sw = System.Diagnostics.Stopwatch.StartNew();
 
@@ -1216,6 +1221,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap MergeAlphaToRGBGpuFromPaths(string rgbPath, string alphaPath, int destWidth, int destHeight, bool invertAlpha) {
+            if (destWidth <= 0 || destHeight <= 0) {
+                System.Diagnostics.Debug.WriteLine($"[MergeAlphaToRGBGpuFromPaths] Invalid dimensions: {destWidth}x{destHeight}. Clearing cache and returning 1x1 fallback.");
+                ClearCache();
+                return new Bitmap(1, 1, PixelFormat.Format32bppArgb);
+            }
             var device = GraphicsDevice.GetDefault();
             int totalPixels = destWidth * destHeight;
 
@@ -1295,6 +1305,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         public static Bitmap MergeAlphaChannelToRGBGpuFromPaths(string rgbPath, string alphaPath, int destWidth, int destHeight, bool invertAlpha) {
+            if (destWidth <= 0 || destHeight <= 0) {
+                System.Diagnostics.Debug.WriteLine($"[MergeAlphaChannelToRGBGpuFromPaths] Invalid dimensions: {destWidth}x{destHeight}. Clearing cache and returning 1x1 fallback.");
+                ClearCache();
+                return new Bitmap(1, 1, PixelFormat.Format32bppArgb);
+            }
             var device = GraphicsDevice.GetDefault();
             int totalPixels = destWidth * destHeight;
 
