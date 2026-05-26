@@ -562,7 +562,29 @@ namespace FFXIVLooseTextureCompiler
                     {
                         List<string> images = new List<string>();
                         List<string> uvs = new List<string>();
+                        List<System.Numerics.Vector4> tints = new List<System.Numerics.Vector4>();
+                        
+                        string primaryGlowPath = !string.IsNullOrEmpty(textureSet.Glow) ? textureSet.Glow : (textureSet.GlowOverlays.Count > 0 ? textureSet.GlowOverlays[0] : "");
+                        if (!string.IsNullOrEmpty(primaryGlowPath)) {
+                            var dims = FFXIVLooseTextureCompiler.ImageProcessing.ComputeSharpLayering.GetDimensions(primaryGlowPath);
+                            int width = dims.Width > 0 ? dims.Width : 4096;
+                            int height = dims.Height > 0 ? dims.Height : 4096;
+                            string memoryPath = $"memory://black_canvas_{width}x{height}";
+                            if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.VirtualFileSystem.ContainsKey(memoryPath)) {
+                                using (Bitmap black = new Bitmap(width, height)) {
+                                    using (Graphics g = Graphics.FromImage(black)) {
+                                        g.Clear(System.Drawing.Color.Black);
+                                    }
+                                    FFXIVLooseTextureCompiler.ImageProcessing.TexIO.SaveMemoryBitmap(black, memoryPath);
+                                }
+                            }
+                            images.Add(memoryPath);
+                            uvs.Add("");
+                            tints.Add(System.Numerics.Vector4.One);
+                        }
+
                         images.Add(textureSet.Glow);
+                        tints.Add(textureSet.GlowTint);
                         if (string.IsNullOrEmpty(textureSet.GlowUV))
                         {
                             if (ImageManipulation.HasTextIdentifiers(textureSet.Glow))
@@ -589,6 +611,7 @@ namespace FFXIVLooseTextureCompiler
                         for (int j = 0; j < textureSet.GlowOverlays.Count; j++)
                         {
                             images.Add(textureSet.GlowOverlays[j]);
+                            tints.Add(j < textureSet.GlowOverlayTints.Count ? textureSet.GlowOverlayTints[j] : System.Numerics.Vector4.One);
                             if (j < textureSet.GlowOverlayUVs.Count && !string.IsNullOrEmpty(textureSet.GlowOverlayUVs[j]))
                             {
                                 if (textureSet.GlowOverlayUVs[j].ToLower() == "auto")
@@ -609,7 +632,7 @@ namespace FFXIVLooseTextureCompiler
                                 uvs.Add("");
                             }
                         }
-                        textureSet.FinalGlow = ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalGlow, ExportScale, null);
+                        textureSet.FinalGlow = ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalGlow, ExportScale, tints);
                         alreadyCalculatedGlows[textureSet.FinalGlow] = "";
                     }
 

@@ -31,6 +31,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private string _glowUV = "";
         private List<string> _glowOverlays = new List<string>();
         private List<string> _glowOverlayUVs = new List<string>();
+        private List<System.Numerics.Vector4> _glowOverlayTints = new List<System.Numerics.Vector4>();
+        private System.Numerics.Vector4 _glowTint = System.Numerics.Vector4.One;
 
         private bool _ignoreNormalGeneration;
         private bool _ignoreMaskGeneration;
@@ -178,6 +180,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public List<string> MaskOverlayUVs { get { if (_maskOverlayUVs == null) { _maskOverlayUVs = new List<string>(); } return _maskOverlayUVs; } set => _maskOverlayUVs = value; }
         public List<string> GlowOverlays { get { if (_glowOverlays == null) { _glowOverlays = new List<string>(); } return _glowOverlays; } set => _glowOverlays = value; }
         public List<string> GlowOverlayUVs { get { if (_glowOverlayUVs == null) { _glowOverlayUVs = new List<string>(); } return _glowOverlayUVs; } set => _glowOverlayUVs = value; }
+        public List<System.Numerics.Vector4> GlowOverlayTints { get { if (_glowOverlayTints == null) { _glowOverlayTints = new List<System.Numerics.Vector4>(); } return _glowOverlayTints; } set => _glowOverlayTints = value; }
+        public System.Numerics.Vector4 GlowTint { get => _glowTint; set => _glowTint = value; }
         private string _finalBaseOverride = null;
         public string FinalBase { get => _finalBaseOverride ?? CreateFinalBasePath(); set => _finalBaseOverride = value; }
         private string _finalNormalOverride = null;
