@@ -16,8 +16,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         /// <summary>
         /// Generates a perfect 16-bit Identity Map where Red = X and Green = Y.
         /// Feed this image into XNormal's base texture slot to bake the coordinate transformation.
-        /// Supports both PNG (16-bit) and TIFF (16-bit) output based on file extension.
-        /// For best results when baking in XNormal, save the XNormal OUTPUT as .tif to preserve 16-bit precision.
+        /// Supports .tif (via Tiff16Writer) and .png (via ImageSharp) — both preserve full 16-bit precision.
         /// </summary>
         public static void GenerateCoordinateMap(int width, int height, string outputPath) {
             using (var image = new Image<Rgba64>(width, height)) {
@@ -34,7 +33,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     }
                 });
                 
-                image.Save(outputPath);
+                // Use our own TIFF writer for .tif — ImageSharp's TiffEncoder is broken for 16-bit.
+                if (outputPath.EndsWith(".tif", StringComparison.OrdinalIgnoreCase) || 
+                    outputPath.EndsWith(".tiff", StringComparison.OrdinalIgnoreCase)) {
+                    Tiff16Writer.Save(image, outputPath);
+                } else {
+                    image.Save(outputPath);
+                }
             }
         }
 
@@ -46,7 +51,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         /// For best quality, use 16-bit TIFF transfer maps (.tif).
         /// </summary>
         public static Bitmap ApplyTransferMap(Bitmap sourceTexture, string transferMapPath, bool useBilinear = true) {
-            if (UseGPUAcceleration && !transferMapPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) {
+            if (UseGPUAcceleration) {
                 try {
                     Bitmap finalFast = ComputeSharpUVTransfer.ApplyTransferMapFast(sourceTexture, transferMapPath, useBilinear);
                     return finalFast;
@@ -100,6 +105,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 });
 
                 is8Bit = sampleCount > 0 && (float)eightBitCount / sampleCount > 0.95f;
+                // Note: 8-bit smoothing is only needed for the CPU fallback path.
+                // The GPU path handles quantized maps via its own shader logic.
             }
 
             if (is8Bit) {

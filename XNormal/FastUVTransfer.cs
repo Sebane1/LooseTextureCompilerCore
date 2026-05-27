@@ -139,7 +139,7 @@ namespace FFXIVLooseTextureCompiler
                 return;
             }
             // GPU fast path: file → GPU → file, zero Bitmap overhead
-            if (UVTransferMap.UseGPUAcceleration && !transferMapPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+            if (UVTransferMap.UseGPUAcceleration)
             {
                 try
                 {
@@ -313,12 +313,20 @@ namespace FFXIVLooseTextureCompiler
             string transferMapPath = Path.Combine(transferMapDir, transferMapName);
 
             // If the map doesn't exist, generate it seamlessly using XNormal!
+            // Also detect and purge maps baked with the buggy 8-bit coordinate_map.tif
+            if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(transferMapPath))
+            {
+                if (IsQuantizedTransferMap(transferMapPath))
+                {
+                    try { File.Delete(transferMapPath); } catch { }
+                }
+            }
             if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(transferMapPath))
             {
                 XNormal.BakeTransferMap(sourceMeshRelPath, targetMeshRelPath, transferMapPath);
             }
             // GPU fast path: file → GPU → file, zero Bitmap overhead
-            if (UVTransferMap.UseGPUAcceleration && !transferMapPath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+            if (UVTransferMap.UseGPUAcceleration)
             {
                 try
                 {
@@ -338,6 +346,47 @@ namespace FFXIVLooseTextureCompiler
                 {
                     TexIO.SaveBitmap(result, outputImage);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Detects transfer maps that were baked from an 8-bit quantized coordinate map.
+        /// In such maps, R and G values are exact multiples of 257 (0, 257, 514, ..., 65535).
+        /// </summary>
+        private static bool IsQuantizedTransferMap(string transferMapPath)
+        {
+            try
+            {
+                using (var image = SixLabors.ImageSharp.Image.Load<SixLabors.ImageSharp.PixelFormats.Rgba64>(transferMapPath))
+                {
+                    int eightBitCount = 0;
+                    int sampleCount = 0;
+                    int target = 200;
+
+                    image.ProcessPixelRows(accessor =>
+                    {
+                        int step = Math.Max(1, accessor.Height / 20);
+                        for (int y = 0; y < accessor.Height && sampleCount < target; y += step)
+                        {
+                            var row = accessor.GetRowSpan(y);
+                            int xStep = Math.Max(1, accessor.Width / 10);
+                            for (int x = 0; x < accessor.Width && sampleCount < target; x += xStep)
+                            {
+                                var pixel = row[x];
+                                if (pixel.A < 100) continue;
+                                sampleCount++;
+                                if (pixel.R % 257 == 0 && pixel.G % 257 == 0)
+                                    eightBitCount++;
+                            }
+                        }
+                    });
+
+                    return sampleCount > 50 && (float)eightBitCount / sampleCount > 0.95f;
+                }
+            }
+            catch
+            {
+                return false;
             }
         }
 
