@@ -615,6 +615,55 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
+    // Restores the base (underlay) layer's alpha channel onto the merged RGB result.
+    // Used as a final pass in the ping-pong merge pipeline to preserve authoritative
+    // alpha data (e.g. lip colour influence on face normals).
+    [ThreadGroupSize(1024, 1, 1)]
+    [GeneratedComputeShaderDescriptor]
+    public readonly partial struct RestoreBaseAlphaShader : IComputeShader {
+        public readonly ReadWriteTexture2D<Bgra32, float4> Source;
+        public readonly ReadOnlyTexture2D<Bgra32, float4> BaseLayer;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+        public readonly int DestWidth;
+        public readonly int DestHeight;
+        public readonly int BaseWidth;
+        public readonly int BaseHeight;
+
+        public RestoreBaseAlphaShader(
+            ReadWriteTexture2D<Bgra32, float4> source,
+            ReadOnlyTexture2D<Bgra32, float4> baseLayer,
+            ReadWriteTexture2D<Bgra32, float4> output,
+            int destWidth, int destHeight, int baseWidth, int baseHeight) {
+            Source = source;
+            BaseLayer = baseLayer;
+            Output = output;
+            DestWidth = destWidth;
+            DestHeight = destHeight;
+            BaseWidth = baseWidth;
+            BaseHeight = baseHeight;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            if (idx >= DestWidth * DestHeight) return;
+
+            int y = idx / DestWidth;
+            int x = idx % DestWidth;
+            int2 pos = new int2(x, y);
+
+            float4 mergedPixel = Source[pos];
+
+            // Sample the base layer's alpha at the corresponding position
+            float baseXf = (float)x / DestWidth * BaseWidth;
+            float baseYf = (float)y / DestHeight * BaseHeight;
+            int baseX = Hlsl.Clamp((int)baseXf, 0, BaseWidth - 1);
+            int baseY = Hlsl.Clamp((int)baseYf, 0, BaseHeight - 1);
+            float4 basePixel = BaseLayer[new int2(baseX, baseY)];
+
+            Output[pos] = new float4(mergedPixel.X, mergedPixel.Y, mergedPixel.Z, basePixel.W);
+        }
+    }
+
     [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct ClearShader : IComputeShader {
@@ -975,7 +1024,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         private static bool _gpuUnavailable = false;
 
-        public static Bitmap MergeMultipleImagesGpuFromPaths(System.Collections.Generic.List<string> paths, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints = null) {
+        public static Bitmap MergeMultipleImagesGpuFromPaths(System.Collections.Generic.List<string> paths, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints = null, bool preserveBaseAlpha = false) {
             if (width <= 0 || height <= 0) {
                 System.Diagnostics.Debug.WriteLine($"[MergeMultipleImagesGpuFromPaths] Invalid dimensions: {width}x{height}. Clearing cache and returning 1x1 fallback.");
                 ClearCache();
@@ -1024,7 +1073,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             // Skip GPU entirely if we already know it's unavailable (e.g. Linux/Wine)
             if (_gpuUnavailable) {
-                return MergeLayersCpuFallback(cpuLayers, width, height, tints);
+                return MergeLayersCpuFallback(cpuLayers, width, height, tints, preserveBaseAlpha);
             }
 
             try {
@@ -1081,6 +1130,18 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                                 context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
                             } else {
                                 context.For(totalPixels, new MergeImagesPingPongTintedShader(pong, ld.Tex, ping, width, height, ld.Width, ld.Height, tint));
+                            }
+                            isPing = !isPing;
+                        }
+
+                        // Final pass: restore the base layer's alpha channel.
+                        // The underlay's alpha is authoritative (e.g. lip colour on face normals).
+                        if (preserveBaseAlpha && textures.Length > 0 && textures[0].Tex != null) {
+                            var baseTex = textures[0];
+                            if (isPing) {
+                                context.For(totalPixels, new RestoreBaseAlphaShader(ping, baseTex.Tex, pong, width, height, baseTex.Width, baseTex.Height));
+                            } else {
+                                context.For(totalPixels, new RestoreBaseAlphaShader(pong, baseTex.Tex, ping, width, height, baseTex.Width, baseTex.Height));
                             }
                             isPing = !isPing;
                         }
@@ -1154,7 +1215,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 System.Diagnostics.Debug.WriteLine($"[MergeMultipleImagesGpuFromPaths] GPU unavailable, using CPU fallback: {ex.Message}");
                 try { System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Benchmark.txt"), 
                     $"[GPU UNAVAILABLE] Falling back to CPU compositing: {ex.Message}\r\n"); } catch {}
-                return MergeLayersCpuFallback(cpuLayers, width, height, tints);
+                return MergeLayersCpuFallback(cpuLayers, width, height, tints, preserveBaseAlpha);
             }
         }
 
@@ -1162,7 +1223,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         /// CPU-based alpha composite fallback for systems without DirectX 12 compute (Linux/Wine).
         /// Uses pre-loaded CpuLayerData from phase 1 — no extra file I/O needed.
         /// </summary>
-        private static Bitmap MergeLayersCpuFallback(CpuLayerData[] cpuLayers, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints) {
+        private static Bitmap MergeLayersCpuFallback(CpuLayerData[] cpuLayers, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints, bool preserveBaseAlpha = false) {
             byte[] output = new byte[width * height * 4];
 
             for (int layerIdx = 0; layerIdx < cpuLayers.Length; layerIdx++) {
@@ -1209,6 +1270,22 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                             output[destIdx + 2] = (byte)Math.Clamp((int)(outR * 255f + 0.5f), 0, 255);
                             output[destIdx + 3] = (byte)Math.Clamp((int)(outA * 255f + 0.5f), 0, 255);
                         }
+                    }
+                });
+            }
+
+            // Restore base layer's alpha if requested
+            if (preserveBaseAlpha && cpuLayers.Length > 0 && cpuLayers[0].Pixels != null) {
+                var baseLayer = cpuLayers[0];
+                float scaleX = (float)baseLayer.Width / width;
+                float scaleY = (float)baseLayer.Height / height;
+                System.Threading.Tasks.Parallel.For(0, height, y => {
+                    int srcY = Math.Clamp((int)(y * scaleY), 0, baseLayer.Height - 1);
+                    for (int x = 0; x < width; x++) {
+                        int srcX = Math.Clamp((int)(x * scaleX), 0, baseLayer.Width - 1);
+                        int destIdx = (y * width + x) * 4;
+                        int srcIdx = (srcY * baseLayer.Width + srcX) * 4;
+                        output[destIdx + 3] = baseLayer.Pixels[srcIdx + 3]; // BGRA: alpha is byte 3
                     }
                 });
             }

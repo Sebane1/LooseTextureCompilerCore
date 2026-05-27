@@ -2442,7 +2442,9 @@ namespace FFXIVLooseTextureCompiler
                         width = 4096;
                         height = 4096;
                     }
-                    Bitmap result = ComputeSharpLayering.MergeMultipleImagesGpuFromPaths(paths, width, height);
+                    // preserveBaseAlpha: the underlay's alpha is authoritative (e.g. lip colour
+                    // influence on face normals). The GPU merge restores it as a final shader pass.
+                    Bitmap result = ComputeSharpLayering.MergeMultipleImagesGpuFromPaths(paths, width, height, preserveBaseAlpha: true);
                     long compositeMs = sw.ElapsedMilliseconds;
                     sw.Stop();
                     _asyncBenchLog.Enqueue($"    [None Detail] CachedGpuPath Setup={setupMs}ms, Composite={compositeMs}ms");
