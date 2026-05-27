@@ -382,7 +382,7 @@ namespace FFXIVLooseTextureCompiler
             // Generate a temporary 16-bit coordinate map
             string tempDir = Path.Combine(Path.GetTempPath(), "FFXIVLooseTextureCompiler_TransferMapBake");
             Directory.CreateDirectory(tempDir);
-            string coordMapPath = Path.Combine(tempDir, "coordinate_map.tif");
+            string coordMapPath = Path.Combine(tempDir, "coordinate_map.png");
 
             FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.GenerateCoordinateMap(4096, 4096, coordMapPath);
 
