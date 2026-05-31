@@ -251,7 +251,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
             if (destinationTextureSet != null)
             {
                 string extension = FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration && UseMemoryCache ? ".raw" : ".png";
-                string memPrefix = (FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration && UseMemoryCache) ? "memory://" : "";
+                string memPrefix = (FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration && UseMemoryCache) ? "memory:\\" : "";
 
                 destinationTextureSet.Base = (!string.IsNullOrWhiteSpace(baseTextureSet.FinalBase) && !baseTextureSet.FinalBase.Contains(memPrefix) ? memPrefix : "") + ImageManipulation.ReplaceExtension(
                     ImageManipulation.AddSuffix(baseTextureSet.FinalBase, $"_{prefix}_d_baseTexBaked"), extension);

@@ -895,7 +895,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             if (string.IsNullOrEmpty(path))
                 return result;
 
-            result.IsPhysicalFile = !path.StartsWith("memory://", StringComparison.OrdinalIgnoreCase);
+            result.IsPhysicalFile = !path.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase);
 
             // Fast path: if file is in CPU pixel cache and not invalidated, return cached pixels
             if (FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
@@ -1467,7 +1467,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         public static (int Width, int Height) GetImageDimensions(string path) {
             if (string.IsNullOrEmpty(path)) return (0, 0);
-            if (path.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+            if (path.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase)) {
                 if (TexIO.VirtualFileSystem.TryGetValue(path, out var memFile)) {
                     return (memFile.Width, memFile.Height);
                 }

@@ -1456,16 +1456,16 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             List<System.Numerics.Vector4> validTints = new List<System.Numerics.Vector4>();
             for (int i = 0; i < images.Count; i++) {
                 var image = images[i];
-                if (!string.IsNullOrEmpty(image) && (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(image) || image.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))) {
+                if (!string.IsNullOrEmpty(image) && (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(image) || image.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase))) {
                     string pathToLoad = image;
 
                     if (uvs != null && i < uvs.Count && !string.IsNullOrEmpty(uvs[i]) && !string.IsNullOrEmpty(targetUV) && uvs[i].ToLower() != targetUV.ToLower()) {
                         string fileHash = LooseTextureCompilerCore.LtcUtility.GetMD5HashFromFile(image);
                         
                         string ext = FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration ? ".raw" : ".png";
-                        string prefix = (FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration && FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) ? "memory://" : "";
+                        string prefix = (FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration && FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) ? "memory:\\" : "";
 
-                        string baseDir = image.StartsWith("memory://", StringComparison.OrdinalIgnoreCase) ? "" : (Path.GetDirectoryName(image) ?? "");
+                        string baseDir = image.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase) ? "" : (Path.GetDirectoryName(image) ?? "");
                         string cachedPath = prefix + Path.Combine(baseDir, fileHash + $"_from_{uvs[i].ToLower()}_to_{targetUV.ToLower()}" + ext);
 
                         if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(cachedPath) && !TexIO.VirtualFileSystem.ContainsKey(cachedPath)) {
@@ -1499,7 +1499,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         validTints.Add(System.Numerics.Vector4.One);
                     }
                                         int width = 0, height = 0;
-                    if (pathToLoad.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+                    if (pathToLoad.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase)) {
                         if (TexIO.VirtualFileSystem.TryGetValue(pathToLoad, out var memFile)) {
                             width = memFile.Width;
                             height = memFile.Height;
@@ -1570,13 +1570,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     bench.AppendLine($"GPU Load+Merge (unified): {gpuTimer.ElapsedMilliseconds}ms");
                     
                     System.Diagnostics.Stopwatch saveTimer = System.Diagnostics.Stopwatch.StartNew();
-                    if (!ouputPath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+                    if (!ouputPath.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase)) {
                         string dir = Path.GetDirectoryName(ouputPath);
                         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
                     }
                     TexIO.SaveBitmapFast(outputBitmap, ouputPath);
                     ComputeSharpLayering.InvalidateCache(ouputPath);
-                    string saveMode = ouputPath.StartsWith("memory://") ? "Memory Dump" : (ouputPath.EndsWith(".raw") ? "Raw Dump" : "PNG Encode");
+                    string saveMode = ouputPath.StartsWith("memory:\\") ? "Memory Dump" : (ouputPath.EndsWith(".raw") ? "Raw Dump" : "PNG Encode");
                     bench.AppendLine($"SaveBitmapFast ({saveMode} + IO): {saveTimer.ElapsedMilliseconds}ms");
                     
                     outputBitmap.Dispose();
@@ -1630,7 +1630,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                             TransparentColorMode = SixLabors.ImageSharp.Formats.Png.PngTransparentColorMode.Preserve,
                             ColorType = SixLabors.ImageSharp.Formats.Png.PngColorType.RgbWithAlpha,
                         };
-                        if (ouputPath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+                        if (ouputPath.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase)) {
                             using (var bitmap = TexIO.ImageSharpToBitmap(outputImage)) {
                                 TexIO.SaveBitmapFast(bitmap, ouputPath);
                             }

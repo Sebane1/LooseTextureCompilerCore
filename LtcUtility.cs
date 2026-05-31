@@ -28,7 +28,7 @@ namespace LooseTextureCompilerCore {
 
         public static string GetMD5HashFromFile(string fileName) {
             if (string.IsNullOrEmpty(fileName)) return "";
-            if (fileName.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+            if (fileName.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase)) {
                 if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.VirtualFileSystem.TryGetValue(fileName, out var memFile)) {
                     using (var md5 = System.Security.Cryptography.MD5.Create()) {
                         return Convert.ToHexString(md5.ComputeHash(memFile.Data));

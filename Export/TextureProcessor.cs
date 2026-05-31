@@ -282,7 +282,7 @@ namespace FFXIVLooseTextureCompiler
                         _xnormalCache.TryAdd(childTexturePath, childTexturePath);
                         Bitmap baseTexture = ResolveBitmapScaled(parentTexturePath);
                         if (Directory.Exists(Path.GetDirectoryName(baseTextureAlpha))
-                            && Directory.Exists(Path.GetDirectoryName(baseTextureRGB)) || childTexturePath.StartsWith("memory:/"))
+                            && Directory.Exists(Path.GetDirectoryName(baseTextureRGB)) || childTexturePath.StartsWith(@"memory:\"))
                         {
                             string childAlpha = childTexturePath.Replace("baseTexBaked", "alpha");
                             string childRGB = childTexturePath.Replace("baseTexBaked", "rgb");
@@ -569,7 +569,7 @@ namespace FFXIVLooseTextureCompiler
                             var dims = FFXIVLooseTextureCompiler.ImageProcessing.ComputeSharpLayering.GetDimensions(primaryGlowPath);
                             int width = dims.Width > 0 ? dims.Width : 4096;
                             int height = dims.Height > 0 ? dims.Height : 4096;
-                            string memoryPath = $"memory://black_canvas_{width}x{height}";
+                            string memoryPath = $"memory:\\black_canvas_{width}x{height}";
                             if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.VirtualFileSystem.ContainsKey(memoryPath)) {
                                 using (Bitmap black = new Bitmap(width, height)) {
                                     using (Graphics g = Graphics.FromImage(black)) {
@@ -1600,7 +1600,7 @@ namespace FFXIVLooseTextureCompiler
                 var sw = System.Diagnostics.Stopwatch.StartNew();
                 int width = 4096, height = 4096;
                 // Get the base normal map dimensions to use as the output bounds
-                if (inputFile.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+                if (inputFile.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase)) {
                     if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.VirtualFileSystem.TryGetValue(inputFile, out var memFile)) {
                         width = memFile.Width;
                         height = memFile.Height;
@@ -2406,8 +2406,8 @@ namespace FFXIVLooseTextureCompiler
                     int height = 4096;
                     
                     // Determine canvas dimensions from the underlayPath so the underlay is never cropped/scaled down
-                    string baselinePath = FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(underlayPath) || underlayPath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase) ? underlayPath : inputFile;
-                    if (baselinePath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))
+                    string baselinePath = FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(underlayPath) || underlayPath.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase) ? underlayPath : inputFile;
+                    if (baselinePath.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase))
                     {
                         if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.VirtualFileSystem.TryGetValue(baselinePath, out FFXIVLooseTextureCompiler.ImageProcessing.TexIO.MemoryFile memFile))
                         {

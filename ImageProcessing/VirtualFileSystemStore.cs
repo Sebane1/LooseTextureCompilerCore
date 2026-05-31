@@ -9,7 +9,7 @@ using System.Threading;
 namespace FFXIVLooseTextureCompiler.ImageProcessing
 {
     /// <summary>
-    /// In-memory virtual filesystem (memory:// paths) with byte accounting and LRU eviction.
+    /// In-memory virtual filesystem (memory:\\ paths) with byte accounting and LRU eviction.
     /// </summary>
     public sealed class VirtualFileSystemStore : IEnumerable<KeyValuePair<string, TexIO.MemoryFile>>
     {
@@ -76,7 +76,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             Interlocked.Exchange(ref _totalBytes, 0);
         }
 
-        /// <summary>Trim cached memory:// entries after an export completes.</summary>
+        /// <summary>Trim cached memory:\\ entries after an export completes.</summary>
         public void TrimAfterExport() => TrimToMaxBytes();
 
         public void TrimToMaxBytes(long? maxBytes = null)
@@ -113,7 +113,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                 if (removed > 0)
                 {
                     Trace.WriteLine(
-                        $"[VFS] Evicted {removed} least-recently-used memory:// file(s); " +
+                        $"[VFS] Evicted {removed} least-recently-used memory:\\ file(s); " +
                         $"{Interlocked.Read(ref _totalBytes) / (1024 * 1024)} MB retained (limit {limit / (1024 * 1024)} MB).");
                 }
             }

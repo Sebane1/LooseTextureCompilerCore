@@ -234,7 +234,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
         public static bool Exists(string path)
         {
             if (string.IsNullOrEmpty(path)) return false;
-            if (path.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))
+            if (path.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase))
             {
                 return VirtualFileSystem.ContainsKey(path);
             }
@@ -309,7 +309,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
 
         public static Bitmap ResolveBitmap(string inputFile, bool noAlpha = false)
         {
-            if (string.IsNullOrEmpty(inputFile) || (!File.Exists(inputFile) && !inputFile.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)))
+            if (string.IsNullOrEmpty(inputFile) || (!File.Exists(inputFile) && !inputFile.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase)))
             {
                 var item = new Bitmap(4096, 4096);
                 using (var g = Graphics.FromImage(item))
@@ -319,7 +319,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                 return item;
             }
 
-            if (inputFile.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))
+            if (inputFile.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase))
             {
                 return ResolveMemoryBitmap(inputFile);
             }
@@ -446,7 +446,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
 
         public static void SaveBitmap(Bitmap bitmap, string path)
         {
-            if (path.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))
+            if (path.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase))
             {
                 SaveMemoryBitmap(bitmap, path);
                 return;
@@ -477,7 +477,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
         
         public static void SaveBitmapFast(Bitmap bitmap, string path)
         {
-            if (path.StartsWith("memory://", StringComparison.OrdinalIgnoreCase))
+            if (path.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase))
             {
                 SaveMemoryBitmap(bitmap, path);
                 return;

@@ -242,8 +242,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private string GetCachePath(string path, List<string> overlays)
         {
             string extension = FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration ? ".raw" : ".png";
-            string prefix = (FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration && PathOrganization.UniversalTextureSetCreator.UseMemoryCache) ? "memory://" : "";
-            string baseDir = path.StartsWith("memory://", StringComparison.OrdinalIgnoreCase) ? "" : (Path.GetDirectoryName(path) ?? "");
+            string prefix = (FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration && PathOrganization.UniversalTextureSetCreator.UseMemoryCache) ? "memory:\\" : "";
+            string baseDir = path.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase) ? "" : (Path.GetDirectoryName(path) ?? "");
             return prefix + Path.Combine(baseDir, LtcUtility.CreateIdentifier(path, overlays) + "_temp" + extension);
         }
         public void CancelCleanup() {

@@ -611,7 +611,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int srcWidth, srcHeight;
             byte[] srcPixels;
             
-            if (inputPath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+            if (inputPath.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase)) {
                 if (!FFXIVLooseTextureCompiler.ImageProcessing.TexIO.VirtualFileSystem.TryGetValue(inputPath, out var memFile)) return false;
                 srcWidth = memFile.Width;
                 srcHeight = memFile.Height;
@@ -689,7 +689,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             phaseSw.Restart();
 
             // Save directly based on extension — no Bitmap conversion!
-            if (outputPath.StartsWith("memory://", StringComparison.OrdinalIgnoreCase)) {
+            if (outputPath.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase)) {
                 var memFile = new FFXIVLooseTextureCompiler.ImageProcessing.TexIO.MemoryFile();
                 memFile.Width = destWidth;
                 memFile.Height = destHeight;
