@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using FFXIVLooseTextureCompiler.Export;
 
 namespace FFXIVLooseTextureCompiler.ImageProcessing
 {
@@ -13,14 +14,21 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
     /// </summary>
     public sealed class VirtualFileSystemStore : IEnumerable<KeyValuePair<string, TexIO.MemoryFile>>
     {
-        public const long DefaultMaxBytes = 2L * 1024 * 1024 * 1024;
+        public const long MinimumMaxBytes = 2L * 1024 * 1024 * 1024;
+        public const long AbsoluteMaxBytes = 8L * 1024 * 1024 * 1024;
 
         private readonly ConcurrentDictionary<string, TexIO.MemoryFile> _files = new();
         private readonly ConcurrentDictionary<string, long> _lastAccessUtcTicks = new();
         private long _totalBytes;
         private readonly object _evictLock = new();
 
-        public long MaxBytes { get; set; } = DefaultMaxBytes;
+        private long _maxBytes = GetDefaultMaxBytes();
+
+        public long MaxBytes
+        {
+            get => Interlocked.Read(ref _maxBytes);
+            set => Interlocked.Exchange(ref _maxBytes, Math.Max(value, MinimumMaxBytes));
+        }
 
         public int Count => _files.Count;
 
@@ -28,6 +36,16 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
 
         public static long EstimateBytes(TexIO.MemoryFile file) =>
             file.Data != null ? file.Data.LongLength : 0;
+
+        private static long GetDefaultMaxBytes()
+        {
+            ulong availableBytes = MemoryHelper.GetAvailablePhysicalMemoryBytes();
+            if (availableBytes == 0)
+                return MinimumMaxBytes;
+
+            long halfAvailable = (long)Math.Min(availableBytes / 2, long.MaxValue);
+            return Math.Clamp(halfAvailable, MinimumMaxBytes, AbsoluteMaxBytes);
+        }
 
         public bool TryGetValue(string key, out TexIO.MemoryFile value)
         {
