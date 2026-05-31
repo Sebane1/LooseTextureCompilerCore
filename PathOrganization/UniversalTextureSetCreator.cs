@@ -250,19 +250,19 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
             }
             if (destinationTextureSet != null)
             {
-                string extension = FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration ? ".raw" : ".png";
+                string extension = FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration && UseMemoryCache ? ".raw" : ".png";
                 string memPrefix = (FFXIVLooseTextureCompiler.ImageProcessing.UVTransferMap.UseGPUAcceleration && UseMemoryCache) ? "memory://" : "";
 
-                destinationTextureSet.Base = memPrefix + ImageManipulation.ReplaceExtension(
+                destinationTextureSet.Base = (!string.IsNullOrWhiteSpace(baseTextureSet.FinalBase) && !baseTextureSet.FinalBase.Contains(memPrefix) ? memPrefix : "") + ImageManipulation.ReplaceExtension(
                     ImageManipulation.AddSuffix(baseTextureSet.FinalBase, $"_{prefix}_d_baseTexBaked"), extension);
-                destinationTextureSet.Normal = memPrefix + ImageManipulation.ReplaceExtension(
+                destinationTextureSet.Normal = (!string.IsNullOrWhiteSpace(baseTextureSet.FinalNormal) && !baseTextureSet.FinalNormal.Contains(memPrefix) ? memPrefix : "") + ImageManipulation.ReplaceExtension(
                     ImageManipulation.AddSuffix(baseTextureSet.FinalNormal, $"_{prefix}_n_baseTexBaked"), extension);
-                destinationTextureSet.Mask = memPrefix + ImageManipulation.ReplaceExtension(
+                destinationTextureSet.Mask = (!string.IsNullOrWhiteSpace(baseTextureSet.FinalMask) && !baseTextureSet.FinalMask.Contains(memPrefix) ? memPrefix : "") + ImageManipulation.ReplaceExtension(
                     ImageManipulation.AddSuffix(baseTextureSet.FinalMask, $"_{prefix}_m_baseTexBaked"), extension);
-                destinationTextureSet.Glow = memPrefix + ImageManipulation.ReplaceExtension(
+                destinationTextureSet.Glow = (!string.IsNullOrWhiteSpace(baseTextureSet.FinalGlow) && !baseTextureSet.FinalGlow.Contains(memPrefix) ? memPrefix : "") + ImageManipulation.ReplaceExtension(
                     ImageManipulation.AddSuffix(baseTextureSet.Glow, $"_{prefix}_g_baseTexBaked"), extension);
-                destinationTextureSet.NormalMask = memPrefix + ImageManipulation.ReplaceExtension(
-                    ImageManipulation.AddSuffix(baseTextureSet.NormalMask, $"_{prefix}_nm_baseTexBaked"), extension);
+                //destinationTextureSet.NormalMask = (!baseTextureSet.NormalMask.Contains(memPrefix) ? memPrefix : "") + ImageManipulation.ReplaceExtension(
+                //    ImageManipulation.AddSuffix(baseTextureSet.NormalMask, $"_{prefix}_nm_baseTexBaked"), extension);
                 destinationTextureSet.IgnoreNormalGeneration = baseTextureSet.IgnoreNormalGeneration;
                 destinationTextureSet.IgnoreMaskGeneration = baseTextureSet.IgnoreMaskGeneration;
                 destinationTextureSet.InvertNormalGeneration = baseTextureSet.InvertNormalGeneration;

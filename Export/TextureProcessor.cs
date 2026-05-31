@@ -282,7 +282,7 @@ namespace FFXIVLooseTextureCompiler
                         _xnormalCache.TryAdd(childTexturePath, childTexturePath);
                         Bitmap baseTexture = ResolveBitmapScaled(parentTexturePath);
                         if (Directory.Exists(Path.GetDirectoryName(baseTextureAlpha))
-                            && Directory.Exists(Path.GetDirectoryName(baseTextureRGB)))
+                            && Directory.Exists(Path.GetDirectoryName(baseTextureRGB)) || childTexturePath.StartsWith("memory:/"))
                         {
                             string childAlpha = childTexturePath.Replace("baseTexBaked", "alpha");
                             string childRGB = childTexturePath.Replace("baseTexBaked", "rgb");
