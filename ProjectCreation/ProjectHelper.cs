@@ -153,7 +153,7 @@ namespace LooseTextureCompilerCore.ProjectCreation
             if (race < 0) race = 0;
             TextureSet textureSet = new TextureSet();
             textureSet.TextureSetName = _bodyNames[baseBody] + (_bodyNames[baseBody].ToLower().Contains("tail") ? " " +
-                (tail + 1) : "") + ", " + (race == 5 ? "Unisex" : _genders[gender])
+                (tail + 1) : "") + ", " + (race == 3 ? "Unisex" : _genders[gender])
                 + ", " + RaceInfo.Races[race];
             AddBodyPaths(textureSet, gender, baseBody, race, tail, uniqueAuRa);
             return textureSet;
