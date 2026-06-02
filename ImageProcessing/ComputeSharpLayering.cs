@@ -1222,9 +1222,45 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         /// <summary>
         /// CPU-based alpha composite fallback for systems without DirectX 12 compute (Linux/Wine).
         /// Uses pre-loaded CpuLayerData from phase 1 — no extra file I/O needed.
+        /// Proactively detects low-memory conditions and falls back to stripe-based processing
+        /// to avoid OutOfMemoryException on machines with limited RAM.
         /// </summary>
         private static Bitmap MergeLayersCpuFallback(CpuLayerData[] cpuLayers, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints, bool preserveBaseAlpha = false) {
-            byte[] output = new byte[width * height * 4];
+            long requiredBytes = (long)width * height * 4;
+
+            // Proactive memory pressure check — if available memory is tight, skip the
+            // monolithic allocation entirely and go straight to the stripe-based path.
+            bool lowMemory = false;
+            try {
+                var memInfo = GC.GetGCMemoryInfo();
+                long available = memInfo.TotalAvailableMemoryBytes - memInfo.HeapSizeBytes;
+                if (available < requiredBytes * 2) {
+                    lowMemory = true;
+                    System.Diagnostics.Debug.WriteLine(
+                        $"[MergeLayersCpuFallback] Low memory detected (available={available / (1024*1024)}MB, " +
+                        $"needed={requiredBytes / (1024*1024)}MB). Using stripe-based fallback.");
+                    try { System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Benchmark.txt"),
+                        $"[LOW MEMORY] Stripe fallback triggered: available={available / (1024*1024)}MB, needed={requiredBytes / (1024*1024)}MB\r\n"); } catch {}
+                }
+            } catch {
+                // GC.GetGCMemoryInfo() may not be available on all runtimes
+            }
+
+            if (lowMemory) {
+                return MergeLayersCpuLowMemory(cpuLayers, width, height, tints, preserveBaseAlpha);
+            }
+
+            // Standard full-buffer path — wrapped in OOM catch as a safety net
+            byte[] output;
+            try {
+                output = new byte[requiredBytes];
+            } catch (OutOfMemoryException) {
+                System.Diagnostics.Debug.WriteLine(
+                    $"[MergeLayersCpuFallback] OOM on output buffer ({requiredBytes / (1024*1024)}MB). Using stripe-based fallback.");
+                try { System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Benchmark.txt"),
+                    $"[OOM CAUGHT] Stripe fallback triggered: buffer size={requiredBytes / (1024*1024)}MB\r\n"); } catch {}
+                return MergeLayersCpuLowMemory(cpuLayers, width, height, tints, preserveBaseAlpha);
+            }
 
             for (int layerIdx = 0; layerIdx < cpuLayers.Length; layerIdx++) {
                 var layer = cpuLayers[layerIdx];
@@ -1294,6 +1330,97 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             var bmpData = result.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
             Marshal.Copy(output, 0, bmpData.Scan0, output.Length);
             result.UnlockBits(bmpData);
+            return result;
+        }
+
+        /// <summary>
+        /// Low-memory stripe-based CPU fallback. Processes the image in horizontal bands
+        /// of STRIPE_HEIGHT rows at a time, capping managed heap usage to width × STRIPE_HEIGHT × 4
+        /// bytes per stripe instead of the full width × height × 4 output buffer.
+        /// Produces identical output to the standard MergeLayersCpuFallback path.
+        /// </summary>
+        private static Bitmap MergeLayersCpuLowMemory(CpuLayerData[] cpuLayers, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints, bool preserveBaseAlpha = false) {
+            const int STRIPE_HEIGHT = 256;
+
+            Bitmap result = new Bitmap(width, height, PixelFormat.Format32bppArgb);
+
+            for (int stripeY = 0; stripeY < height; stripeY += STRIPE_HEIGHT) {
+                int stripeH = Math.Min(STRIPE_HEIGHT, height - stripeY);
+                byte[] stripe = new byte[width * stripeH * 4];
+
+                // Composite all layers for this stripe
+                for (int layerIdx = 0; layerIdx < cpuLayers.Length; layerIdx++) {
+                    var layer = cpuLayers[layerIdx];
+                    if (layer.Pixels == null || layer.Width <= 0 || layer.Height <= 0) continue;
+
+                    float tR = 1f, tG = 1f, tB = 1f, tA = 1f;
+                    if (tints != null && layerIdx < tints.Count) {
+                        tR = tints[layerIdx].X; tG = tints[layerIdx].Y; tB = tints[layerIdx].Z; tA = tints[layerIdx].W;
+                    }
+
+                    float scaleX = (float)layer.Width / width;
+                    float scaleY = (float)layer.Height / height;
+
+                    System.Threading.Tasks.Parallel.For(0, stripeH, localY => {
+                        int globalY = stripeY + localY;
+                        int srcY = Math.Clamp((int)(globalY * scaleY), 0, layer.Height - 1);
+                        for (int x = 0; x < width; x++) {
+                            int srcX = Math.Clamp((int)(x * scaleX), 0, layer.Width - 1);
+
+                            int destIdx = (localY * width + x) * 4;
+                            int srcIdx = (srcY * layer.Width + srcX) * 4;
+
+                            // BGRA byte order
+                            float topB = (layer.Pixels[srcIdx] / 255f) * tB;
+                            float topG = (layer.Pixels[srcIdx + 1] / 255f) * tG;
+                            float topR = (layer.Pixels[srcIdx + 2] / 255f) * tR;
+                            float topA = (layer.Pixels[srcIdx + 3] / 255f) * tA;
+
+                            if (topA <= 0f) continue;
+
+                            float accB = stripe[destIdx] / 255f;
+                            float accG = stripe[destIdx + 1] / 255f;
+                            float accR = stripe[destIdx + 2] / 255f;
+                            float accA = stripe[destIdx + 3] / 255f;
+
+                            float outA = topA + accA * (1f - topA);
+                            if (outA > 0f) {
+                                float outR = (topR * topA + accR * accA * (1f - topA)) / outA;
+                                float outG = (topG * topA + accG * accA * (1f - topA)) / outA;
+                                float outB = (topB * topA + accB * accA * (1f - topA)) / outA;
+
+                                stripe[destIdx] = (byte)Math.Clamp((int)(outB * 255f + 0.5f), 0, 255);
+                                stripe[destIdx + 1] = (byte)Math.Clamp((int)(outG * 255f + 0.5f), 0, 255);
+                                stripe[destIdx + 2] = (byte)Math.Clamp((int)(outR * 255f + 0.5f), 0, 255);
+                                stripe[destIdx + 3] = (byte)Math.Clamp((int)(outA * 255f + 0.5f), 0, 255);
+                            }
+                        }
+                    });
+                }
+
+                // Restore base layer's alpha for this stripe if requested
+                if (preserveBaseAlpha && cpuLayers.Length > 0 && cpuLayers[0].Pixels != null) {
+                    var baseLayer = cpuLayers[0];
+                    float scaleX = (float)baseLayer.Width / width;
+                    float scaleY = (float)baseLayer.Height / height;
+                    System.Threading.Tasks.Parallel.For(0, stripeH, localY => {
+                        int globalY = stripeY + localY;
+                        int srcY = Math.Clamp((int)(globalY * scaleY), 0, baseLayer.Height - 1);
+                        for (int x = 0; x < width; x++) {
+                            int srcX = Math.Clamp((int)(x * scaleX), 0, baseLayer.Width - 1);
+                            int destIdx = (localY * width + x) * 4;
+                            int srcIdx = (srcY * baseLayer.Width + srcX) * 4;
+                            stripe[destIdx + 3] = baseLayer.Pixels[srcIdx + 3]; // BGRA: alpha is byte 3
+                        }
+                    });
+                }
+
+                // Write this stripe directly into the result Bitmap
+                var bmpData = result.LockBits(new Rectangle(0, stripeY, width, stripeH), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+                Marshal.Copy(stripe, 0, bmpData.Scan0, stripe.Length);
+                result.UnlockBits(bmpData);
+            }
+
             return result;
         }
 
