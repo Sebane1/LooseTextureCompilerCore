@@ -664,6 +664,54 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
     }
 
+    /// <summary>
+    /// Copies a source texture's RGB to the output with alpha forced to 1.0.
+    /// Used as the first step when preserveBaseAlpha is true — the base layer's RGB
+    /// must survive compositing even when its alpha is near-zero (e.g. face normals
+    /// where alpha encodes lip colour influence, not transparency).
+    /// </summary>
+    [ThreadGroupSize(1024, 1, 1)]
+    [GeneratedComputeShaderDescriptor]
+    public readonly partial struct CopyForceOpaqueShader : IComputeShader {
+        public readonly ReadOnlyTexture2D<Bgra32, float4> Source;
+        public readonly ReadWriteTexture2D<Bgra32, float4> Output;
+        public readonly int DestWidth;
+        public readonly int DestHeight;
+        public readonly int SrcWidth;
+        public readonly int SrcHeight;
+
+        public CopyForceOpaqueShader(
+            ReadOnlyTexture2D<Bgra32, float4> source,
+            ReadWriteTexture2D<Bgra32, float4> output,
+            int destWidth, int destHeight, int srcWidth, int srcHeight) {
+            Source = source;
+            Output = output;
+            DestWidth = destWidth;
+            DestHeight = destHeight;
+            SrcWidth = srcWidth;
+            SrcHeight = srcHeight;
+        }
+
+        public void Execute() {
+            int idx = ThreadIds.X;
+            if (idx >= DestWidth * DestHeight) return;
+
+            int y = idx / DestWidth;
+            int x = idx % DestWidth;
+            int2 pos = new int2(x, y);
+
+            // Map destination pixel to source coordinates
+            float srcXf = (float)x / DestWidth * SrcWidth;
+            float srcYf = (float)y / DestHeight * SrcHeight;
+            int srcX = Hlsl.Clamp((int)srcXf, 0, SrcWidth - 1);
+            int srcY = Hlsl.Clamp((int)srcYf, 0, SrcHeight - 1);
+            float4 pixel = Source[new int2(srcX, srcY)];
+
+            // Copy RGB, force alpha to 1.0 so compositing doesn't discard low-alpha RGB data
+            Output[pos] = new float4(pixel.X, pixel.Y, pixel.Z, 1.0f);
+        }
+    }
+
     [ThreadGroupSize(1024, 1, 1)]
     [GeneratedComputeShaderDescriptor]
     public readonly partial struct ClearShader : IComputeShader {
@@ -948,10 +996,35 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 return result;
 
             // Cache miss — decode pixels on CPU
-            if (path.EndsWith(".tex", StringComparison.OrdinalIgnoreCase) || 
-                path.EndsWith(".dds", StringComparison.OrdinalIgnoreCase) ||
-                path.EndsWith(".ltct", StringComparison.OrdinalIgnoreCase) ||
-                path.EndsWith(".raw", StringComparison.OrdinalIgnoreCase)) {
+            // .tex/.dds: load raw RGBA bytes directly from OtterTex, bypassing GDI Bitmap
+            // entirely to avoid premultiplied alpha corruption on low-alpha textures (e.g. face normals).
+            if (path.EndsWith(".tex", StringComparison.OrdinalIgnoreCase)) {
+                while (TexIO.IsFileLocked(path)) { System.Threading.Thread.Sleep(100); }
+                var kv = TexIO.TexToBytes(path);
+                result.Pixels = kv.Value;
+                result.Width = kv.Key.Width;
+                result.Height = kv.Key.Height;
+                // Swizzle RGBA → BGRA (pipeline uses Bgra32 throughout)
+                for (int i = 0; i < result.Pixels.Length; i += 4) {
+                    byte tmp = result.Pixels[i];
+                    result.Pixels[i] = result.Pixels[i + 2];
+                    result.Pixels[i + 2] = tmp;
+                }
+            } else if (path.EndsWith(".dds", StringComparison.OrdinalIgnoreCase)) {
+                while (TexIO.IsFileLocked(path)) { System.Threading.Thread.Sleep(100); }
+                var kv = TexIO.DDSToBytes(path);
+                result.Pixels = kv.Value;
+                result.Width = kv.Key.Width;
+                result.Height = kv.Key.Height;
+                // Swizzle RGBA → BGRA
+                for (int i = 0; i < result.Pixels.Length; i += 4) {
+                    byte tmp = result.Pixels[i];
+                    result.Pixels[i] = result.Pixels[i + 2];
+                    result.Pixels[i + 2] = tmp;
+                }
+            } else if (path.EndsWith(".ltct", StringComparison.OrdinalIgnoreCase) ||
+                       path.EndsWith(".raw", StringComparison.OrdinalIgnoreCase)) {
+                // .ltct/.raw: keep GDI path (these don't carry face-normal-style alpha data)
                 using (var bitmap = TexIO.ResolveBitmap(path)) {
                     Bitmap safe = bitmap.PixelFormat == PixelFormat.Format32bppArgb ? bitmap : bitmap.Clone(new Rectangle(0, 0, bitmap.Width, bitmap.Height), PixelFormat.Format32bppArgb);
                     var bmpData = safe.LockBits(new Rectangle(0, 0, safe.Width, safe.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
@@ -1118,8 +1191,12 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         if (textures.Length > 0 && textures[0].Tex != null) {
                             var ld = textures[0];
                             float4 tint = tints != null && 0 < tints.Count ? new float4(tints[0].X, tints[0].Y, tints[0].Z, tints[0].W) : new float4(1,1,1,1);
-                            context.For(totalPixels, new ClearShader(ping, width, height));
-                            context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
+                            if (preserveBaseAlpha) {
+                                context.For(totalPixels, new CopyForceOpaqueShader(ld.Tex, pong, width, height, ld.Width, ld.Height));
+                            } else {
+                                context.For(totalPixels, new ClearShader(ping, width, height));
+                                context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
+                            }
                             isPing = false;
                         }
 
@@ -1251,6 +1328,233 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         }
 
         /// <summary>
+        /// Same compositing pipeline as MergeMultipleImagesGpuFromPaths, but returns raw BGRA bytes
+        /// instead of a GDI Bitmap. This avoids GDI+'s premultiplied alpha round-trip that destroys
+        /// low-alpha RGB data (e.g. face normal maps where alpha encodes lip colour influence).
+        /// </summary>
+        public static (byte[] BgraPixels, int Width, int Height) MergeMultipleImagesGpuFromPathsRaw(
+            System.Collections.Generic.List<string> paths, int width, int height,
+            System.Collections.Generic.List<System.Numerics.Vector4> tints = null, bool preserveBaseAlpha = false) {
+
+            if (width <= 0 || height <= 0) {
+                return (new byte[4], 1, 1);
+            }
+            int totalPixels = width * height;
+
+            // Phase 1: Load CPU pixels (reuses same cache as the Bitmap variant)
+            var cpuLayers = new CpuLayerData[paths.Count];
+            for (int i = 0; i < paths.Count; i++) {
+                if (FFXIVLooseTextureCompiler.PathOrganization.UniversalTextureSetCreator.UseMemoryCache) {
+                    bool inCpuCache = _cpuPixelCache.ContainsKey(paths[i]) && !_invalidatedPaths.ContainsKey(paths[i]);
+                    if (inCpuCache) {
+                        cpuLayers[i] = LoadPixelsCpu(paths[i]);
+                        continue;
+                    }
+                }
+                cpuLayers[i] = LoadPixelsCpu(paths[i]);
+            }
+
+            // Skip GPU if unavailable
+            if (_gpuUnavailable) {
+                return MergeLayersCpuFallbackRaw(cpuLayers, width, height, tints, preserveBaseAlpha);
+            }
+
+            try {
+                var device = GraphicsDevice.GetDefault();
+
+                lock (_gpuLock) {
+                    // Phase 2: Upload to VRAM
+                    var textures = new (ReadOnlyTexture2D<Bgra32, float4> Tex, bool IsCached, int Width, int Height)[paths.Count];
+                    for (int i = 0; i < paths.Count; i++) {
+                        textures[i] = UploadToVram(device, cpuLayers[i]);
+                    }
+
+                    // Reuse cached ping/pong
+                    if (_cachedPing == null || _cachedWidth != width || _cachedHeight != height) {
+                        _cachedPing?.Dispose();
+                        _cachedPong?.Dispose();
+                        _cachedPing = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
+                        _cachedPong = device.AllocateReadWriteTexture2D<Bgra32, float4>(width, height);
+                        _cachedWidth = width;
+                        _cachedHeight = height;
+                        _cachedResultBuffer = new byte[totalPixels * 4];
+                    }
+                    var ping = _cachedPing;
+                    var pong = _cachedPong;
+
+                    // Phase 3: GPU merge
+                    bool isPing = true;
+                    using (var context = device.CreateComputeContext()) {
+                        if (textures.Length > 0 && textures[0].Tex != null) {
+                            var ld = textures[0];
+                            float4 tint = tints != null && 0 < tints.Count ? new float4(tints[0].X, tints[0].Y, tints[0].Z, tints[0].W) : new float4(1,1,1,1);
+                            if (preserveBaseAlpha) {
+                                // Force alpha=1.0 on the base layer so its RGB survives compositing
+                                // even when its alpha is near-zero (e.g. face normals).
+                                // RestoreBaseAlphaShader will put the real alpha back at the end.
+                                context.For(totalPixels, new CopyForceOpaqueShader(ld.Tex, pong, width, height, ld.Width, ld.Height));
+                            } else {
+                                context.For(totalPixels, new ClearShader(ping, width, height));
+                                context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
+                            }
+                            isPing = false;
+                        }
+
+                        for (int i = 1; i < textures.Length; i++) {
+                            var ld = textures[i];
+                            if (ld.Tex == null) continue;
+                            float4 tint = tints != null && i < tints.Count ? new float4(tints[i].X, tints[i].Y, tints[i].Z, tints[i].W) : new float4(1,1,1,1);
+                            if (isPing) {
+                                context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
+                            } else {
+                                context.For(totalPixels, new MergeImagesPingPongTintedShader(pong, ld.Tex, ping, width, height, ld.Width, ld.Height, tint));
+                            }
+                            isPing = !isPing;
+                        }
+
+                        if (preserveBaseAlpha && textures.Length > 0 && textures[0].Tex != null) {
+                            var baseTex = textures[0];
+                            if (isPing) {
+                                context.For(totalPixels, new RestoreBaseAlphaShader(ping, baseTex.Tex, pong, width, height, baseTex.Width, baseTex.Height));
+                            } else {
+                                context.For(totalPixels, new RestoreBaseAlphaShader(pong, baseTex.Tex, ping, width, height, baseTex.Width, baseTex.Height));
+                            }
+                            isPing = !isPing;
+                        }
+                    }
+
+                    // Dispose non-cached textures
+                    for (int i = 0; i < textures.Length; i++) {
+                        if (!textures[i].IsCached && textures[i].Tex != null)
+                            textures[i].Tex.Dispose();
+                    }
+
+                    // GPU→CPU readback
+                    if (isPing) {
+                        ping.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(_cachedResultBuffer));
+                    } else {
+                        pong.CopyTo(MemoryMarshal.Cast<byte, Bgra32>(_cachedResultBuffer));
+                    }
+                    AuditVram();
+                } // release GPU lock
+
+                // Return a COPY of the raw BGRA bytes (no GDI Bitmap!)
+                byte[] rawOutput = new byte[totalPixels * 4];
+                Array.Copy(_cachedResultBuffer, rawOutput, rawOutput.Length);
+                return (rawOutput, width, height);
+
+            } catch (OutOfMemoryException) {
+                _cachedResultBuffer = null;
+                try { GC.Collect(2, GCCollectionMode.Aggressive, true, true); } catch {}
+                return MergeLayersCpuFallbackRaw(cpuLayers, width, height, tints, preserveBaseAlpha);
+            } catch {
+                _gpuUnavailable = true;
+                return MergeLayersCpuFallbackRaw(cpuLayers, width, height, tints, preserveBaseAlpha);
+            }
+        }
+
+        /// <summary>
+        /// CPU fallback that returns raw BGRA bytes instead of a GDI Bitmap.
+        /// </summary>
+        private static (byte[] BgraPixels, int Width, int Height) MergeLayersCpuFallbackRaw(
+            CpuLayerData[] cpuLayers, int width, int height,
+            System.Collections.Generic.List<System.Numerics.Vector4> tints, bool preserveBaseAlpha = false) {
+
+            long requiredBytes = (long)width * height * 4;
+            byte[] output;
+            try {
+                output = new byte[requiredBytes];
+            } catch (OutOfMemoryException) {
+                // If we can't even allocate the output, return a minimal fallback
+                return (new byte[4], 1, 1);
+            }
+
+            for (int layerIdx = 0; layerIdx < cpuLayers.Length; layerIdx++) {
+                var layer = cpuLayers[layerIdx];
+                if (layer.Pixels == null || layer.Width <= 0 || layer.Height <= 0) continue;
+
+                float tR = 1f, tG = 1f, tB = 1f, tA = 1f;
+                if (tints != null && layerIdx < tints.Count) {
+                    tR = tints[layerIdx].X; tG = tints[layerIdx].Y; tB = tints[layerIdx].Z; tA = tints[layerIdx].W;
+                }
+
+                float scaleX = (float)layer.Width / width;
+                float scaleY = (float)layer.Height / height;
+
+                // When preserveBaseAlpha is set and this is the base layer, copy its RGB directly
+                // with alpha=255 so compositing doesn't discard low-alpha RGB data.
+                if (preserveBaseAlpha && layerIdx == 0) {
+                    System.Threading.Tasks.Parallel.For(0, height, y => {
+                        int srcY = Math.Clamp((int)(y * scaleY), 0, layer.Height - 1);
+                        for (int x = 0; x < width; x++) {
+                            int srcX = Math.Clamp((int)(x * scaleX), 0, layer.Width - 1);
+                            int destIdx = (y * width + x) * 4;
+                            int srcIdx = (srcY * layer.Width + srcX) * 4;
+                            output[destIdx] = layer.Pixels[srcIdx];         // B
+                            output[destIdx + 1] = layer.Pixels[srcIdx + 1]; // G
+                            output[destIdx + 2] = layer.Pixels[srcIdx + 2]; // R
+                            output[destIdx + 3] = 255;                       // A forced opaque
+                        }
+                    });
+                    continue;
+                }
+
+                System.Threading.Tasks.Parallel.For(0, height, y => {
+                    int srcY = Math.Clamp((int)(y * scaleY), 0, layer.Height - 1);
+                    for (int x = 0; x < width; x++) {
+                        int srcX = Math.Clamp((int)(x * scaleX), 0, layer.Width - 1);
+
+                        int destIdx = (y * width + x) * 4;
+                        int srcIdx = (srcY * layer.Width + srcX) * 4;
+
+                        // BGRA byte order
+                        float topB = (layer.Pixels[srcIdx] / 255f) * tB;
+                        float topG = (layer.Pixels[srcIdx + 1] / 255f) * tG;
+                        float topR = (layer.Pixels[srcIdx + 2] / 255f) * tR;
+                        float topA = (layer.Pixels[srcIdx + 3] / 255f) * tA;
+
+                        if (topA <= 0f) continue;
+
+                        float accB = output[destIdx] / 255f;
+                        float accG = output[destIdx + 1] / 255f;
+                        float accR = output[destIdx + 2] / 255f;
+                        float accA = output[destIdx + 3] / 255f;
+
+                        float outA = topA + accA * (1f - topA);
+                        if (outA > 0f) {
+                            float outR = (topR * topA + accR * accA * (1f - topA)) / outA;
+                            float outG = (topG * topA + accG * accA * (1f - topA)) / outA;
+                            float outB = (topB * topA + accB * accA * (1f - topA)) / outA;
+
+                            output[destIdx] = (byte)Math.Clamp((int)(outB * 255f + 0.5f), 0, 255);
+                            output[destIdx + 1] = (byte)Math.Clamp((int)(outG * 255f + 0.5f), 0, 255);
+                            output[destIdx + 2] = (byte)Math.Clamp((int)(outR * 255f + 0.5f), 0, 255);
+                            output[destIdx + 3] = (byte)Math.Clamp((int)(outA * 255f + 0.5f), 0, 255);
+                        }
+                    }
+                });
+            }
+
+            // Restore base layer's alpha if requested
+            if (preserveBaseAlpha && cpuLayers.Length > 0 && cpuLayers[0].Pixels != null) {
+                var baseLayer = cpuLayers[0];
+                float scaleX = (float)baseLayer.Width / width;
+                float scaleY = (float)baseLayer.Height / height;
+                System.Threading.Tasks.Parallel.For(0, height, y => {
+                    int srcY = Math.Clamp((int)(y * scaleY), 0, baseLayer.Height - 1);
+                    for (int x = 0; x < width; x++) {
+                        int srcX = Math.Clamp((int)(x * scaleX), 0, baseLayer.Width - 1);
+                        int destIdx = (y * width + x) * 4;
+                        int srcIdx = (srcY * baseLayer.Width + srcX) * 4;
+                        output[destIdx + 3] = baseLayer.Pixels[srcIdx + 3];
+                    }
+                });
+            }
+
+            return (output, width, height);
+        }
+
+        /// <summary>
         /// CPU-based alpha composite fallback for systems without DirectX 12 compute (Linux/Wine).
         /// Uses pre-loaded CpuLayerData from phase 1 — no extra file I/O needed.
         /// Proactively detects low-memory conditions and falls back to stripe-based processing
@@ -1304,6 +1608,24 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
                 float scaleX = (float)layer.Width / width;
                 float scaleY = (float)layer.Height / height;
+
+                // When preserveBaseAlpha is set and this is the base layer, copy its RGB directly
+                // with alpha=255 so compositing doesn't discard low-alpha RGB data.
+                if (preserveBaseAlpha && layerIdx == 0) {
+                    System.Threading.Tasks.Parallel.For(0, height, y => {
+                        int srcY = Math.Clamp((int)(y * scaleY), 0, layer.Height - 1);
+                        for (int x = 0; x < width; x++) {
+                            int srcX = Math.Clamp((int)(x * scaleX), 0, layer.Width - 1);
+                            int destIdx = (y * width + x) * 4;
+                            int srcIdx = (srcY * layer.Width + srcX) * 4;
+                            output[destIdx] = layer.Pixels[srcIdx];         // B
+                            output[destIdx + 1] = layer.Pixels[srcIdx + 1]; // G
+                            output[destIdx + 2] = layer.Pixels[srcIdx + 2]; // R
+                            output[destIdx + 3] = 255;                       // A forced opaque
+                        }
+                    });
+                    continue;
+                }
 
                 System.Threading.Tasks.Parallel.For(0, height, y => {
                     int srcY = Math.Clamp((int)(y * scaleY), 0, layer.Height - 1);
@@ -1391,6 +1713,25 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
                     float scaleX = (float)layer.Width / width;
                     float scaleY = (float)layer.Height / height;
+
+                    // When preserveBaseAlpha is set and this is the base layer, copy its RGB directly
+                    // with alpha=255 so compositing doesn't discard low-alpha RGB data.
+                    if (preserveBaseAlpha && layerIdx == 0) {
+                        System.Threading.Tasks.Parallel.For(0, stripeH, localY => {
+                            int globalY = stripeY + localY;
+                            int srcY = Math.Clamp((int)(globalY * scaleY), 0, layer.Height - 1);
+                            for (int x = 0; x < width; x++) {
+                                int srcX = Math.Clamp((int)(x * scaleX), 0, layer.Width - 1);
+                                int destIdx = (localY * width + x) * 4;
+                                int srcIdx = (srcY * layer.Width + srcX) * 4;
+                                stripe[destIdx] = layer.Pixels[srcIdx];         // B
+                                stripe[destIdx + 1] = layer.Pixels[srcIdx + 1]; // G
+                                stripe[destIdx + 2] = layer.Pixels[srcIdx + 2]; // R
+                                stripe[destIdx + 3] = 255;                       // A forced opaque
+                            }
+                        });
+                        continue;
+                    }
 
                     System.Threading.Tasks.Parallel.For(0, stripeH, localY => {
                         int globalY = stripeY + localY;

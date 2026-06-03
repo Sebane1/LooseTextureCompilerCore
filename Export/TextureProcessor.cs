@@ -1477,10 +1477,17 @@ namespace FFXIVLooseTextureCompiler
                         switch (exportType)
                         {
                             case ExportType.None:
-                                using (Bitmap resultBitmap = ExportTypeNone(inputFile, layeringImage, alphaOverride, invertAlpha, dontInvertAlphaOverride))
-                                {
-                                    if (resultBitmap != null) ScaleAndConvertToTex(resultBitmap, out data, actualExportBc7, actualUseGpu);
-                                    else _asyncBenchLog.Enqueue($"  [Tex Error] ExportType.None '{Path.GetFileName(outputFile)}' returned null bitmap!");
+                                // Try raw-bytes path first (avoids GDI premultiplied alpha corruption)
+                                byte[] rawTexData = ExportTypeNoneRaw(inputFile, layeringImage, alphaOverride, invertAlpha, dontInvertAlphaOverride, actualExportBc7, actualUseGpu);
+                                if (rawTexData != null && rawTexData.Length > 0) {
+                                    data = rawTexData;
+                                } else {
+                                    // Fallback: alpha-override path or other cases that need GDI Bitmap
+                                    using (Bitmap resultBitmap = ExportTypeNone(inputFile, layeringImage, alphaOverride, invertAlpha, dontInvertAlphaOverride))
+                                    {
+                                        if (resultBitmap != null) ScaleAndConvertToTex(resultBitmap, out data, actualExportBc7, actualUseGpu);
+                                        else _asyncBenchLog.Enqueue($"  [Tex Error] ExportType.None '{Path.GetFileName(outputFile)}' returned null bitmap!");
+                                    }
                                 }
                                 break;
                             case ExportType.SkipLayering:
@@ -2489,6 +2496,76 @@ namespace FFXIVLooseTextureCompiler
         }
 
 
+
+        /// <summary>
+        /// Raw-bytes variant of ExportTypeNone that bypasses GDI Bitmap entirely.
+        /// Returns .tex bytes directly, or null if this path can't handle the request
+        /// (e.g. alpha-override scenarios that still need the GDI Bitmap path).
+        /// </summary>
+        private byte[] ExportTypeNoneRaw(string inputFile, string layeringImage, string alphaOverride,
+            bool invertAlpha, bool dontInvertAlphaOverride, bool exportBc7, bool useGpu) {
+
+            // Only handle the no-alpha-override layering path
+            if (string.IsNullOrEmpty(layeringImage) || !string.IsNullOrEmpty(alphaOverride))
+                return null;
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            string underlayPath = Path.Combine(_basePath, layeringImage);
+
+            var paths = new System.Collections.Generic.List<string> { underlayPath, inputFile };
+            int width = 4096;
+            int height = 4096;
+
+            // Determine canvas dimensions from the underlay
+            string baselinePath = FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(underlayPath) || underlayPath.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase) ? underlayPath : inputFile;
+            if (baselinePath.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase)) {
+                if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.VirtualFileSystem.TryGetValue(baselinePath, out FFXIVLooseTextureCompiler.ImageProcessing.TexIO.MemoryFile memFile)) {
+                    width = memFile.Width;
+                    height = memFile.Height;
+                }
+            } else if (baselinePath.EndsWith(".tex", StringComparison.OrdinalIgnoreCase)) {
+                try {
+                    using (var stream = new FileStream(baselinePath, FileMode.Open, FileAccess.Read)) {
+                        var scratch = global::Penumbra.LTCImport.Textures.PenumbraTexFileParser.Parse(stream);
+                        width = scratch.Meta.Width;
+                        height = scratch.Meta.Height;
+                    }
+                } catch {}
+            } else {
+                try {
+                    using (var img = System.Drawing.Image.FromFile(baselinePath)) {
+                        width = img.Width;
+                        height = img.Height;
+                    }
+                } catch {}
+            }
+
+            if (width <= 0 || height <= 0) {
+                width = 4096;
+                height = 4096;
+            }
+
+            long setupMs = sw.ElapsedMilliseconds;
+            sw.Restart();
+
+            // Use the raw-bytes pipeline — no GDI Bitmap anywhere
+            var (bgraPixels, outW, outH) = ComputeSharpLayering.MergeMultipleImagesGpuFromPathsRaw(paths, width, height, preserveBaseAlpha: true);
+
+            long compositeMs = sw.ElapsedMilliseconds;
+            sw.Stop();
+            _asyncBenchLog.Enqueue($"    [None Detail] RawGpuPath Setup={setupMs}ms, Composite={compositeMs}ms");
+
+            // Swizzle BGRA → RGBA for RgbaBytesToTex
+            for (int i = 0; i < bgraPixels.Length; i += 4) {
+                byte tmp = bgraPixels[i];
+                bgraPixels[i] = bgraPixels[i + 2];
+                bgraPixels[i + 2] = tmp;
+            }
+
+            byte[] texData;
+            PenumbraTextureImporter.RgbaBytesToTex(bgraPixels, outW, outH, out texData, exportBc7, useGpu);
+            return texData;
+        }
 
         public string AppendIdentifier(string value)
         {
