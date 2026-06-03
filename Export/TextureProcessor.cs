@@ -2470,8 +2470,9 @@ namespace FFXIVLooseTextureCompiler
                         height = 4096;
                     }
                     // Vanilla/gen2 body textures are 1:2 aspect ratio (e.g. 2048x4096).
-                    // If we detected a square canvas but the underlay is gen2, enforce 1:2.
-                    if (width == height && layeringImage.IndexOf("gen2", StringComparison.OrdinalIgnoreCase) >= 0)
+                    // If we detected a square canvas but the underlay is gen2 body, enforce 1:2.
+                    if (width == height && layeringImage.IndexOf("gen2", StringComparison.OrdinalIgnoreCase) >= 0
+                        && (layeringImage.IndexOf("body", StringComparison.OrdinalIgnoreCase) >= 0 || layeringImage.IndexOf("b0001", StringComparison.OrdinalIgnoreCase) >= 0))
                     {
                         width = height / 2;
                     }
@@ -2580,8 +2581,9 @@ namespace FFXIVLooseTextureCompiler
                 height = 4096;
             }
             // Vanilla/gen2 body textures are 1:2 aspect ratio (e.g. 2048x4096).
-            // If we detected a square canvas but the underlay is gen2, enforce 1:2.
-            if (width == height && layeringImage.IndexOf("gen2", StringComparison.OrdinalIgnoreCase) >= 0)
+            // If we detected a square canvas but the underlay is gen2 body, enforce 1:2.
+            if (width == height && layeringImage.IndexOf("gen2", StringComparison.OrdinalIgnoreCase) >= 0
+                && (layeringImage.IndexOf("body", StringComparison.OrdinalIgnoreCase) >= 0 || layeringImage.IndexOf("b0001", StringComparison.OrdinalIgnoreCase) >= 0))
             {
                 width = height / 2;
             }
