@@ -915,6 +915,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 _cachedPong = null;
                 _cachedResultBuffer = null;
             }
+            ReleaseStampResources();
         }
 
         // CPU-only pixel loading (thread-safe, parallelizable)
