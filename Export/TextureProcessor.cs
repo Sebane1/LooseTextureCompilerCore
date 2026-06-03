@@ -1620,6 +1620,15 @@ namespace FFXIVLooseTextureCompiler
                             height = scratch.Meta.Height;
                         }
                     } catch {}
+                } else if (inputFile.EndsWith(".ltct", StringComparison.OrdinalIgnoreCase)) {
+                    try {
+                        using (var ltctImg = FFXIVLooseTextureCompiler.ImageProcessing.TexIO.OpenImageFromXOR(inputFile)) {
+                            if (ltctImg != null) {
+                                width = ltctImg.Width;
+                                height = ltctImg.Height;
+                            }
+                        }
+                    } catch {}
                 } else {
                     try {
                         using (var img = System.Drawing.Image.FromFile(inputFile)) {
@@ -2432,6 +2441,17 @@ namespace FFXIVLooseTextureCompiler
                             }
                         } catch {}
                     }
+                    else if (baselinePath.EndsWith(".ltct", StringComparison.OrdinalIgnoreCase))
+                    {
+                        try {
+                            using (var ltctImg = FFXIVLooseTextureCompiler.ImageProcessing.TexIO.OpenImageFromXOR(baselinePath)) {
+                                if (ltctImg != null) {
+                                    width = ltctImg.Width;
+                                    height = ltctImg.Height;
+                                }
+                            }
+                        } catch {}
+                    }
                     else
                     {
                         try {
@@ -2448,6 +2468,12 @@ namespace FFXIVLooseTextureCompiler
                     {
                         width = 4096;
                         height = 4096;
+                    }
+                    // Vanilla/gen2 body textures are 1:2 aspect ratio (e.g. 2048x4096).
+                    // If we detected a square canvas but the underlay is gen2, enforce 1:2.
+                    if (width == height && layeringImage.IndexOf("gen2", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        width = height / 2;
                     }
                     // preserveBaseAlpha: the underlay's alpha is authoritative (e.g. lip colour
                     // influence on face normals). The GPU merge restores it as a final shader pass.
@@ -2531,6 +2557,15 @@ namespace FFXIVLooseTextureCompiler
                         height = scratch.Meta.Height;
                     }
                 } catch {}
+            } else if (baselinePath.EndsWith(".ltct", StringComparison.OrdinalIgnoreCase)) {
+                try {
+                    using (var ltctImg = FFXIVLooseTextureCompiler.ImageProcessing.TexIO.OpenImageFromXOR(baselinePath)) {
+                        if (ltctImg != null) {
+                            width = ltctImg.Width;
+                            height = ltctImg.Height;
+                        }
+                    }
+                } catch {}
             } else {
                 try {
                     using (var img = System.Drawing.Image.FromFile(baselinePath)) {
@@ -2543,6 +2578,12 @@ namespace FFXIVLooseTextureCompiler
             if (width <= 0 || height <= 0) {
                 width = 4096;
                 height = 4096;
+            }
+            // Vanilla/gen2 body textures are 1:2 aspect ratio (e.g. 2048x4096).
+            // If we detected a square canvas but the underlay is gen2, enforce 1:2.
+            if (width == height && layeringImage.IndexOf("gen2", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                width = height / 2;
             }
 
             long setupMs = sw.ElapsedMilliseconds;

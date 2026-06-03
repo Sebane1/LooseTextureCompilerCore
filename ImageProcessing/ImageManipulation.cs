@@ -117,8 +117,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             else if (lowerPath.Contains("_b_d") || lowerPath.Contains("_b_base") || lowerPath.Contains("tbse")) targetUV = "tbse";
             else if (lowerPath.Contains("bibo") || lowerPath.Contains("b+")) targetUV = "bibo";
             else if (lowerPath.Contains("gen3") || System.Text.RegularExpressions.Regex.IsMatch(lowerPath, @"(^|[^a-z])eve([^a-z]|$)")) targetUV = "gen3";
-            else if (lowerPath.Contains("0201") || lowerPath.Contains("vanilla_male")) targetUV = "vanillamale"; 
-            else if (lowerPath.Contains("body") || lowerPath.Contains("mata")) targetUV = "gen2";
+            else if (lowerPath.Contains("0101") || lowerPath.Contains("vanilla_male")) targetUV = "vanillamale"; 
+            else if (lowerPath.Contains("body") || lowerPath.Contains("mata") || lowerPath.Contains("gen2"))  targetUV = "gen2";
             return targetUV;
         }
 

@@ -35,6 +35,49 @@ namespace FFXIVLooseTextureCompiler
         public static List<ModularTransferJob> modularBatch = new List<ModularTransferJob>();
 
         
+        /// <summary>
+        /// If a gen2 source is square-padded (content in left half), stretch the left half
+        /// to fill the full width so transfer map UV coordinates align correctly.
+        /// Returns the input unchanged if it's already 1:2 aspect ratio.
+        /// </summary>
+        private static Bitmap PrepareGen2ForTransfer(Bitmap input)
+        {
+            if (input == null) return null;
+            int w = input.Width;
+            int h = input.Height;
+            if (w != h) return input; // Already 1:2, no prep needed
+            // Square padded: gen2 content in left half, stretch to fill full width
+            int halfW = w / 2;
+            Bitmap stretched = new Bitmap(w, h, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            using (Graphics g = Graphics.FromImage(stretched))
+            {
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                var srcRect = new System.Drawing.Rectangle(0, 0, halfW, h);
+                var destRect = new System.Drawing.Rectangle(0, 0, w, h);
+                g.DrawImage(input, destRect, srcRect, System.Drawing.GraphicsUnit.Pixel);
+            }
+            return stretched;
+        }
+
+        /// <summary>
+        /// File-based variant: loads, stretches if needed, saves to a temp VFS path, returns the path.
+        /// </summary>
+        private static string PrepareGen2FileForTransfer(string inputImage)
+        {
+            using (Bitmap source = TexIO.ResolveBitmap(inputImage))
+            {
+                if (source == null || source.Width != source.Height) return inputImage;
+                using (Bitmap stretched = PrepareGen2ForTransfer(source))
+                {
+                    string preparedPath = inputImage + "_gen2_stretched.raw";
+                    if (inputImage.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase))
+                        preparedPath = inputImage + "_gen2_stretched.raw";
+                    TexIO.SaveBitmap(stretched, preparedPath);
+                    return preparedPath;
+                }
+            }
+        }
+
         public static Bitmap PerformTransfer(Bitmap inputImage, string transferMapFilename)
         {
             string transferMapPath = Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "res", "fastuvtransfer", "body", transferMapFilename);
@@ -50,8 +93,47 @@ namespace FFXIVLooseTextureCompiler
         public static Bitmap BiboToGen3(Bitmap inputImage) => PerformTransfer(inputImage, "bibo_to_gen3_transfer.tif");
         public static Bitmap Gen3ToGen2(Bitmap inputImage) => PerformTransfer(inputImage, "gen3_to_gen2_transfer.tif");
         public static Bitmap Gen3ToBibo(Bitmap inputImage) => PerformTransfer(inputImage, "gen3_to_bibo_transfer.tif");
-        public static Bitmap Gen2ToBibo(Bitmap inputImage) => PerformTransfer(inputImage, "gen2_to_bibo_transfer.tif");
-        public static Bitmap Gen2ToGen3(Bitmap inputImage) => PerformTransfer(inputImage, "gen2_to_gen3_transfer.tif");
+        public static Bitmap Gen2ToBibo(Bitmap inputImage) {
+            if (inputImage == null) return null;
+            int srcW = inputImage.Width;
+            int srcH = inputImage.Height;
+            // Gen2 content occupies the left half (or full width if 1:2).
+            int halfW = (srcW == srcH) ? srcW / 2 : srcW;
+            int outW = halfW * 2;
+            int outH = srcH;
+            // Extract left half into a temp bitmap
+            var leftRect = new System.Drawing.Rectangle(0, 0, halfW, srcH);
+            using (Bitmap leftHalf = new Bitmap(halfW, srcH, System.Drawing.Imaging.PixelFormat.Format32bppArgb))
+            {
+                using (Graphics gTemp = Graphics.FromImage(leftHalf))
+                {
+                    gTemp.DrawImage(inputImage, new System.Drawing.Rectangle(0, 0, halfW, srcH), leftRect, System.Drawing.GraphicsUnit.Pixel);
+                }
+                // Create flipped copy
+                using (Bitmap flipped = (Bitmap)leftHalf.Clone())
+                {
+                    flipped.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                    Bitmap output = new Bitmap(outW, outH, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                    using (Graphics g = Graphics.FromImage(output))
+                    {
+                        g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                        // Right half = original gen2 content
+                        g.DrawImage(leftHalf, outW / 2, 0, halfW, srcH);
+                        // Left half = mirrored gen2 content
+                        g.DrawImage(flipped, 0, 0, halfW, srcH);
+                    }
+                    return output;
+                }
+            }
+        }
+        public static Bitmap Gen2ToGen3(Bitmap inputImage) {
+            if (inputImage == null) return null;
+            // If the input is square-padded (gen2 content in left half), stretch to fill 1:1
+            Bitmap prepared = PrepareGen2ForTransfer(inputImage);
+            Bitmap result = PerformTransfer(prepared, "gen2_to_gen3_transfer.tif");
+            if (prepared != inputImage) prepared.Dispose();
+            return result;
+        }
         public static Bitmap OtopopToVanillaLala(Bitmap inputImage) => PerformTransfer(inputImage, "otopop_to_vanillalala_transfer.tif");
         public static Bitmap VanillaLalaToOtopop(Bitmap inputImage) => PerformTransfer(inputImage, "vanillalala_to_otopop_transfer.tif");
         public static Bitmap VanillaLalaToAsymLala(Bitmap inputImage) => PerformTransfer(inputImage, "vanillalala_to_asymlala_transfer.tif");
@@ -184,12 +266,46 @@ namespace FFXIVLooseTextureCompiler
 
         public static void Gen2ToBibo(string inputImage, string outputImage)
         {
-            PerformTransfer(inputImage, outputImage, "gen2_to_bibo_transfer.tif", XNormal.Gen2ToBibo);
+            // Gen2→Bibo is a simple horizontal mirror: the 2048x4096 gen2 body
+            // becomes a 4096x4096 bibo body by mirroring left↔right.
+            using (Bitmap source = TexIO.ResolveBitmap(inputImage))
+            {
+                if (source == null) return;
+                int srcW = source.Width;
+                int srcH = source.Height;
+                int halfW = (srcW == srcH) ? srcW / 2 : srcW;
+                int outW = halfW * 2;
+                int outH = srcH;
+                var leftRect = new System.Drawing.Rectangle(0, 0, halfW, srcH);
+                using (Bitmap leftHalf = new Bitmap(halfW, srcH, System.Drawing.Imaging.PixelFormat.Format32bppArgb))
+                {
+                    using (Graphics gTemp = Graphics.FromImage(leftHalf))
+                    {
+                        gTemp.DrawImage(source, new System.Drawing.Rectangle(0, 0, halfW, srcH), leftRect, System.Drawing.GraphicsUnit.Pixel);
+                    }
+                    using (Bitmap flipped = (Bitmap)leftHalf.Clone())
+                    {
+                        flipped.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                        using (Bitmap result = new Bitmap(outW, outH, System.Drawing.Imaging.PixelFormat.Format32bppArgb))
+                        {
+                            using (Graphics g = Graphics.FromImage(result))
+                            {
+                                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                                g.DrawImage(leftHalf, outW / 2, 0, halfW, srcH);
+                                g.DrawImage(flipped, 0, 0, halfW, srcH);
+                            }
+                            TexIO.SaveBitmap(result, outputImage);
+                        }
+                    }
+                }
+            }
         }
 
         public static void Gen2ToGen3(string inputImage, string outputImage)
         {
-            PerformTransfer(inputImage, outputImage, "gen2_to_gen3_transfer.tif", XNormal.Gen2ToGen3);
+            // Pre-stretch the gen2 padded image to 1:1 before transfer map
+            string preparedPath = PrepareGen2FileForTransfer(inputImage);
+            PerformTransfer(preparedPath, outputImage, "gen2_to_gen3_transfer.tif", XNormal.Gen2ToGen3);
         }
 
         public static void OtopopToVanillaLala(string inputImage, string outputImage)
