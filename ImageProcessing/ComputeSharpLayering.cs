@@ -1095,6 +1095,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     long phase2Ms = sw.ElapsedMilliseconds;
                     sw.Restart();
 
+                    // Evict stale VRAM entries before allocating ping/pong working surfaces
+                    AuditVram();
+
                     // Reuse cached ping/pong working textures if dimensions match
                     if (_cachedPing == null || _cachedWidth != width || _cachedHeight != height) {
                         _cachedPing?.Dispose();
@@ -1209,12 +1212,40 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 result.UnlockBits(bmpDataResult);
 
                 return result;
+            } catch (OutOfMemoryException oomEx) {
+                // System RAM exhausted — the GPU itself is likely fine, do NOT blacklist it.
+                // This typically means the _cachedResultBuffer or Bitmap allocation failed on the managed heap,
+                // not that DirectX 12 compute is unavailable.
+                string oomLog;
+                try {
+                    var memInfo = GC.GetGCMemoryInfo();
+                    oomLog = $"[OOM IN GPU PATH - NOT A GPU FAILURE] System RAM exhausted during GPU compositing.\r\n" +
+                        $"  Heap: {memInfo.HeapSizeBytes / (1024*1024)}MB, Available: {memInfo.TotalAvailableMemoryBytes / (1024*1024)}MB\r\n" +
+                        $"  Buffer needed: {(long)totalPixels * 4 / (1024*1024)}MB, Layers: {paths.Count}, Resolution: {width}x{height}\r\n" +
+                        $"  CPU cache entries: {_cpuPixelCache.Count}, VRAM cache entries: {_vramCache.Count}\r\n" +
+                        $"  Exception: {oomEx.Message}\r\n" +
+                        $"  Stack: {oomEx.StackTrace}\r\n";
+                } catch {
+                    oomLog = $"[OOM IN GPU PATH - NOT A GPU FAILURE] {oomEx.Message}\r\n  Stack: {oomEx.StackTrace}\r\n";
+                }
+                System.Diagnostics.Debug.WriteLine(oomLog);
+                try { System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Benchmark.txt"), oomLog); } catch {}
+
+                // Free what we can to make room for the low-memory CPU fallback
+                _cachedResultBuffer = null;
+                try { GC.Collect(2, GCCollectionMode.Aggressive, true, true); } catch {}
+
+                return MergeLayersCpuLowMemory(cpuLayers, width, height, tints, preserveBaseAlpha);
             } catch (Exception ex) {
-                // GPU unavailable (e.g. Linux/Wine without DirectX 12 compute support)
+                // Genuine GPU failure (e.g. Linux/Wine without DirectX 12 compute, driver crash, etc.)
                 _gpuUnavailable = true;
-                System.Diagnostics.Debug.WriteLine($"[MergeMultipleImagesGpuFromPaths] GPU unavailable, using CPU fallback: {ex.Message}");
-                try { System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Benchmark.txt"), 
-                    $"[GPU UNAVAILABLE] Falling back to CPU compositing: {ex.Message}\r\n"); } catch {}
+                string exType = ex.GetType().FullName;
+                string gpuLog = $"[GPU FAILURE - {exType}] Permanent fallback to CPU compositing.\r\n" +
+                    $"  Message: {ex.Message}\r\n" +
+                    $"  Layers: {paths.Count}, Resolution: {width}x{height}\r\n" +
+                    $"  Stack: {ex.StackTrace}\r\n";
+                System.Diagnostics.Debug.WriteLine(gpuLog);
+                try { System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Benchmark.txt"), gpuLog); } catch {}
                 return MergeLayersCpuFallback(cpuLayers, width, height, tints, preserveBaseAlpha);
             }
         }
