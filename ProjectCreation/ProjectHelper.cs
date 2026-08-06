@@ -11,6 +11,8 @@ using System.Text;
 using System.Threading.Tasks;
 using static FFXIVLooseTextureCompiler.ImageProcessing.ImageManipulation;
 using Penumbra.GameData.Enums;
+using Newtonsoft.Json;
+using FFXIVVoicePackCreator.Json;
 
 namespace LooseTextureCompilerCore.ProjectCreation
 {
@@ -24,37 +26,7 @@ namespace LooseTextureCompilerCore.ProjectCreation
         static string[] _faceParts = new string[] { "Face", "Eyebrows", "Eyes", "Ears", "Face Paint", "Hair", "Face B", "Etc B" };
         static string[] _faceScales = new string[] { "Vanilla Scales", "Scaleless Vanilla", "Scaleless Varied" };
 
-        public static void ExportJson(string jsonFilePath)
-        {
-            string jsonText = @"{
-  ""Name"": """",
-  ""Priority"": 0,
-  ""Files"": { },
-  ""FileSwaps"": { },
-  ""Manipulations"": []
-}";
-            if (jsonFilePath != null)
-            {
-                int retries = 50;
-                while (retries > 0)
-                {
-                    try
-                    {
-                        using (StreamWriter writer = new StreamWriter(jsonFilePath))
-                        {
-                            writer.WriteLine(jsonText);
-                        }
-                        break;
-                    }
-                    catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
-                    {
-                        retries--;
-                        if (retries == 0) throw;
-                        Thread.Sleep(50);
-                    }
-                }
-            }
-        }
+
 
         public static UVMapType SortUVTexture(TextureSet textureSet, string file)
         {
@@ -106,21 +78,20 @@ namespace LooseTextureCompilerCore.ProjectCreation
             }
             return uVMapType;
         }
-        public static void ExportMeta(string metaFilePath, string name, string author = "Loose Texture Compiler",
+        public static void ExportMeta(string metaFilePath, string name, List<Group> groups, string author = "Loose Texture Compiler",
             string description = "Exported By Loose Texture Compiler", string modVersion = "0.0.0",
             string modWebsite = @"https://github.com/Sebane1/FFXIVLooseTextureCompiler")
         {
-            string metaText = @"{
-  ""FileVersion"": 3,
-  ""Name"": """ + (!string.IsNullOrEmpty(name) ? name : "") + @""",
-  ""Author"": """ + (!string.IsNullOrEmpty(author) ? author :
-        "FFXIV Loose Texture Compiler") + @""",
-  ""Description"": """ + (!string.IsNullOrEmpty(description) ? description :
-        "Exported by FFXIV Loose Texture Compiler") + @""",
-  ""Version"": """ + modVersion + @""",
-  ""Website"": """ + modWebsite + @""",
-  ""ModTags"": []
-}";
+            ModMeta meta = new ModMeta
+            {
+                Name = !string.IsNullOrEmpty(name) ? name : "",
+                Author = !string.IsNullOrEmpty(author) ? author : "FFXIV Loose Texture Compiler",
+                Description = !string.IsNullOrEmpty(description) ? description : "Exported by FFXIV Loose Texture Compiler",
+                Version = modVersion,
+                Website = modWebsite,
+                Groups = groups ?? new List<Group>()
+            };
+
             if (metaFilePath != null)
             {
                 int retries = 50;
@@ -130,7 +101,9 @@ namespace LooseTextureCompilerCore.ProjectCreation
                     {
                         using (StreamWriter writer = new StreamWriter(metaFilePath))
                         {
-                            writer.WriteLine(metaText);
+                            JsonSerializer serializer = new JsonSerializer();
+                            serializer.Formatting = Formatting.Indented;
+                            serializer.Serialize(writer, meta);
                         }
                         break;
                     }
@@ -232,7 +205,6 @@ namespace LooseTextureCompilerCore.ProjectCreation
         {
             textureProcessor.ExportBc7 = exportBc7;
             List<TextureSet> textureSets = new List<TextureSet>();
-            string jsonFilepath = Path.Combine(path, "default_mod.json");
             string metaFilePath = Path.Combine(path, "meta.json");
             foreach (TextureSet item in exportTextureSets)
             {
@@ -241,10 +213,9 @@ namespace LooseTextureCompilerCore.ProjectCreation
             }
             Directory.CreateDirectory(path);
             textureProcessor.CleanGeneratedAssets(path);
-            textureProcessor.Export(textureSets, new Dictionary<string, int>(), path, generationType, generateNormals, generateMulti, File.Exists(xNormalPath) && finalize, xNormalPath);
+            List<Group> exportedGroups = textureProcessor.Export(textureSets, new Dictionary<string, int>(), path, generationType, generateNormals, generateMulti, File.Exists(xNormalPath) && finalize, xNormalPath);
             if (!Directory.Exists(path)) Directory.CreateDirectory(path);
-            ProjectHelper.ExportJson(jsonFilepath);
-            ProjectHelper.ExportMeta(metaFilePath, name);
+            ProjectHelper.ExportMeta(metaFilePath, name, exportedGroups);
         }
         private static void AddHairPaths(TextureSet textureSet, int gender, int facePart, int faceExtra, int race, int subrace)
         {

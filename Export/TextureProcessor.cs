@@ -330,10 +330,11 @@ namespace FFXIVLooseTextureCompiler
                 }
             }
         }
-        public void Export(List<TextureSet> textureSetList, Dictionary<string, int> groupOptionTypes,
+        public List<Group> Export(List<TextureSet> textureSetList, Dictionary<string, int> groupOptionTypes,
             string modPath, int generationType, bool generateNormals,
             bool generateMulti, bool useXNormal, string xNormalPathOverride = "")
         {
+            List<Group> outputGroups = new List<Group>();
             Dictionary<string, List<TextureSet>> groups = new Dictionary<string, List<TextureSet>>();
             try
             {
@@ -951,9 +952,7 @@ namespace FFXIVLooseTextureCompiler
                     }
                     if (group.Options.Count > 0)
                     {
-                        string groupPath = Path.Combine(modPath, $"group_" + (1 + i++).ToString()
-                        .PadLeft(3, '0') + $"_{group.Name.ToLower().Replace(" ", "_")}.json");
-                        ExportGroup(groupPath, group);
+                        outputGroups.AddRange(ExportGroup(group));
                     }
                 }
                 while (_exportCompletion < _exportMax)
@@ -975,10 +974,12 @@ namespace FFXIVLooseTextureCompiler
                 try {
                     File.AppendAllText(Path.Combine(Path.GetTempPath(), "Export_Benchmark.txt"), benchLog.ToString());
                 } catch { }
+                return outputGroups;
             }
             catch (Exception e)
             {
                 OnError?.Invoke(this, e.ToString());
+                return outputGroups;
             }
         }
 
@@ -1393,40 +1394,29 @@ namespace FFXIVLooseTextureCompiler
             }
         }
 
-        private void ExportGroup(string path, Group group)
+        private List<Group> ExportGroup(Group group)
         {
+            List<Group> resultGroups = new List<Group>();
             group.Description += " -generated";
             bool isSingle = group.Type == "Single";
-            if (path != null)
+            if (group.Options.Count > (isSingle ? int.MaxValue : 32))
             {
-                if (group.Options.Count > (isSingle ? int.MaxValue : 32))
+                int groupsToSplitTo = group.Options.Count / 32;
+                for (int i = 0; i < groupsToSplitTo; i++)
                 {
-                    int groupsToSplitTo = group.Options.Count / 32;
-                    for (int i = 0; i < groupsToSplitTo; i++)
-                    {
-                        int rangeStartingPoint = 32 * i;
-                        int maxRange = group.Options.Count - rangeStartingPoint;
-                        Group newGroup = new Group(group.Name + $" ({i + 1})", group.Description + " -generated",
-                                        group.Priority, group.Type, group.DefaultSettings);
-                        newGroup.Options = group.Options.GetRange(rangeStartingPoint, maxRange > 32 ? 32 : maxRange);
-                        using (StreamWriter file = File.CreateText(path.Replace(".", $" ({i}).")))
-                        {
-                            JsonSerializer serializer = new JsonSerializer();
-                            serializer.Formatting = Formatting.Indented;
-                            serializer.Serialize(file, newGroup);
-                        }
-                    }
-                }
-                else if (group.Options.Count > 0)
-                {
-                    using (StreamWriter file = File.CreateText(path))
-                    {
-                        JsonSerializer serializer = new JsonSerializer();
-                        serializer.Formatting = Formatting.Indented;
-                        serializer.Serialize(file, group);
-                    }
+                    int rangeStartingPoint = 32 * i;
+                    int maxRange = group.Options.Count - rangeStartingPoint;
+                    Group newGroup = new Group(group.Name + $" ({i + 1})", group.Description,
+                                    group.Priority, group.Type, group.DefaultSettings);
+                    newGroup.Options = group.Options.GetRange(rangeStartingPoint, maxRange > 32 ? 32 : maxRange);
+                    resultGroups.Add(newGroup);
                 }
             }
+            else if (group.Options.Count > 0)
+            {
+                resultGroups.Add(group);
+            }
+            return resultGroups;
         }
 
         public enum ExportType
