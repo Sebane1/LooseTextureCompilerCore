@@ -78,6 +78,29 @@ namespace FFXIVLooseTextureCompiler
             }
         }
 
+        public static string GetBodyTransferMapPath(string sourceBodyType, string destBodyType, string modDirectoryHint = null)
+        {
+            sourceBodyType = FFXIVLooseTextureCompiler.ImageProcessing.PainterUvBridge.NormalizeBodyType(sourceBodyType);
+            destBodyType = FFXIVLooseTextureCompiler.ImageProcessing.PainterUvBridge.NormalizeBodyType(destBodyType);
+            if (string.IsNullOrEmpty(sourceBodyType) || string.IsNullOrEmpty(destBodyType))
+                return null;
+            if (string.Equals(sourceBodyType, destBodyType, StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            string transferMapFilename = $"{sourceBodyType}_to_{destBodyType}_transfer.tif";
+            foreach (string baseDir in GlobalPathStorage.GetResourceBaseCandidates(modDirectoryHint))
+            {
+                string transferMapPath = Path.Combine(baseDir, "res", "fastuvtransfer", "body", transferMapFilename);
+                if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(transferMapPath))
+                {
+                    GlobalPathStorage.OriginalBaseDirectory = baseDir;
+                    return transferMapPath;
+                }
+            }
+
+            return null;
+        }
+
         public static Bitmap PerformTransfer(Bitmap inputImage, string transferMapFilename)
         {
             string transferMapPath = Path.Combine(GlobalPathStorage.OriginalBaseDirectory, "res", "fastuvtransfer", "body", transferMapFilename);
