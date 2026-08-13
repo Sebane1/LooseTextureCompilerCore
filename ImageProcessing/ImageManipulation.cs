@@ -1449,11 +1449,12 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             return ComputeSharpLayering.MergeMultipleImagesGpu(validImages.ToArray(), maxX, maxY);
         }
 
-        public static string MergeImageLayers(List<string> images, List<string> uvs, string targetUV, string ouputPath, float scale = 1.0f, System.Collections.Generic.List<System.Numerics.Vector4> tints = null) {
+        public static string MergeImageLayers(List<string> images, List<string> uvs, string targetUV, string ouputPath, float scale = 1.0f, System.Collections.Generic.List<System.Numerics.Vector4> tints = null, System.Collections.Generic.List<int> blendModes = null) {
             int maxX = 0;
             int maxY = 0;
             List<string> validPaths = new List<string>();
             List<System.Numerics.Vector4> validTints = new List<System.Numerics.Vector4>();
+            List<int> validBlendModes = new List<int>();
             for (int i = 0; i < images.Count; i++) {
                 var image = images[i];
                 if (!string.IsNullOrEmpty(image) && (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(image) || image.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase))) {
@@ -1497,6 +1498,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         validTints.Add(tints[i]);
                     } else if (tints != null) {
                         validTints.Add(System.Numerics.Vector4.One);
+                    }
+                    if (blendModes != null && i < blendModes.Count) {
+                        validBlendModes.Add(blendModes[i]);
+                    } else if (blendModes != null) {
+                        validBlendModes.Add(0);
                     }
                                         int width = 0, height = 0;
                     if (pathToLoad.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase)) {
@@ -1554,7 +1560,15 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 }
             }
 
-            if (validPaths.Count == 1 && (scale == 1.0f || scale <= 0.0f) && !hasTints) {
+            bool hasBlendModes = false;
+            if (blendModes != null) {
+                blendModes = validBlendModes;
+                for (int b = 0; b < blendModes.Count && b < validPaths.Count; b++) {
+                    if (blendModes[b] != 0) { hasBlendModes = true; break; }
+                }
+            }
+
+            if (validPaths.Count == 1 && (scale == 1.0f || scale <= 0.0f) && !hasTints && !hasBlendModes) {
                 // Fast path for single images with no scaling and no tinting - bypass entirely!
                 return validPaths[0];
             } else {
@@ -1565,7 +1579,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     System.Diagnostics.Stopwatch totalTimer = System.Diagnostics.Stopwatch.StartNew();
 
                     System.Diagnostics.Stopwatch gpuTimer = System.Diagnostics.Stopwatch.StartNew();
-                    Bitmap outputBitmap = ComputeSharpLayering.MergeMultipleImagesGpuFromPaths(validPaths, maxX, maxY, tints);
+                    Bitmap outputBitmap = ComputeSharpLayering.MergeMultipleImagesGpuFromPaths(validPaths, maxX, maxY, tints, false, blendModes);
                     gpuTimer.Stop();
                     bench.AppendLine($"GPU Load+Merge (unified): {gpuTimer.ElapsedMilliseconds}ms");
                     

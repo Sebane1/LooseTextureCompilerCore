@@ -12,6 +12,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private List<string> _baseOverlays = new List<string>();
         private List<string> _baseOverlayUVs = new List<string>();
         private List<System.Numerics.Vector4> _baseOverlayTints = new List<System.Numerics.Vector4>();
+        private List<int> _baseOverlayBlendModes = new List<int>();
+        private int _baseBlendMode = 0;
         private System.Numerics.Vector4 _baseTint = System.Numerics.Vector4.One;
         private string _normal = "";
         private string _normalUV = "";
@@ -32,6 +34,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         private List<string> _glowOverlays = new List<string>();
         private List<string> _glowOverlayUVs = new List<string>();
         private List<System.Numerics.Vector4> _glowOverlayTints = new List<System.Numerics.Vector4>();
+        private List<int> _glowOverlayBlendModes = new List<int>();
+        private int _glowBlendMode = 0;
         private System.Numerics.Vector4 _glowTint = System.Numerics.Vector4.One;
 
         private bool _ignoreNormalGeneration;
@@ -173,6 +177,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public List<string> BaseOverlays { get { if (_baseOverlays == null) { _baseOverlays = new List<string>(); } return _baseOverlays; } set => _baseOverlays = value; }
         public List<string> BaseOverlayUVs { get { if (_baseOverlayUVs == null) { _baseOverlayUVs = new List<string>(); } return _baseOverlayUVs; } set => _baseOverlayUVs = value; }
         public List<System.Numerics.Vector4> BaseOverlayTints { get { if (_baseOverlayTints == null) { _baseOverlayTints = new List<System.Numerics.Vector4>(); } return _baseOverlayTints; } set => _baseOverlayTints = value; }
+        public List<int> BaseOverlayBlendModes { get { if (_baseOverlayBlendModes == null) { _baseOverlayBlendModes = new List<int>(); } return _baseOverlayBlendModes; } set => _baseOverlayBlendModes = value; }
+        public int BaseBlendMode { get => _baseBlendMode; set => _baseBlendMode = value; }
         public System.Numerics.Vector4 BaseTint { get => _baseTint; set => _baseTint = value; }
         public List<string> NormalOverlays { get { if (_normalOverlays == null) { _normalOverlays = new List<string>(); } return _normalOverlays; } set => _normalOverlays = value; }
         public List<string> NormalOverlayUVs { get { if (_normalOverlayUVs == null) { _normalOverlayUVs = new List<string>(); } return _normalOverlayUVs; } set => _normalOverlayUVs = value; }
@@ -181,6 +187,8 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public List<string> GlowOverlays { get { if (_glowOverlays == null) { _glowOverlays = new List<string>(); } return _glowOverlays; } set => _glowOverlays = value; }
         public List<string> GlowOverlayUVs { get { if (_glowOverlayUVs == null) { _glowOverlayUVs = new List<string>(); } return _glowOverlayUVs; } set => _glowOverlayUVs = value; }
         public List<System.Numerics.Vector4> GlowOverlayTints { get { if (_glowOverlayTints == null) { _glowOverlayTints = new List<System.Numerics.Vector4>(); } return _glowOverlayTints; } set => _glowOverlayTints = value; }
+        public List<int> GlowOverlayBlendModes { get { if (_glowOverlayBlendModes == null) { _glowOverlayBlendModes = new List<int>(); } return _glowOverlayBlendModes; } set => _glowOverlayBlendModes = value; }
+        public int GlowBlendMode { get => _glowBlendMode; set => _glowBlendMode = value; }
         public System.Numerics.Vector4 GlowTint { get => _glowTint; set => _glowTint = value; }
         private string _finalBaseOverride = null;
         public string FinalBase { get => _finalBaseOverride ?? CreateFinalBasePath(); set => _finalBaseOverride = value; }

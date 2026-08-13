@@ -314,12 +314,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         public readonly int SrcWidth;
         public readonly int SrcHeight;
         public readonly float4 Tint;
+        public readonly int BlendMode;
 
         public MergeImagesPingPongTintedShader(
             ReadWriteTexture2D<Bgra32, float4> bottomLayer, 
             ReadOnlyTexture2D<Bgra32, float4> topLayer, 
             ReadWriteTexture2D<Bgra32, float4> output, 
-            int destWidth, int destHeight, int srcWidth, int srcHeight, float4 tint) {
+            int destWidth, int destHeight, int srcWidth, int srcHeight, float4 tint, int blendMode = 0) {
             BottomLayer = bottomLayer;
             TopLayer = topLayer;
             Output = output;
@@ -328,6 +329,26 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             SrcWidth = srcWidth;
             SrcHeight = srcHeight;
             Tint = tint;
+            BlendMode = blendMode;
+        }
+
+        private float BlendChannel(float b, float t) {
+            if (BlendMode == 1) return b * t; // Multiply
+            if (BlendMode == 2) return 1.0f - (1.0f - b) * (1.0f - t); // Screen
+            if (BlendMode == 3) return b < 0.5f ? 2.0f * b * t : 1.0f - 2.0f * (1.0f - b) * (1.0f - t); // Overlay
+            if (BlendMode == 4) {
+                return t < 0.5f
+                    ? 2.0f * b * t + b * b * (1.0f - 2.0f * t)
+                    : Hlsl.Sqrt(b) * (2.0f * t - 1.0f) + 2.0f * b * (1.0f - t); // Soft Light
+            }
+            if (BlendMode == 5) return t < 0.5f ? 2.0f * b * t : 1.0f - 2.0f * (1.0f - b) * (1.0f - t); // Hard Light
+            if (BlendMode == 6) return t >= 1.0f ? 1.0f : Hlsl.Min(1.0f, b / Hlsl.Max(1e-6f, 1.0f - t)); // Color Dodge
+            if (BlendMode == 7) return t <= 0.0f ? 0.0f : Hlsl.Max(0.0f, 1.0f - (1.0f - b) / Hlsl.Max(1e-6f, t)); // Color Burn
+            if (BlendMode == 8) return Hlsl.Min(b, t); // Darken
+            if (BlendMode == 9) return Hlsl.Max(b, t); // Lighten
+            if (BlendMode == 10) return Hlsl.Abs(b - t); // Difference
+            if (BlendMode == 11) return b + t - 2.0f * b * t; // Exclusion
+            return t; // Normal
         }
 
         public void Execute() {
@@ -363,9 +384,20 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             float outB = 0;
             
             if (outA > 0) {
-                outR = (topPixel.Z * topA + bottomPixel.Z * bottomA * (1.0f - topA)) / outA;
-                outG = (topPixel.Y * topA + bottomPixel.Y * bottomA * (1.0f - topA)) / outA;
-                outB = (topPixel.X * topA + bottomPixel.X * bottomA * (1.0f - topA)) / outA;
+                float bottomR = bottomPixel.Z;
+                float bottomG = bottomPixel.Y;
+                float bottomB = bottomPixel.X;
+                float topR = topPixel.Z;
+                float topG = topPixel.Y;
+                float topB = topPixel.X;
+
+                float blendedR = BlendMode == 0 ? topR : BlendChannel(bottomR, topR);
+                float blendedG = BlendMode == 0 ? topG : BlendChannel(bottomG, topG);
+                float blendedB = BlendMode == 0 ? topB : BlendChannel(bottomB, topB);
+
+                outR = (blendedR * topA + bottomR * bottomA * (1.0f - topA)) / outA;
+                outG = (blendedG * topA + bottomG * bottomA * (1.0f - topA)) / outA;
+                outB = (blendedB * topA + bottomB * bottomA * (1.0f - topA)) / outA;
             }
 
             Output[pos] = new float4(outB, outG, outR, outA);
@@ -1098,7 +1130,27 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
         private static bool _gpuUnavailable = false;
 
-        public static Bitmap MergeMultipleImagesGpuFromPaths(System.Collections.Generic.List<string> paths, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints = null, bool preserveBaseAlpha = false) {
+        private static int GetLayerBlendMode(System.Collections.Generic.List<int> blendModes, int layerIndex) {
+            if (blendModes != null && layerIndex >= 0 && layerIndex < blendModes.Count) {
+                return blendModes[layerIndex];
+            }
+            return 0;
+        }
+
+        private static void CompositeCpuPixel(byte[] buffer, int destIdx, float accR, float accG, float accB, float accA,
+            float topR, float topG, float topB, float topA, int layerBlend) {
+            if (topA <= 0f) return;
+            LayerBlendMath.CompositePixel(layerBlend, accR, accG, accB, accA, topR, topG, topB, topA,
+                out float outR, out float outG, out float outB, out float outA);
+            if (outA > 0f) {
+                buffer[destIdx] = (byte)Math.Clamp((int)(outB * 255f + 0.5f), 0, 255);
+                buffer[destIdx + 1] = (byte)Math.Clamp((int)(outG * 255f + 0.5f), 0, 255);
+                buffer[destIdx + 2] = (byte)Math.Clamp((int)(outR * 255f + 0.5f), 0, 255);
+                buffer[destIdx + 3] = (byte)Math.Clamp((int)(outA * 255f + 0.5f), 0, 255);
+            }
+        }
+
+        public static Bitmap MergeMultipleImagesGpuFromPaths(System.Collections.Generic.List<string> paths, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints = null, bool preserveBaseAlpha = false, System.Collections.Generic.List<int> blendModes = null) {
             if (width <= 0 || height <= 0) {
                 System.Diagnostics.Debug.WriteLine($"[MergeMultipleImagesGpuFromPaths] Invalid dimensions: {width}x{height}. Clearing cache and returning 1x1 fallback.");
                 ClearCache();
@@ -1147,7 +1199,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             // Skip GPU entirely if we already know it's unavailable (e.g. Linux/Wine)
             if (_gpuUnavailable) {
-                return MergeLayersCpuFallback(cpuLayers, width, height, tints, preserveBaseAlpha);
+                return MergeLayersCpuFallback(cpuLayers, width, height, tints, preserveBaseAlpha, blendModes);
             }
 
             try {
@@ -1192,11 +1244,12 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         if (textures.Length > 0 && textures[0].Tex != null) {
                             var ld = textures[0];
                             float4 tint = tints != null && 0 < tints.Count ? new float4(tints[0].X, tints[0].Y, tints[0].Z, tints[0].W) : new float4(1,1,1,1);
+                            int layerBlend = GetLayerBlendMode(blendModes, 0);
                             if (preserveBaseAlpha) {
                                 context.For(totalPixels, new CopyForceOpaqueShader(ld.Tex, pong, width, height, ld.Width, ld.Height));
                             } else {
                                 context.For(totalPixels, new ClearShader(ping, width, height));
-                                context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
+                                context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint, layerBlend));
                             }
                             isPing = false;
                         }
@@ -1207,10 +1260,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                             if (ld.Tex == null) continue;
 
                             float4 tint = tints != null && i < tints.Count ? new float4(tints[i].X, tints[i].Y, tints[i].Z, tints[i].W) : new float4(1,1,1,1);
+                            int layerBlend = GetLayerBlendMode(blendModes, i);
                             if (isPing) {
-                                context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
+                                context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint, layerBlend));
                             } else {
-                                context.For(totalPixels, new MergeImagesPingPongTintedShader(pong, ld.Tex, ping, width, height, ld.Width, ld.Height, tint));
+                                context.For(totalPixels, new MergeImagesPingPongTintedShader(pong, ld.Tex, ping, width, height, ld.Width, ld.Height, tint, layerBlend));
                             }
                             isPing = !isPing;
                         }
@@ -1313,7 +1367,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 _cachedResultBuffer = null;
                 try { GC.Collect(2, GCCollectionMode.Aggressive, true, true); } catch {}
 
-                return MergeLayersCpuLowMemory(cpuLayers, width, height, tints, preserveBaseAlpha);
+                return MergeLayersCpuLowMemory(cpuLayers, width, height, tints, preserveBaseAlpha, blendModes);
             } catch (Exception ex) {
                 // Genuine GPU failure (e.g. Linux/Wine without DirectX 12 compute, driver crash, etc.)
                 _gpuUnavailable = true;
@@ -1324,7 +1378,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     $"  Stack: {ex.StackTrace}\r\n";
                 System.Diagnostics.Debug.WriteLine(gpuLog);
                 try { System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Benchmark.txt"), gpuLog); } catch {}
-                return MergeLayersCpuFallback(cpuLayers, width, height, tints, preserveBaseAlpha);
+                return MergeLayersCpuFallback(cpuLayers, width, height, tints, preserveBaseAlpha, blendModes);
             }
         }
 
@@ -1335,7 +1389,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         /// </summary>
         public static (byte[] BgraPixels, int Width, int Height) MergeMultipleImagesGpuFromPathsRaw(
             System.Collections.Generic.List<string> paths, int width, int height,
-            System.Collections.Generic.List<System.Numerics.Vector4> tints = null, bool preserveBaseAlpha = false) {
+            System.Collections.Generic.List<System.Numerics.Vector4> tints = null, bool preserveBaseAlpha = false, System.Collections.Generic.List<int> blendModes = null) {
 
             if (width <= 0 || height <= 0) {
                 return (new byte[4], 1, 1);
@@ -1357,7 +1411,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             // Skip GPU if unavailable
             if (_gpuUnavailable) {
-                return MergeLayersCpuFallbackRaw(cpuLayers, width, height, tints, preserveBaseAlpha);
+                return MergeLayersCpuFallbackRaw(cpuLayers, width, height, tints, preserveBaseAlpha, blendModes);
             }
 
             try {
@@ -1389,6 +1443,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         if (textures.Length > 0 && textures[0].Tex != null) {
                             var ld = textures[0];
                             float4 tint = tints != null && 0 < tints.Count ? new float4(tints[0].X, tints[0].Y, tints[0].Z, tints[0].W) : new float4(1,1,1,1);
+                            int layerBlend = GetLayerBlendMode(blendModes, 0);
                             if (preserveBaseAlpha) {
                                 // Force alpha=1.0 on the base layer so its RGB survives compositing
                                 // even when its alpha is near-zero (e.g. face normals).
@@ -1396,7 +1451,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                                 context.For(totalPixels, new CopyForceOpaqueShader(ld.Tex, pong, width, height, ld.Width, ld.Height));
                             } else {
                                 context.For(totalPixels, new ClearShader(ping, width, height));
-                                context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
+                                context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint, layerBlend));
                             }
                             isPing = false;
                         }
@@ -1405,10 +1460,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                             var ld = textures[i];
                             if (ld.Tex == null) continue;
                             float4 tint = tints != null && i < tints.Count ? new float4(tints[i].X, tints[i].Y, tints[i].Z, tints[i].W) : new float4(1,1,1,1);
+                            int layerBlend = GetLayerBlendMode(blendModes, i);
                             if (isPing) {
-                                context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint));
+                                context.For(totalPixels, new MergeImagesPingPongTintedShader(ping, ld.Tex, pong, width, height, ld.Width, ld.Height, tint, layerBlend));
                             } else {
-                                context.For(totalPixels, new MergeImagesPingPongTintedShader(pong, ld.Tex, ping, width, height, ld.Width, ld.Height, tint));
+                                context.For(totalPixels, new MergeImagesPingPongTintedShader(pong, ld.Tex, ping, width, height, ld.Width, ld.Height, tint, layerBlend));
                             }
                             isPing = !isPing;
                         }
@@ -1447,10 +1503,10 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             } catch (OutOfMemoryException) {
                 _cachedResultBuffer = null;
                 try { GC.Collect(2, GCCollectionMode.Aggressive, true, true); } catch {}
-                return MergeLayersCpuFallbackRaw(cpuLayers, width, height, tints, preserveBaseAlpha);
+                return MergeLayersCpuFallbackRaw(cpuLayers, width, height, tints, preserveBaseAlpha, blendModes);
             } catch {
                 _gpuUnavailable = true;
-                return MergeLayersCpuFallbackRaw(cpuLayers, width, height, tints, preserveBaseAlpha);
+                return MergeLayersCpuFallbackRaw(cpuLayers, width, height, tints, preserveBaseAlpha, blendModes);
             }
         }
 
@@ -1459,7 +1515,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         /// </summary>
         private static (byte[] BgraPixels, int Width, int Height) MergeLayersCpuFallbackRaw(
             CpuLayerData[] cpuLayers, int width, int height,
-            System.Collections.Generic.List<System.Numerics.Vector4> tints, bool preserveBaseAlpha = false) {
+            System.Collections.Generic.List<System.Numerics.Vector4> tints, bool preserveBaseAlpha = false, System.Collections.Generic.List<int> blendModes = null) {
 
             long requiredBytes = (long)width * height * 4;
             byte[] output;
@@ -1478,6 +1534,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 if (tints != null && layerIdx < tints.Count) {
                     tR = tints[layerIdx].X; tG = tints[layerIdx].Y; tB = tints[layerIdx].Z; tA = tints[layerIdx].W;
                 }
+                int layerBlend = GetLayerBlendMode(blendModes, layerIdx);
 
                 float scaleX = (float)layer.Width / width;
                 float scaleY = (float)layer.Height / height;
@@ -1508,30 +1565,14 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         int destIdx = (y * width + x) * 4;
                         int srcIdx = (srcY * layer.Width + srcX) * 4;
 
-                        // BGRA byte order
                         float topB = (layer.Pixels[srcIdx] / 255f) * tB;
                         float topG = (layer.Pixels[srcIdx + 1] / 255f) * tG;
                         float topR = (layer.Pixels[srcIdx + 2] / 255f) * tR;
                         float topA = (layer.Pixels[srcIdx + 3] / 255f) * tA;
 
-                        if (topA <= 0f) continue;
-
-                        float accB = output[destIdx] / 255f;
-                        float accG = output[destIdx + 1] / 255f;
-                        float accR = output[destIdx + 2] / 255f;
-                        float accA = output[destIdx + 3] / 255f;
-
-                        float outA = topA + accA * (1f - topA);
-                        if (outA > 0f) {
-                            float outR = (topR * topA + accR * accA * (1f - topA)) / outA;
-                            float outG = (topG * topA + accG * accA * (1f - topA)) / outA;
-                            float outB = (topB * topA + accB * accA * (1f - topA)) / outA;
-
-                            output[destIdx] = (byte)Math.Clamp((int)(outB * 255f + 0.5f), 0, 255);
-                            output[destIdx + 1] = (byte)Math.Clamp((int)(outG * 255f + 0.5f), 0, 255);
-                            output[destIdx + 2] = (byte)Math.Clamp((int)(outR * 255f + 0.5f), 0, 255);
-                            output[destIdx + 3] = (byte)Math.Clamp((int)(outA * 255f + 0.5f), 0, 255);
-                        }
+                        CompositeCpuPixel(output, destIdx,
+                            output[destIdx + 2] / 255f, output[destIdx + 1] / 255f, output[destIdx] / 255f, output[destIdx + 3] / 255f,
+                            topR, topG, topB, topA, layerBlend);
                     }
                 });
             }
@@ -1561,7 +1602,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         /// Proactively detects low-memory conditions and falls back to stripe-based processing
         /// to avoid OutOfMemoryException on machines with limited RAM.
         /// </summary>
-        private static Bitmap MergeLayersCpuFallback(CpuLayerData[] cpuLayers, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints, bool preserveBaseAlpha = false) {
+        private static Bitmap MergeLayersCpuFallback(CpuLayerData[] cpuLayers, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints, bool preserveBaseAlpha = false, System.Collections.Generic.List<int> blendModes = null) {
             long requiredBytes = (long)width * height * 4;
 
             // Proactive memory pressure check — if available memory is tight, skip the
@@ -1583,7 +1624,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             }
 
             if (lowMemory) {
-                return MergeLayersCpuLowMemory(cpuLayers, width, height, tints, preserveBaseAlpha);
+                return MergeLayersCpuLowMemory(cpuLayers, width, height, tints, preserveBaseAlpha, blendModes);
             }
 
             // Standard full-buffer path — wrapped in OOM catch as a safety net
@@ -1595,7 +1636,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     $"[MergeLayersCpuFallback] OOM on output buffer ({requiredBytes / (1024*1024)}MB). Using stripe-based fallback.");
                 try { System.IO.File.AppendAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "GPU_Benchmark.txt"),
                     $"[OOM CAUGHT] Stripe fallback triggered: buffer size={requiredBytes / (1024*1024)}MB\r\n"); } catch {}
-                return MergeLayersCpuLowMemory(cpuLayers, width, height, tints, preserveBaseAlpha);
+                return MergeLayersCpuLowMemory(cpuLayers, width, height, tints, preserveBaseAlpha, blendModes);
             }
 
             for (int layerIdx = 0; layerIdx < cpuLayers.Length; layerIdx++) {
@@ -1606,6 +1647,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 if (tints != null && layerIdx < tints.Count) {
                     tR = tints[layerIdx].X; tG = tints[layerIdx].Y; tB = tints[layerIdx].Z; tA = tints[layerIdx].W;
                 }
+                int layerBlend = GetLayerBlendMode(blendModes, layerIdx);
 
                 float scaleX = (float)layer.Width / width;
                 float scaleY = (float)layer.Height / height;
@@ -1636,30 +1678,14 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                         int destIdx = (y * width + x) * 4;
                         int srcIdx = (srcY * layer.Width + srcX) * 4;
 
-                        // BGRA byte order
                         float topB = (layer.Pixels[srcIdx] / 255f) * tB;
                         float topG = (layer.Pixels[srcIdx + 1] / 255f) * tG;
                         float topR = (layer.Pixels[srcIdx + 2] / 255f) * tR;
                         float topA = (layer.Pixels[srcIdx + 3] / 255f) * tA;
 
-                        if (topA <= 0f) continue;
-
-                        float accB = output[destIdx] / 255f;
-                        float accG = output[destIdx + 1] / 255f;
-                        float accR = output[destIdx + 2] / 255f;
-                        float accA = output[destIdx + 3] / 255f;
-
-                        float outA = topA + accA * (1f - topA);
-                        if (outA > 0f) {
-                            float outR = (topR * topA + accR * accA * (1f - topA)) / outA;
-                            float outG = (topG * topA + accG * accA * (1f - topA)) / outA;
-                            float outB = (topB * topA + accB * accA * (1f - topA)) / outA;
-
-                            output[destIdx] = (byte)Math.Clamp((int)(outB * 255f + 0.5f), 0, 255);
-                            output[destIdx + 1] = (byte)Math.Clamp((int)(outG * 255f + 0.5f), 0, 255);
-                            output[destIdx + 2] = (byte)Math.Clamp((int)(outR * 255f + 0.5f), 0, 255);
-                            output[destIdx + 3] = (byte)Math.Clamp((int)(outA * 255f + 0.5f), 0, 255);
-                        }
+                        CompositeCpuPixel(output, destIdx,
+                            output[destIdx + 2] / 255f, output[destIdx + 1] / 255f, output[destIdx] / 255f, output[destIdx + 3] / 255f,
+                            topR, topG, topB, topA, layerBlend);
                     }
                 });
             }
@@ -1693,7 +1719,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
         /// bytes per stripe instead of the full width × height × 4 output buffer.
         /// Produces identical output to the standard MergeLayersCpuFallback path.
         /// </summary>
-        private static Bitmap MergeLayersCpuLowMemory(CpuLayerData[] cpuLayers, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints, bool preserveBaseAlpha = false) {
+        private static Bitmap MergeLayersCpuLowMemory(CpuLayerData[] cpuLayers, int width, int height, System.Collections.Generic.List<System.Numerics.Vector4> tints, bool preserveBaseAlpha = false, System.Collections.Generic.List<int> blendModes = null) {
             const int STRIPE_HEIGHT = 256;
 
             Bitmap result = new Bitmap(width, height, PixelFormat.Format32bppArgb);
@@ -1711,6 +1737,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                     if (tints != null && layerIdx < tints.Count) {
                         tR = tints[layerIdx].X; tG = tints[layerIdx].Y; tB = tints[layerIdx].Z; tA = tints[layerIdx].W;
                     }
+                    int layerBlend = GetLayerBlendMode(blendModes, layerIdx);
 
                     float scaleX = (float)layer.Width / width;
                     float scaleY = (float)layer.Height / height;
@@ -1743,30 +1770,14 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                             int destIdx = (localY * width + x) * 4;
                             int srcIdx = (srcY * layer.Width + srcX) * 4;
 
-                            // BGRA byte order
                             float topB = (layer.Pixels[srcIdx] / 255f) * tB;
                             float topG = (layer.Pixels[srcIdx + 1] / 255f) * tG;
                             float topR = (layer.Pixels[srcIdx + 2] / 255f) * tR;
                             float topA = (layer.Pixels[srcIdx + 3] / 255f) * tA;
 
-                            if (topA <= 0f) continue;
-
-                            float accB = stripe[destIdx] / 255f;
-                            float accG = stripe[destIdx + 1] / 255f;
-                            float accR = stripe[destIdx + 2] / 255f;
-                            float accA = stripe[destIdx + 3] / 255f;
-
-                            float outA = topA + accA * (1f - topA);
-                            if (outA > 0f) {
-                                float outR = (topR * topA + accR * accA * (1f - topA)) / outA;
-                                float outG = (topG * topA + accG * accA * (1f - topA)) / outA;
-                                float outB = (topB * topA + accB * accA * (1f - topA)) / outA;
-
-                                stripe[destIdx] = (byte)Math.Clamp((int)(outB * 255f + 0.5f), 0, 255);
-                                stripe[destIdx + 1] = (byte)Math.Clamp((int)(outG * 255f + 0.5f), 0, 255);
-                                stripe[destIdx + 2] = (byte)Math.Clamp((int)(outR * 255f + 0.5f), 0, 255);
-                                stripe[destIdx + 3] = (byte)Math.Clamp((int)(outA * 255f + 0.5f), 0, 255);
-                            }
+                            CompositeCpuPixel(stripe, destIdx,
+                                stripe[destIdx + 2] / 255f, stripe[destIdx + 1] / 255f, stripe[destIdx] / 255f, stripe[destIdx + 3] / 255f,
+                                topR, topG, topB, topA, layerBlend);
                         }
                     });
                 }

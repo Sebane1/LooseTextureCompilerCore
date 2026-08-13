@@ -393,8 +393,10 @@ namespace FFXIVLooseTextureCompiler
                         List<string> images = new List<string>();
                         List<string> uvs = new List<string>();
                         List<System.Numerics.Vector4> tints = new List<System.Numerics.Vector4>();
+                        List<int> blendModes = new List<int>();
                         images.Add(textureSet.Base);
                         tints.Add(textureSet.BaseTint);
+                        blendModes.Add(textureSet.BaseBlendMode);
                         if (string.IsNullOrEmpty(textureSet.BaseUV))
                         {
                             if (ImageManipulation.HasTextIdentifiers(textureSet.Base))
@@ -422,6 +424,7 @@ namespace FFXIVLooseTextureCompiler
                         {
                             images.Add(textureSet.BaseOverlays[j]);
                             tints.Add(j < textureSet.BaseOverlayTints.Count ? textureSet.BaseOverlayTints[j] : System.Numerics.Vector4.One);
+                            blendModes.Add(j < textureSet.BaseOverlayBlendModes.Count ? textureSet.BaseOverlayBlendModes[j] : 0);
                             if (j < textureSet.BaseOverlayUVs.Count && !string.IsNullOrEmpty(textureSet.BaseOverlayUVs[j]))
                             {
                                 if (textureSet.BaseOverlayUVs[j].ToLower() == "auto")
@@ -442,7 +445,7 @@ namespace FFXIVLooseTextureCompiler
                                 uvs.Add("");
                             }
                         }
-                        textureSet.FinalBase = ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalBase, ExportScale, tints);
+                        textureSet.FinalBase = ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalBase, ExportScale, tints, blendModes);
                         alreadyCalculatedBases[textureSet.FinalBase] = "";
                     }
 
@@ -564,6 +567,7 @@ namespace FFXIVLooseTextureCompiler
                         List<string> images = new List<string>();
                         List<string> uvs = new List<string>();
                         List<System.Numerics.Vector4> tints = new List<System.Numerics.Vector4>();
+                        List<int> blendModes = new List<int>();
                         
                         string primaryGlowPath = !string.IsNullOrEmpty(textureSet.Glow) ? textureSet.Glow : (textureSet.GlowOverlays.Count > 0 ? textureSet.GlowOverlays[0] : "");
                         if (!string.IsNullOrEmpty(primaryGlowPath)) {
@@ -582,10 +586,12 @@ namespace FFXIVLooseTextureCompiler
                             images.Add(memoryPath);
                             uvs.Add("");
                             tints.Add(System.Numerics.Vector4.One);
+                            blendModes.Add(0);
                         }
 
                         images.Add(textureSet.Glow);
                         tints.Add(textureSet.GlowTint);
+                        blendModes.Add(textureSet.GlowBlendMode);
                         if (string.IsNullOrEmpty(textureSet.GlowUV))
                         {
                             if (ImageManipulation.HasTextIdentifiers(textureSet.Glow))
@@ -613,6 +619,7 @@ namespace FFXIVLooseTextureCompiler
                         {
                             images.Add(textureSet.GlowOverlays[j]);
                             tints.Add(j < textureSet.GlowOverlayTints.Count ? textureSet.GlowOverlayTints[j] : System.Numerics.Vector4.One);
+                            blendModes.Add(j < textureSet.GlowOverlayBlendModes.Count ? textureSet.GlowOverlayBlendModes[j] : 0);
                             if (j < textureSet.GlowOverlayUVs.Count && !string.IsNullOrEmpty(textureSet.GlowOverlayUVs[j]))
                             {
                                 if (textureSet.GlowOverlayUVs[j].ToLower() == "auto")
@@ -633,7 +640,7 @@ namespace FFXIVLooseTextureCompiler
                                 uvs.Add("");
                             }
                         }
-                        textureSet.FinalGlow = ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalGlow, ExportScale, tints);
+                        textureSet.FinalGlow = ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalGlow, ExportScale, tints, blendModes);
                         alreadyCalculatedGlows[textureSet.FinalGlow] = "";
                     }
 
