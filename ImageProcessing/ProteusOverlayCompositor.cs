@@ -1,3 +1,4 @@
+using FFXIVLooseTextureCompiler.ImageProcessing;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -146,7 +147,13 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                     for (int x = 0; x < w; x++)
                     {
                         int i = row + x * 4;
-                        float coverage = nBuf[i] / 255f; // blue channel
+
+                        if (nBuf[i] == 0)
+                        {
+                            nBuf[i] = 255;
+                        }
+
+                        float coverage = nBuf[i] / 255f;
                         byte a = (byte)(coverage * 255f + 0.5f);
                         oBuf[i + 3] = a;
                         oBuf[i + 2] = (byte)(row16.DiffuseR * coverage * 255f + 0.5f);
@@ -370,11 +377,89 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
 
             try
             {
-                return TexIO.ResolveBitmap(path);
+                var bitmap = TexIO.ResolveBitmap(path);
+                if (path.Contains("_n") || path.Contains("norm"))
+                {
+                    // Ensure Proteus normal maps have proper blue channel values for lighting calculations
+                    if (bitmap != null)
+                    {
+                        // Check if this is likely a proteus normal map that needs blue channel correction
+                        // This addresses the core issue where imported normal maps lack proper blue channel set to 255
+                        CorrectNormalMapBlueChannel(bitmap);
+                        bitmap.Save($"C:\\Users\\stel9\\Pictures\\{Guid.NewGuid().ToString()}_test.png", ImageFormat.Png);
+                    }
+                }
+                return bitmap;
             }
             catch
             {
                 return null;
+            }
+        }
+
+        private static void SetProteusNormalBlueToWhite(Bitmap bitmap)
+        {
+            // Ensure all normal maps from Proteus mods have blue channel set to 255 (white)
+            if (bitmap == null || bitmap.Width <= 0 || bitmap.Height <= 0) return;
+
+            var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            try
+            {
+                int stride = data.Stride;
+                int bytes = Math.Abs(stride) * bitmap.Height;
+                byte[] pixels = new byte[bytes];
+                Marshal.Copy(data.Scan0, pixels, 0, bytes);
+
+                // Process each pixel to set blue channel to 255 (white)
+                for (int y = 0; y < bitmap.Height; y++)
+                {
+                    int rowStart = y * stride;
+                    for (int x = 0; x < bitmap.Width; x++)
+                    {
+                        int pixelIndex = rowStart + x * 4;
+
+                        // Set blue channel to 255 as required by Proteus norms
+                        pixels[pixelIndex] = 255;
+                    }
+                }
+
+                Marshal.Copy(pixels, 0, data.Scan0, bytes);
+            }
+            finally
+            {
+                bitmap.UnlockBits(data);
+            }
+        }
+
+        private static void CorrectNormalMapBlueChannel(Bitmap bitmap)
+        {
+            // For Proteus normal maps, ensure the blue channel is properly set (should be 255 for lighting)
+            // This prevents white skin appearance issues caused by improperly initialized blue channels
+
+            var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            try
+            {
+                int stride = data.Stride;
+                int bytes = Math.Abs(stride) * bitmap.Height;
+                byte[] pixels = new byte[bytes];
+                Marshal.Copy(data.Scan0, pixels, 0, bytes);
+
+                // Process each pixel to ensure proper blue channel values for normal maps
+                for (int y = 0; y < bitmap.Height; y++)
+                {
+                    int rowStart = y * stride;
+                    for (int x = 0; x < bitmap.Width; x++)
+                    {
+                        int pixelIndex = rowStart + x * 4;
+                        pixels[pixelIndex] = 255;
+                    }
+                }
+
+                Marshal.Copy(pixels, 0, data.Scan0, bytes);
+            }
+            finally
+            {
+                bitmap.UnlockBits(data);
             }
         }
 
@@ -415,6 +500,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             public string EmissiveMemoryPath { get; set; }
             public System.Numerics.Vector4 DefaultTint { get; set; } = System.Numerics.Vector4.One;
             public System.Numerics.Vector4 DefaultEmissiveTint { get; set; }
+            public string NormalMemoryPath { get; internal set; }
 
             public void Dispose()
             {
@@ -431,27 +517,35 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             string cacheKeyPrefix)
         {
             Bitmap diffuse = null;
+            Bitmap normal = null;
             Bitmap index = null;
             var masks = new List<Bitmap>();
             try
             {
                 if (!string.IsNullOrEmpty(diffusePath))
-                    diffuse = LoadBitmapOrNull(diffusePath);
-                else if (generateDiffuse && !string.IsNullOrEmpty(normalPath))
                 {
-                    using var normal = LoadBitmapOrNull(normalPath);
-                    if (normal != null)
-                    {
-                        var row16 = ResolveFlatSubRow(rows ?? new Dictionary<int, ColorTableRow>());
-                        diffuse = GenerateDiffuseFromNormal(normal, row16);
-                    }
+                    diffuse = LoadBitmapOrNull(diffusePath);
+                }
+                if (!string.IsNullOrEmpty(normalPath))
+                {
+                    normal = LoadBitmapOrNull(normalPath);
+                    //if (generateDiffuse)
+                    //{
+                    //    if (normal != null)
+                    //    {
+                    //        var row16 = ResolveFlatSubRow(rows ?? new Dictionary<int, ColorTableRow>());
+                    //        diffuse = GenerateDiffuseFromNormal(normal, row16);
+                    //    }
+                    //}
                 }
 
                 if (diffuse == null)
                     return null;
 
                 if (!string.IsNullOrEmpty(indexPath))
+                {
                     index = LoadBitmapOrNull(indexPath);
+                }
 
                 if (index != null && (index.Width != diffuse.Width || index.Height != diffuse.Height))
                 {
@@ -486,12 +580,18 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                     using var emissive = BakeEmissiveOverlay(bakedDiffuse, index, rows);
                     string emMem = $"memory:\\proteus_{cacheKeyPrefix}_e";
                     TexIO.SaveMemoryBitmap(emissive, emMem);
+                    emissive?.Dispose();
                     result.EmissiveMemoryPath = emMem;
                 }
 
                 string diffMem = $"memory:\\proteus_{cacheKeyPrefix}_d";
                 TexIO.SaveMemoryBitmap(bakedDiffuse, diffMem);
+
+                string normMem = $"memory:\\proteus_{cacheKeyPrefix}_n";
+                TexIO.SaveMemoryBitmap(normal, normMem);
                 result.DiffuseMemoryPath = diffMem;
+                result.NormalMemoryPath = normMem;
+                normal.Dispose();
                 bakedDiffuse.Dispose();
 
                 return result;
@@ -499,6 +599,7 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             finally
             {
                 diffuse?.Dispose();
+                normal?.Dispose();
                 index?.Dispose();
                 foreach (var m in masks)
                     m.Dispose();
