@@ -248,13 +248,21 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
                             sub = flatRow;
                         }
 
-                        oBuf[i + 2] = (byte)Math.Clamp(r * sub.DiffuseR, 0, 255);
-                        oBuf[i + 1] = (byte)Math.Clamp(g * sub.DiffuseG, 0, 255);
-                        oBuf[i] = (byte)Math.Clamp(b * sub.DiffuseB, 0, 255);
-                        oBuf[i + 3] = ScaleOverlayAlpha(a, sub.Opacity);
-
+                        byte finalAlpha = ScaleOverlayAlpha(a, sub.Opacity);
                         foreach (var mBuf in maskBuffers)
-                            oBuf[i + 3] = ApplyCoverageMaskByte(oBuf[i + 3], a, mBuf[i + 2], mBuf[i + 3]);
+                            finalAlpha = ApplyCoverageMaskByte(finalAlpha, a, mBuf[i + 2], mBuf[i + 3]);
+
+                        oBuf[i + 3] = finalAlpha;
+                        if (finalAlpha == 0)
+                        {
+                            oBuf[i] = oBuf[i + 1] = oBuf[i + 2] = 0;
+                        }
+                        else
+                        {
+                            oBuf[i + 2] = (byte)Math.Clamp(r * sub.DiffuseR, 0, 255);
+                            oBuf[i + 1] = (byte)Math.Clamp(g * sub.DiffuseG, 0, 255);
+                            oBuf[i] = (byte)Math.Clamp(b * sub.DiffuseB, 0, 255);
+                        }
                     }
                 }
 
@@ -278,10 +286,11 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
             if (originalOverlayAlpha == 0)
                 return 0;
 
-            float cov = coverage / 255f;
-            float w = (255 - maskAlpha) / 255f;
-            float t = maskGray / 255f * (maskAlpha / 255f);
-            float newCov = cov * w + t;
+            // Properly handle coverage from masks - use the alpha channel of mask for visibility
+            float visibility = maskAlpha / 255f;
+            float newCov = coverage / 255f * visibility;
+
+            // The result should be clamped to [0,1] and converted back to byte
             return (byte)(Math.Clamp(newCov, 0f, 1f) * 255f + 0.5f);
         }
 
@@ -357,11 +366,20 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
 
         public static Bitmap LoadBitmapOrNull(string path)
         {
-            if (string.IsNullOrEmpty(path) || !File.Exists(path))
+            if (string.IsNullOrEmpty(path))
                 return null;
 
-            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            return new Bitmap(fs);
+            if (!File.Exists(path) && !path.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            try
+            {
+                return TexIO.ResolveBitmap(path);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public static List<Bitmap> LoadCoverageMasks(IReadOnlyList<string> maskPaths, int width, int height)
