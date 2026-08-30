@@ -285,12 +285,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing
         {
             if (originalOverlayAlpha == 0)
                 return 0;
-
-            // Properly handle coverage from masks - use the alpha channel of mask for visibility
-            float visibility = maskAlpha / 255f;
+            float visibility = 1.0f - (maskAlpha / 255f);
             float newCov = coverage / 255f * visibility;
-
-            // The result should be clamped to [0,1] and converted back to byte
             return (byte)(Math.Clamp(newCov, 0f, 1f) * 255f + 0.5f);
         }
 
