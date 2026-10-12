@@ -1,5 +1,6 @@
 using FFXIVLooseTextureCompiler.Export;
 using LooseTextureCompilerCore;
+using Newtonsoft.Json;
 
 namespace FFXIVLooseTextureCompiler.PathOrganization {
     public class TextureSet {
@@ -164,6 +165,7 @@ namespace FFXIVLooseTextureCompiler.PathOrganization {
         public bool IgnoreNormalGeneration { get => _ignoreNormalGeneration; set => _ignoreNormalGeneration = value; }
         public bool OmniExportMode { get => _omniExportMode; set => _omniExportMode = value; }
         public List<TextureSet> ChildSets { get => _childSets; set => _childSets = value; }
+        [JsonIgnore]
         public BackupTexturePaths BackupTexturePaths { get => _backupTexturePaths; set => _backupTexturePaths = value; }
         public string NormalCorrection { get => _normalCorrection; set => _normalCorrection = value; }
         public bool InvertNormalGeneration { get => _invertNormalGeneration; set => _invertNormalGeneration = value; }

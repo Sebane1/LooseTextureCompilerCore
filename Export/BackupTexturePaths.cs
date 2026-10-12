@@ -10,6 +10,10 @@ namespace FFXIVLooseTextureCompiler.Export
 {
     public class BackupTexturePaths
     {
+        public BackupTexturePaths()
+        {
+        }
+
         public BackupTexturePaths(string path, bool isFace = false, int gender = 0, int subRace = 0, int face = 0)
         {
             _path = path;
