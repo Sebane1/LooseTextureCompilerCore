@@ -330,10 +330,11 @@ namespace FFXIVLooseTextureCompiler
                 }
             }
         }
-        public void Export(List<TextureSet> textureSetList, Dictionary<string, int> groupOptionTypes,
+        public List<Group> Export(List<TextureSet> textureSetList, Dictionary<string, int> groupOptionTypes,
             string modPath, int generationType, bool generateNormals,
             bool generateMulti, bool useXNormal, string xNormalPathOverride = "")
         {
+            List<Group> outputGroups = new List<Group>();
             Dictionary<string, List<TextureSet>> groups = new Dictionary<string, List<TextureSet>>();
             try
             {
@@ -392,8 +393,10 @@ namespace FFXIVLooseTextureCompiler
                         List<string> images = new List<string>();
                         List<string> uvs = new List<string>();
                         List<System.Numerics.Vector4> tints = new List<System.Numerics.Vector4>();
+                        List<int> blendModes = new List<int>();
                         images.Add(textureSet.Base);
                         tints.Add(textureSet.BaseTint);
+                        blendModes.Add(textureSet.BaseBlendMode);
                         if (string.IsNullOrEmpty(textureSet.BaseUV))
                         {
                             if (ImageManipulation.HasTextIdentifiers(textureSet.Base))
@@ -421,6 +424,7 @@ namespace FFXIVLooseTextureCompiler
                         {
                             images.Add(textureSet.BaseOverlays[j]);
                             tints.Add(j < textureSet.BaseOverlayTints.Count ? textureSet.BaseOverlayTints[j] : System.Numerics.Vector4.One);
+                            blendModes.Add(j < textureSet.BaseOverlayBlendModes.Count ? textureSet.BaseOverlayBlendModes[j] : 0);
                             if (j < textureSet.BaseOverlayUVs.Count && !string.IsNullOrEmpty(textureSet.BaseOverlayUVs[j]))
                             {
                                 if (textureSet.BaseOverlayUVs[j].ToLower() == "auto")
@@ -441,7 +445,7 @@ namespace FFXIVLooseTextureCompiler
                                 uvs.Add("");
                             }
                         }
-                        textureSet.FinalBase = ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalBase, ExportScale, tints);
+                        textureSet.FinalBase = ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalBase, ExportScale, tints, blendModes);
                         alreadyCalculatedBases[textureSet.FinalBase] = "";
                     }
 
@@ -563,6 +567,7 @@ namespace FFXIVLooseTextureCompiler
                         List<string> images = new List<string>();
                         List<string> uvs = new List<string>();
                         List<System.Numerics.Vector4> tints = new List<System.Numerics.Vector4>();
+                        List<int> blendModes = new List<int>();
                         
                         string primaryGlowPath = !string.IsNullOrEmpty(textureSet.Glow) ? textureSet.Glow : (textureSet.GlowOverlays.Count > 0 ? textureSet.GlowOverlays[0] : "");
                         if (!string.IsNullOrEmpty(primaryGlowPath)) {
@@ -581,10 +586,12 @@ namespace FFXIVLooseTextureCompiler
                             images.Add(memoryPath);
                             uvs.Add("");
                             tints.Add(System.Numerics.Vector4.One);
+                            blendModes.Add(0);
                         }
 
                         images.Add(textureSet.Glow);
                         tints.Add(textureSet.GlowTint);
+                        blendModes.Add(textureSet.GlowBlendMode);
                         if (string.IsNullOrEmpty(textureSet.GlowUV))
                         {
                             if (ImageManipulation.HasTextIdentifiers(textureSet.Glow))
@@ -612,6 +619,7 @@ namespace FFXIVLooseTextureCompiler
                         {
                             images.Add(textureSet.GlowOverlays[j]);
                             tints.Add(j < textureSet.GlowOverlayTints.Count ? textureSet.GlowOverlayTints[j] : System.Numerics.Vector4.One);
+                            blendModes.Add(j < textureSet.GlowOverlayBlendModes.Count ? textureSet.GlowOverlayBlendModes[j] : 0);
                             if (j < textureSet.GlowOverlayUVs.Count && !string.IsNullOrEmpty(textureSet.GlowOverlayUVs[j]))
                             {
                                 if (textureSet.GlowOverlayUVs[j].ToLower() == "auto")
@@ -632,7 +640,7 @@ namespace FFXIVLooseTextureCompiler
                                 uvs.Add("");
                             }
                         }
-                        textureSet.FinalGlow = ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalGlow, ExportScale, tints);
+                        textureSet.FinalGlow = ImageManipulation.MergeImageLayers(images, uvs, targetUV, textureSet.FinalGlow, ExportScale, tints, blendModes);
                         alreadyCalculatedGlows[textureSet.FinalGlow] = "";
                     }
 
@@ -951,9 +959,7 @@ namespace FFXIVLooseTextureCompiler
                     }
                     if (group.Options.Count > 0)
                     {
-                        string groupPath = Path.Combine(modPath, $"group_" + (1 + i++).ToString()
-                        .PadLeft(3, '0') + $"_{group.Name.ToLower().Replace(" ", "_")}.json");
-                        ExportGroup(groupPath, group);
+                        outputGroups.AddRange(ExportGroup(group));
                     }
                 }
                 while (_exportCompletion < _exportMax)
@@ -975,10 +981,12 @@ namespace FFXIVLooseTextureCompiler
                 try {
                     File.AppendAllText(Path.Combine(Path.GetTempPath(), "Export_Benchmark.txt"), benchLog.ToString());
                 } catch { }
+                return outputGroups;
             }
             catch (Exception e)
             {
                 OnError?.Invoke(this, e.ToString());
+                return outputGroups;
             }
         }
 
@@ -1393,40 +1401,29 @@ namespace FFXIVLooseTextureCompiler
             }
         }
 
-        private void ExportGroup(string path, Group group)
+        private List<Group> ExportGroup(Group group)
         {
+            List<Group> resultGroups = new List<Group>();
             group.Description += " -generated";
             bool isSingle = group.Type == "Single";
-            if (path != null)
+            if (group.Options.Count > (isSingle ? int.MaxValue : 32))
             {
-                if (group.Options.Count > (isSingle ? int.MaxValue : 32))
+                int groupsToSplitTo = group.Options.Count / 32;
+                for (int i = 0; i < groupsToSplitTo; i++)
                 {
-                    int groupsToSplitTo = group.Options.Count / 32;
-                    for (int i = 0; i < groupsToSplitTo; i++)
-                    {
-                        int rangeStartingPoint = 32 * i;
-                        int maxRange = group.Options.Count - rangeStartingPoint;
-                        Group newGroup = new Group(group.Name + $" ({i + 1})", group.Description + " -generated",
-                                        group.Priority, group.Type, group.DefaultSettings);
-                        newGroup.Options = group.Options.GetRange(rangeStartingPoint, maxRange > 32 ? 32 : maxRange);
-                        using (StreamWriter file = File.CreateText(path.Replace(".", $" ({i}).")))
-                        {
-                            JsonSerializer serializer = new JsonSerializer();
-                            serializer.Formatting = Formatting.Indented;
-                            serializer.Serialize(file, newGroup);
-                        }
-                    }
-                }
-                else if (group.Options.Count > 0)
-                {
-                    using (StreamWriter file = File.CreateText(path))
-                    {
-                        JsonSerializer serializer = new JsonSerializer();
-                        serializer.Formatting = Formatting.Indented;
-                        serializer.Serialize(file, group);
-                    }
+                    int rangeStartingPoint = 32 * i;
+                    int maxRange = group.Options.Count - rangeStartingPoint;
+                    Group newGroup = new Group(group.Name + $" ({i + 1})", group.Description,
+                                    group.Priority, group.Type, group.DefaultSettings);
+                    newGroup.Options = group.Options.GetRange(rangeStartingPoint, maxRange > 32 ? 32 : maxRange);
+                    resultGroups.Add(newGroup);
                 }
             }
+            else if (group.Options.Count > 0)
+            {
+                resultGroups.Add(group);
+            }
+            return resultGroups;
         }
 
         public enum ExportType
@@ -1477,10 +1474,17 @@ namespace FFXIVLooseTextureCompiler
                         switch (exportType)
                         {
                             case ExportType.None:
-                                using (Bitmap resultBitmap = ExportTypeNone(inputFile, layeringImage, alphaOverride, invertAlpha, dontInvertAlphaOverride))
-                                {
-                                    if (resultBitmap != null) ScaleAndConvertToTex(resultBitmap, out data, actualExportBc7, actualUseGpu);
-                                    else _asyncBenchLog.Enqueue($"  [Tex Error] ExportType.None '{Path.GetFileName(outputFile)}' returned null bitmap!");
+                                // Try raw-bytes path first (avoids GDI premultiplied alpha corruption)
+                                byte[] rawTexData = ExportTypeNoneRaw(inputFile, layeringImage, alphaOverride, invertAlpha, dontInvertAlphaOverride, actualExportBc7, actualUseGpu);
+                                if (rawTexData != null && rawTexData.Length > 0) {
+                                    data = rawTexData;
+                                } else {
+                                    // Fallback: alpha-override path or other cases that need GDI Bitmap
+                                    using (Bitmap resultBitmap = ExportTypeNone(inputFile, layeringImage, alphaOverride, invertAlpha, dontInvertAlphaOverride))
+                                    {
+                                        if (resultBitmap != null) ScaleAndConvertToTex(resultBitmap, out data, actualExportBc7, actualUseGpu);
+                                        else _asyncBenchLog.Enqueue($"  [Tex Error] ExportType.None '{Path.GetFileName(outputFile)}' returned null bitmap!");
+                                    }
                                 }
                                 break;
                             case ExportType.SkipLayering:
@@ -1611,6 +1615,15 @@ namespace FFXIVLooseTextureCompiler
                             var scratch = global::Penumbra.LTCImport.Textures.PenumbraTexFileParser.Parse(stream);
                             width = scratch.Meta.Width;
                             height = scratch.Meta.Height;
+                        }
+                    } catch {}
+                } else if (inputFile.EndsWith(".ltct", StringComparison.OrdinalIgnoreCase)) {
+                    try {
+                        using (var ltctImg = FFXIVLooseTextureCompiler.ImageProcessing.TexIO.OpenImageFromXOR(inputFile)) {
+                            if (ltctImg != null) {
+                                width = ltctImg.Width;
+                                height = ltctImg.Height;
+                            }
                         }
                     } catch {}
                 } else {
@@ -2425,6 +2438,17 @@ namespace FFXIVLooseTextureCompiler
                             }
                         } catch {}
                     }
+                    else if (baselinePath.EndsWith(".ltct", StringComparison.OrdinalIgnoreCase))
+                    {
+                        try {
+                            using (var ltctImg = FFXIVLooseTextureCompiler.ImageProcessing.TexIO.OpenImageFromXOR(baselinePath)) {
+                                if (ltctImg != null) {
+                                    width = ltctImg.Width;
+                                    height = ltctImg.Height;
+                                }
+                            }
+                        } catch {}
+                    }
                     else
                     {
                         try {
@@ -2441,6 +2465,13 @@ namespace FFXIVLooseTextureCompiler
                     {
                         width = 4096;
                         height = 4096;
+                    }
+                    // Vanilla/gen2 body textures are 1:2 aspect ratio (e.g. 2048x4096).
+                    // If we detected a square canvas but the underlay is gen2 body, enforce 1:2.
+                    if (width == height && layeringImage.IndexOf("gen2", StringComparison.OrdinalIgnoreCase) >= 0
+                        && (layeringImage.IndexOf("body", StringComparison.OrdinalIgnoreCase) >= 0 || layeringImage.IndexOf("b0001", StringComparison.OrdinalIgnoreCase) >= 0))
+                    {
+                        width = height / 2;
                     }
                     // preserveBaseAlpha: the underlay's alpha is authoritative (e.g. lip colour
                     // influence on face normals). The GPU merge restores it as a final shader pass.
@@ -2489,6 +2520,92 @@ namespace FFXIVLooseTextureCompiler
         }
 
 
+
+        /// <summary>
+        /// Raw-bytes variant of ExportTypeNone that bypasses GDI Bitmap entirely.
+        /// Returns .tex bytes directly, or null if this path can't handle the request
+        /// (e.g. alpha-override scenarios that still need the GDI Bitmap path).
+        /// </summary>
+        private byte[] ExportTypeNoneRaw(string inputFile, string layeringImage, string alphaOverride,
+            bool invertAlpha, bool dontInvertAlphaOverride, bool exportBc7, bool useGpu) {
+
+            // Only handle the no-alpha-override layering path
+            if (string.IsNullOrEmpty(layeringImage) || !string.IsNullOrEmpty(alphaOverride))
+                return null;
+
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            string underlayPath = Path.Combine(_basePath, layeringImage);
+
+            var paths = new System.Collections.Generic.List<string> { underlayPath, inputFile };
+            int width = 4096;
+            int height = 4096;
+
+            // Determine canvas dimensions from the underlay
+            string baselinePath = FFXIVLooseTextureCompiler.ImageProcessing.TexIO.Exists(underlayPath) || underlayPath.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase) ? underlayPath : inputFile;
+            if (baselinePath.StartsWith("memory:\\", StringComparison.OrdinalIgnoreCase)) {
+                if (FFXIVLooseTextureCompiler.ImageProcessing.TexIO.VirtualFileSystem.TryGetValue(baselinePath, out FFXIVLooseTextureCompiler.ImageProcessing.TexIO.MemoryFile memFile)) {
+                    width = memFile.Width;
+                    height = memFile.Height;
+                }
+            } else if (baselinePath.EndsWith(".tex", StringComparison.OrdinalIgnoreCase)) {
+                try {
+                    using (var stream = new FileStream(baselinePath, FileMode.Open, FileAccess.Read)) {
+                        var scratch = global::Penumbra.LTCImport.Textures.PenumbraTexFileParser.Parse(stream);
+                        width = scratch.Meta.Width;
+                        height = scratch.Meta.Height;
+                    }
+                } catch {}
+            } else if (baselinePath.EndsWith(".ltct", StringComparison.OrdinalIgnoreCase)) {
+                try {
+                    using (var ltctImg = FFXIVLooseTextureCompiler.ImageProcessing.TexIO.OpenImageFromXOR(baselinePath)) {
+                        if (ltctImg != null) {
+                            width = ltctImg.Width;
+                            height = ltctImg.Height;
+                        }
+                    }
+                } catch {}
+            } else {
+                try {
+                    using (var img = System.Drawing.Image.FromFile(baselinePath)) {
+                        width = img.Width;
+                        height = img.Height;
+                    }
+                } catch {}
+            }
+
+            if (width <= 0 || height <= 0) {
+                width = 4096;
+                height = 4096;
+            }
+            // Vanilla/gen2 body textures are 1:2 aspect ratio (e.g. 2048x4096).
+            // If we detected a square canvas but the underlay is gen2 body, enforce 1:2.
+            if (width == height && layeringImage.IndexOf("gen2", StringComparison.OrdinalIgnoreCase) >= 0
+                && (layeringImage.IndexOf("body", StringComparison.OrdinalIgnoreCase) >= 0 || layeringImage.IndexOf("b0001", StringComparison.OrdinalIgnoreCase) >= 0))
+            {
+                width = height / 2;
+            }
+
+            long setupMs = sw.ElapsedMilliseconds;
+            sw.Restart();
+
+            // Use the raw-bytes pipeline — no GDI Bitmap anywhere
+            var (bgraPixels, outW, outH) = ComputeSharpLayering.MergeMultipleImagesGpuFromPathsRaw(paths, width, height, preserveBaseAlpha: true);
+
+            long compositeMs = sw.ElapsedMilliseconds;
+            sw.Stop();
+            _asyncBenchLog.Enqueue($"    [None Detail] RawGpuPath Setup={setupMs}ms, Composite={compositeMs}ms");
+
+            // Swizzle BGRA → RGBA for RgbaBytesToTex
+            for (int i = 0; i < bgraPixels.Length; i += 4) {
+                byte tmp = bgraPixels[i];
+                bgraPixels[i] = bgraPixels[i + 2];
+                bgraPixels[i + 2] = tmp;
+            }
+
+            byte[] texData;
+            PenumbraTextureImporter.RgbaBytesToTex(bgraPixels, outW, outH, out texData, exportBc7, useGpu);
+            return texData;
+        }
 
         public string AppendIdentifier(string value)
         {

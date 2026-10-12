@@ -475,7 +475,25 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 try { kvp.Value.Dispose(); } catch { }
             }
             _gpuResidentMapCache.Clear();
-            // Note: ThreadStatic pool cannot be cleared globally from here, but it's bound to thread lifetime
+            // Dispose the ThreadStatic GPU buffer pool for the calling thread
+            DisposeThreadBufferPool();
+        }
+
+        /// <summary>
+        /// Disposes the ThreadStatic GPU buffer pool on the calling thread.
+        /// Called from ClearCache and should be called from any worker thread before it exits.
+        /// </summary>
+        public static void DisposeThreadBufferPool() {
+            if (_gpuBufferPool != null) {
+                foreach (var kvp in _gpuBufferPool) {
+                    try { kvp.Value.DestRgb?.Dispose(); } catch { }
+                    try { kvp.Value.DestAlpha?.Dispose(); } catch { }
+                    try { kvp.Value.PingRgb?.Dispose(); } catch { }
+                    try { kvp.Value.PingAlpha?.Dispose(); } catch { }
+                }
+                _gpuBufferPool.Clear();
+                _gpuBufferPool = null;
+            }
         }
 
         public static Bitmap ApplyTransferMapFast(Bitmap sourceTexture, string transferMapPath, bool useBilinear) {

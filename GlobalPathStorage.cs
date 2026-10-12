@@ -16,6 +16,49 @@ namespace LooseTextureCompilerCore {
         public static string OriginalBaseDirectory { get; set; } = AppDomain.CurrentDomain.BaseDirectory;
 
         /// <summary>
+        /// Returns the directory that contains res/fastuvtransfer/body transfer maps.
+        /// Checks OriginalBaseDirectory first, then Penumbra's LooseTextureCompilerDLC folder.
+        /// Updates OriginalBaseDirectory when a better candidate is found.
+        /// </summary>
+        public static string ResolveResourceBaseDirectory(string modDirectoryHint = null)
+        {
+            foreach (string candidate in GetResourceBaseCandidates(modDirectoryHint))
+            {
+                if (Directory.Exists(Path.Combine(candidate, "res", "fastuvtransfer", "body")))
+                {
+                    if (!string.Equals(OriginalBaseDirectory, candidate, StringComparison.OrdinalIgnoreCase))
+                        OriginalBaseDirectory = candidate;
+                    return candidate;
+                }
+            }
+
+            return OriginalBaseDirectory;
+        }
+
+        public static IEnumerable<string> GetResourceBaseCandidates(string modDirectoryHint = null)
+        {
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            void TryAdd(List<string> list, string path)
+            {
+                if (string.IsNullOrWhiteSpace(path))
+                    return;
+                string normalized = path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                if (seen.Add(normalized))
+                    list.Add(normalized);
+            }
+
+            var candidates = new List<string>();
+            TryAdd(candidates, OriginalBaseDirectory);
+            TryAdd(candidates, AppDomain.CurrentDomain.BaseDirectory);
+
+            if (!string.IsNullOrWhiteSpace(modDirectoryHint))
+                TryAdd(candidates, Path.Combine(modDirectoryHint, "LooseTextureCompilerDLC"));
+
+            return candidates;
+        }
+
+        /// <summary>
         /// Validates that critical application assets exist on disk.
         /// Returns a list of human-readable warnings for any missing assets.
         /// </summary>

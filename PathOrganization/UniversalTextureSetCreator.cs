@@ -19,9 +19,9 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
         {
             textureSet.ChildSets.Clear();
             int race = RaceInfo.ReverseRaceLookup(textureSet.InternalBasePath);
-            if (((textureSet.InternalBasePath.Contains("0001_d.tex") &&
-                !textureSet.InternalBasePath.Contains("fac"))
-                || (textureSet.InternalBasePath.Contains("0101_d.tex")
+            if (((textureSet.InternalBasePath.Contains("0001_d.tex") || textureSet.InternalBasePath.Contains("0001_base.tex")) &&
+                !textureSet.InternalBasePath.Contains("fac")
+                || ((textureSet.InternalBasePath.Contains("0101_d.tex") || textureSet.InternalBasePath.Contains("0101_base.tex"))
                 && !textureSet.InternalBasePath.Contains("fac")))
                 && !textureSet.InternalBasePath.Contains("--c1101b0001_"))
             {
@@ -273,13 +273,13 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
         private static void ConfigureTBSECrossCompatibility(TextureSet textureSet, int race, bool omniExport)
         {
             ConfigureTextureSet(textureSet.TextureSetName, "", race, 0, 3, null, textureSet);
-            textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.TbseOverride : BackupTexturePaths.TbseSkinTypes[textureSet.SkinType].BackupTextures[0];
+            textureSet.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.TbseOverride : null) ?? BackupTexturePaths.TbseSkinTypes[textureSet.SkinType].BackupTextures[0];
             TextureSet tbseVanilla = new TextureSet();
 
             if (omniExport)
             {
                 ConfigureTextureSet("Vanilla [IsChild]", "tbse_vanilla", race, 0, 0, tbseVanilla, textureSet);
-                tbseVanilla.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : BackupTexturePaths.TbseSkinTypes[textureSet.SkinType].BackupTextures[3];
+                tbseVanilla.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : null) ?? BackupTexturePaths.TbseSkinTypes[textureSet.SkinType].BackupTextures[3];
 
                 Directory.CreateDirectory(
                     Path.GetDirectoryName(
@@ -343,17 +343,17 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
         private static void ConfigureLalafellVanillaCrossCompatibility(TextureSet textureSet, int race, bool omniExport)
         {
             ConfigureTextureSet(textureSet.TextureSetName, "", race, 1, 0, null, textureSet);
-            textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[2];
+            textureSet.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : null) ?? BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[2];
 
             if (omniExport)
             {
                 TextureSet otopop = new TextureSet();
                 ConfigureTextureSet("Otopop [IsChild]", "otopop", race, 1, 5, otopop, textureSet);
-                otopop.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.OtopopOverride : BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[1];
+                otopop.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.OtopopOverride : null) ?? BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[1];
 
                 TextureSet asymLalaFell = new TextureSet();
                 ConfigureTextureSet("Asym Lala [IsChild]", "asym_lala", race, 0, 6, asymLalaFell, textureSet);
-                asymLalaFell.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.AsymOverridePath() : BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
+                asymLalaFell.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.AsymOverridePath() : null) ?? BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
 
                 TextureSet relala = new TextureSet();
                 ConfigureTextureSet("ReLala [IsChild]", "relala", race, 1, 7, relala, textureSet);
@@ -368,17 +368,17 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
         private static void ConfigureAsymLalafellCrossCompatibility(TextureSet textureSet, int race, bool omniExport)
         {
             ConfigureTextureSet(textureSet.TextureSetName, "", race, 1, 6, null, textureSet);
-            textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.AsymOverridePath() : BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
+            textureSet.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.AsymOverridePath() : null) ?? BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
 
             if (omniExport)
             {
                 TextureSet otopop = new TextureSet();
                 ConfigureTextureSet("Otopop [IsChild]", "otopop", race, 0, 5, otopop, textureSet);
-                otopop.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.OtopopOverride : BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[1];
+                otopop.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.OtopopOverride : null) ?? BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[1];
 
                 TextureSet vanilla = new TextureSet();
                 ConfigureTextureSet("Vanilla [IsChild]", "vanilla_lala", race, 0, 0, vanilla, textureSet);
-                vanilla.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
+                vanilla.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : null) ?? BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
 
                 TextureSet relala = new TextureSet();
                 ConfigureTextureSet("ReLala [IsChild]", "relala", race, 1, 7, relala, textureSet);
@@ -393,17 +393,17 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
         private static void ConfigureOtopopCrossCompatibility(TextureSet textureSet, int race, bool omniExport)
         {
             ConfigureTextureSet(textureSet.TextureSetName, "", race, 1, 5, null, textureSet);
-            textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.OtopopOverride : BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[1];
+            textureSet.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.OtopopOverride : null) ?? BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[1];
 
             if (omniExport)
             {
                 TextureSet vanilla = new TextureSet();
                 ConfigureTextureSet("Vanilla [IsChild]", "vanilla_lala", race, 0, 0, vanilla, textureSet);
-                vanilla.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
+                vanilla.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : null) ?? BackupTexturePaths.OtopopSkinTypes[textureSet.SkinType].BackupTextures[0];
 
                 TextureSet asymLalafell = new TextureSet();
                 ConfigureTextureSet("Asym Lala [IsChild]", "asym_lala", race, 0, 6, asymLalafell, textureSet);
-                asymLalafell.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.AsymOverridePath() : BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
+                asymLalafell.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.AsymOverridePath() : null) ?? BackupTexturePaths.AsymLalaPath(textureSet.SkinType);
 
                 TextureSet relala = new TextureSet();
                 ConfigureTextureSet("ReLala [IsChild]", "relala", race, 1, 7, relala, textureSet);
@@ -418,17 +418,17 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
         private static void ConfigureRelalaCrossCompatibility(TextureSet textureSet, int race, bool omniExport)
         {
             ConfigureTextureSet(textureSet.TextureSetName, "", race, 1, 7, null, textureSet);
-            textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.RelalaOverride : BackupTexturePaths.RelalaSkinTypes[textureSet.SkinType].BackupTextures[0];
+            textureSet.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.RelalaOverride : null) ?? BackupTexturePaths.RelalaSkinTypes[textureSet.SkinType].BackupTextures[0];
 
             if (omniExport)
             {
                 TextureSet vanilla = new TextureSet();
                 ConfigureTextureSet("Vanilla [IsChild]", "vanilla_lala", race, 0, 0, vanilla, textureSet);
-                vanilla.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : BackupTexturePaths.RelalaSkinTypes[textureSet.SkinType].BackupTextures[2];
+                vanilla.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : null) ?? BackupTexturePaths.RelalaSkinTypes[textureSet.SkinType].BackupTextures[2];
 
                 TextureSet otopop = new TextureSet();
                 ConfigureTextureSet("Otopop [IsChild]", "otopop", race, 0, 5, otopop, textureSet);
-                otopop.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.OtopopOverride : BackupTexturePaths.RelalaSkinTypes[textureSet.SkinType].BackupTextures[1];
+                otopop.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.OtopopOverride : null) ?? BackupTexturePaths.RelalaSkinTypes[textureSet.SkinType].BackupTextures[1];
 
                 TextureSet asymLalafell = new TextureSet();
                 ConfigureTextureSet("Asym Lala [IsChild]", "asym_lala", race, 0, 6, asymLalafell, textureSet);
@@ -443,17 +443,17 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
         private static void ConfigureGen3FemaleCrossCompatibility(TextureSet textureSet, int race, bool omniExport)
         {
             ConfigureTextureSet(textureSet.TextureSetName, "", race, 1, 2, null, textureSet);
-            textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen3Override : BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[1];
+            textureSet.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen3Override : null) ?? BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[1];
 
             if (omniExport)
             {
                 TextureSet vanilla = new TextureSet();
                 ConfigureTextureSet("Vanilla [IsChild]", "gen2", race, 1, 0, vanilla, textureSet);
-                vanilla.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
+                vanilla.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : null) ?? BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
 
                 TextureSet bibo = new TextureSet();
                 ConfigureTextureSet("Bibo+ [IsChild]", "bibo", race, 1, 1, bibo, textureSet);
-                bibo.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.BiboOverride : BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[0];
+                bibo.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.BiboOverride : null) ?? BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[0];
 
                 textureSet.ChildSets.Add(vanilla);
                 textureSet.ChildSets.Add(bibo);
@@ -463,17 +463,17 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
         private static void ConfigureBiboFemaleCrossCompatibility(TextureSet textureSet, int race, bool omniExport)
         {
             ConfigureTextureSet(textureSet.TextureSetName, "", race, 1, 1, null, textureSet);
-            textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.BiboOverride : BackupTexturePaths.BiboSkinTypes[textureSet.SkinType].BackupTextures[0];
+            textureSet.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.BiboOverride : null) ?? BackupTexturePaths.BiboSkinTypes[textureSet.SkinType].BackupTextures[0];
 
             if (omniExport)
             {
                 TextureSet vanilla = new TextureSet();
                 ConfigureTextureSet("Vanilla [IsChild]", "gen2", race, 1, 0, vanilla, textureSet);
-                vanilla.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : BackupTexturePaths.BiboSkinTypes[textureSet.SkinType].BackupTextures[2];
+                vanilla.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : null) ?? BackupTexturePaths.BiboSkinTypes[textureSet.SkinType].BackupTextures[2];
 
                 TextureSet gen3 = new TextureSet();
                 ConfigureTextureSet("Tight & Firm [IsChild]", "gen3", race, 1, 2, gen3, textureSet);
-                gen3.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen3Override : BackupTexturePaths.BiboSkinTypes[textureSet.SkinType].BackupTextures[1];
+                gen3.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen3Override : null) ?? BackupTexturePaths.BiboSkinTypes[textureSet.SkinType].BackupTextures[1];
 
                 textureSet.ChildSets.Add(vanilla);
                 textureSet.ChildSets.Add(gen3);
@@ -483,17 +483,18 @@ namespace FFXIVLooseTextureCompiler.PathOrganization
         private static void ConfigureVanillaFemaleCrossCompatibility(TextureSet textureSet, int race, bool omniExport)
         {
             ConfigureTextureSet(textureSet.TextureSetName, "", race, 1, 0, null, textureSet);
-            textureSet.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
+            if (textureSet.BackupTexturePaths == null || string.IsNullOrEmpty(textureSet.BackupTexturePaths.Base))
+                textureSet.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen2Override : null) ?? BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[2];
 
             if (omniExport)
             {
                 TextureSet bibo = new TextureSet();
                 ConfigureTextureSet("Bibo [IsChild]", "bibo", race, 1, 1, bibo, textureSet);
-                bibo.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.BiboOverride : BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[0];
+                bibo.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.BiboOverride : null) ?? BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[0];
 
                 TextureSet gen3 = new TextureSet();
                 ConfigureTextureSet("Tight & Firm [IsChild]", "gen3", race, 1, 2, gen3, textureSet);
-                gen3.BackupTexturePaths = BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen3Override : BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[1];
+                gen3.BackupTexturePaths = (BackupTexturePaths.OverrideMode ? BackupTexturePaths.Gen3Override : null) ?? BackupTexturePaths.Gen3SkinTypes[textureSet.SkinType].BackupTextures[1];
 
                 textureSet.ChildSets.Add(bibo);
                 textureSet.ChildSets.Add(gen3);
