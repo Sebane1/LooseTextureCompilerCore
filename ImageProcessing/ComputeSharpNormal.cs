@@ -87,9 +87,9 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
                 float4 maskPixel = Mask[pos];
                 // maskPixel.W = alpha, in flipped coordinates
                 if (maskPixel.W > 0.0f) {
-                    // Not masked → flat normal (128, 127, 255, 255) in BGRA
-                    // B=255, G=127, R=128, A=255 → float4(1.0, 0.498, 0.502, 1.0)
-                    Output[pos] = new float4(1.0f, 0.498f, 0.502f, 1.0f);
+                    // Not masked → flat normal (128, 127, 255, 255)
+                    // Bgra32 in HLSL maps X=R, Y=G, Z=B, W=A: R=128, G=127, B=255, A=255
+                    Output[pos] = new float4(0.502f, 0.498f, 1.0f, 1.0f);
                     return;
                 }
             }
@@ -105,7 +105,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             float yv = (((u - d) + 1.0f) * 0.5f);
 
             // Normal map channels: R=xv, G=yv, B=1.0, A=1.0
-            // But we work in BGRA float4: X=B, Y=G, Z=R, W=A
             float normalR = xv;
             float normalG = yv;
             float normalB = 1.0f;
@@ -136,8 +135,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             float4 origPixel = OriginalSource[new int2(flippedX, y)];
             float alpha = origPixel.W;
 
-            // Output in BGRA: X=B, Y=G, Z=R, W=A
-            Output[pos] = new float4(blendB, blendG, blendR, alpha);
+            // Output in RGBA: X=R, Y=G, Z=B, W=A
+            Output[pos] = new float4(blendR, blendG, blendB, alpha);
         }
     }
 

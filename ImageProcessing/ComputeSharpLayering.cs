@@ -227,12 +227,15 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
 
             float4 pixel = Input[pos];
             
+            float r = pixel.X;
+            float b = pixel.Z;
+
+            float outR = r;
+            float outG = 1.0f - b;
             float outB = 152.0f / 255.0f;
-            float outG = 1.0f - pixel.X;
-            float outR = pixel.Z;
             float outA = 1.0f;
 
-            Output[pos] = new float4(outB, outG, outR, outA);
+            Output[pos] = new float4(outR, outG, outB, outA);
         }
     }
 

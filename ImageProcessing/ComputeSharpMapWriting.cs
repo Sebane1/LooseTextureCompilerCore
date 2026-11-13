@@ -34,23 +34,20 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             int x = idx % Width;
             int2 pos = new int2(x, y);
 
-            float4 filePixel = File[pos];    // BGRA: X=B, Y=G, Z=R, W=A
+            float4 filePixel = File[pos];
             float4 glowPixel = Glow[pos];
 
-            // Multiply blend: merged = file * glow (per channel, treating glow as white where no data)
-            // The CPU code fills a white background then draws glow on it, then multiplies with file
             float mergedB = filePixel.X * glowPixel.X;
             float mergedG = filePixel.Y * glowPixel.Y;
             float mergedR = filePixel.Z * glowPixel.Z;
             float mergedA = filePixel.W;
 
-            // Source pixel = resized glow
+ 
             float srcB = glowPixel.X;
             float srcG = glowPixel.Y;
             float srcR = glowPixel.Z;
             float srcA = glowPixel.W;
 
-            // Threshold check: flatten colours > 90/255 ≈ 0.353
             float compR = srcR > 0.353f ? srcR : 0.0f;
             float compG = srcG > 0.353f ? srcG : 0.0f;
             float compB = srcB > 0.353f ? srcB : 0.0f;
@@ -119,12 +116,8 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             float4 filePixel = File[pos];
             float4 glowPixel = Glow[pos];
 
-            // If source alpha > 20/255 ≈ 0.078, replace dest blue channel with source alpha
-            // CPU code: Color.FromArgb(dest.A, dest.R, dest.G, sourcePixel.A)
-            // In BGRA float4: X=B, Y=G, Z=R, W=A
-            // "B" in the Color is the LAST arg = sourcePixel.A, which maps to X in BGRA
             if (glowPixel.W > 0.078f) {
-                Output[pos] = new float4(glowPixel.W, filePixel.Y, filePixel.Z, filePixel.W);
+                Output[pos] = new float4(filePixel.X, filePixel.Y, glowPixel.W, filePixel.W);
             } else {
                 Output[pos] = filePixel;
             }
@@ -160,8 +153,6 @@ namespace FFXIVLooseTextureCompiler.ImageProcessing {
             float4 filePixel = File[pos];
             float4 glowPixel = Glow[pos];
 
-            // CPU: Color.FromArgb(255 - sourcePixel.A, dest.R, dest.G, dest.B)
-            // In BGRA float4: W=A → set W to 1.0 - glowAlpha
             if (glowPixel.W > 0.0f) {
                 Output[pos] = new float4(filePixel.X, filePixel.Y, filePixel.Z, 1.0f - glowPixel.W);
             } else {
